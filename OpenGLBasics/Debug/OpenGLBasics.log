@@ -1,0 +1,141 @@
+﻿  EntityComponent.cpp
+  Camera.cpp
+  Entity.cpp
+  GLWindow.cpp
+  Mesh.cpp
+  MeshComponent.cpp
+  Texture.cpp
+  Generating Code...
+Camera.obj : error LNK2019: unresolved external symbol _glfwGetKey referenced in function "public: void __thiscall Camera::MoveCamera(struct GLFWwindow *)" (?MoveCamera@Camera@@QAEXPAUGLFWwindow@@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glBindTexture@8 referenced in function "unsigned int __cdecl LoadBMP(char const *)" (?LoadBMP@@YAIPBD@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp__glBindTexture@8
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glBlendFunc@8 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glClear@4 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glClearColor@16 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glCullFace@4 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glDepthFunc@4 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glEnable@4 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glGenTextures@8 referenced in function "unsigned int __cdecl LoadBMP(char const *)" (?LoadBMP@@YAIPBD@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp__glGenTextures@8
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glLoadIdentity@0 referenced in function "struct glm::mat<4,4,float,0> __cdecl GetViewMatrix(struct glm::vec<3,float,0> const &,struct glm::vec<3,float,0> const &,struct glm::vec<3,float,0>)" (?GetViewMatrix@@YA?AU?$mat@$03$03M$0A@@glm@@ABU?$vec@$02M$0A@@2@0U32@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glMatrixMode@4 referenced in function "struct glm::mat<4,4,float,0> __cdecl GetViewMatrix(struct glm::vec<3,float,0> const &,struct glm::vec<3,float,0> const &,struct glm::vec<3,float,0>)" (?GetViewMatrix@@YA?AU?$mat@$03$03M$0A@@glm@@ABU?$vec@$02M$0A@@2@0U32@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glTexImage2D@36 referenced in function "unsigned int __cdecl LoadBMP(char const *)" (?LoadBMP@@YAIPBD@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp__glTexImage2D@36
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glTexParameteri@12 referenced in function "unsigned int __cdecl LoadBMP(char const *)" (?LoadBMP@@YAIPBD@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp__glTexParameteri@12
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glViewport@16 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glewInit@0 referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwInit referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwTerminate referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwSetErrorCallback referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwWindowHint referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwCreateWindow referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwDestroyWindow referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwWindowShouldClose referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwSetWindowShouldClose referenced in function "void __cdecl CloseWindowKeyPressed(struct GLFWwindow *,int,int,int,int)" (?CloseWindowKeyPressed@@YAXPAUGLFWwindow@@HHHH@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwGetFramebufferSize referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwPollEvents referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwGetMouseButton referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwGetCursorPos referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwSetKeyCallback referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwSetScrollCallback referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwGetTime referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwMakeContextCurrent referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwSwapBuffers referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol _glfwSwapInterval referenced in function _main
+GLWindow.obj : error LNK2019: unresolved external symbol "public: __thiscall Assimp::Importer::Importer(void)" (??0Importer@Assimp@@QAE@XZ) referenced in function "bool __cdecl LoadModelFromFile(char const *,class std::vector<class vertex,class std::allocator<class vertex> > &,class std::vector<unsigned short,class std::allocator<unsigned short> > &)" (?LoadModelFromFile@@YA_NPBDAAV?$vector@Vvertex@@V?$allocator@Vvertex@@@std@@@std@@AAV?$vector@GV?$allocator@G@std@@@2@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol "public: __thiscall Assimp::Importer::~Importer(void)" (??1Importer@Assimp@@QAE@XZ) referenced in function "bool __cdecl LoadModelFromFile(char const *,class std::vector<class vertex,class std::allocator<class vertex> > &,class std::vector<unsigned short,class std::allocator<unsigned short> > &)" (?LoadModelFromFile@@YA_NPBDAAV?$vector@Vvertex@@V?$allocator@Vvertex@@@std@@@std@@AAV?$vector@GV?$allocator@G@std@@@2@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol "public: struct aiScene const * __thiscall Assimp::Importer::ReadFile(char const *,unsigned int)" (?ReadFile@Importer@Assimp@@QAEPBUaiScene@@PBDI@Z) referenced in function "bool __cdecl LoadModelFromFile(char const *,class std::vector<class vertex,class std::allocator<class vertex> > &,class std::vector<unsigned short,class std::allocator<unsigned short> > &)" (?LoadModelFromFile@@YA_NPBDAAV?$vector@Vvertex@@V?$allocator@Vvertex@@@std@@@std@@AAV?$vector@GV?$allocator@G@std@@@2@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewDeleteBuffers referenced in function "public: __thiscall Mesh::~Mesh(void)" (??1Mesh@@QAE@XZ)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewAttachShader referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewAttachShader
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewCompileShader referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewCompileShader
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewCreateProgram referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewCreateProgram
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewCreateShader referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewCreateShader
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewDeleteShader referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewDeleteShader
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewDetachShader referenced in function "unsigned int __cdecl LoadShaders(char const *,char const *)" (?LoadShaders@@YAIPBD0@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewDisableVertexAttribArray referenced in function "public: __thiscall Mesh::~Mesh(void)" (??1Mesh@@QAE@XZ)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewGetProgramInfoLog referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewGetProgramInfoLog
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewGetProgramiv referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewGetProgramiv
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewGetShaderInfoLog referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewGetShaderInfoLog
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewGetShaderiv referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewGetShaderiv
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewGetUniformLocation referenced in function "public: void __thiscall Shader::SetFloat3(char const *,float const &,float const &,float const &)" (?SetFloat3@Shader@@QAEXPBDABM11@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewLinkProgram referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewLinkProgram
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewShaderSource referenced in function "public: __thiscall Shader::Shader(char const *,char const *)" (??0Shader@@QAE@PBD0@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewShaderSource
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewUniform1f referenced in function "public: void __thiscall Shader::SetFloat(char const *,float const &)" (?SetFloat@Shader@@QAEXPBDABM@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewUniform3f referenced in function "public: void __thiscall Shader::SetFloat3(char const *,float const &,float const &,float const &)" (?SetFloat3@Shader@@QAEXPBDABM11@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewUniformMatrix4fv referenced in function "public: void __thiscall Shader::SetMat4(char const *,struct glm::mat<4,4,float,0> const &)" (?SetMat4@Shader@@QAEXPBDABU?$mat@$03$03M$0A@@glm@@@Z)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewUseProgram referenced in function "public: void __thiscall Shader::Use(void)" (?Use@Shader@@QAEXXZ)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewUseProgram
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewGenerateMipmap referenced in function "unsigned int __cdecl LoadBMP(char const *)" (?LoadBMP@@YAIPBD@Z)
+Mesh.obj : error LNK2001: unresolved external symbol __imp____glewGenerateMipmap
+GLWindow.obj : error LNK2019: unresolved external symbol __imp____glewDeleteVertexArrays referenced in function "public: __thiscall Mesh::~Mesh(void)" (??1Mesh@@QAE@XZ)
+GLWindow.obj : error LNK2019: unresolved external symbol __imp__glewExperimental referenced in function _main
+Mesh.obj : error LNK2019: unresolved external symbol __imp__glDrawElements@16 referenced in function "public: void __thiscall Mesh::Draw(void)" (?Draw@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewBindBuffer referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewBufferData referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewGenBuffers referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewEnableVertexAttribArray referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewVertexAttribPointer referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewBindVertexArray referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+Mesh.obj : error LNK2019: unresolved external symbol __imp____glewGenVertexArrays referenced in function "public: void __thiscall Mesh::AddDataToGLBuffer(void)" (?AddDataToGLBuffer@Mesh@@QAEXXZ)
+MSVCRTD.lib(debugger_jmc.obj) : error LNK2019: unresolved external symbol __imp__GetCurrentThreadId@0 referenced in function @__CheckForDebuggerJustMyCode@4
+MSVCRTD.lib(gs_support.obj) : error LNK2001: unresolved external symbol __imp__GetCurrentThreadId@0
+MSVCRTD.lib(error.obj) : error LNK2019: unresolved external symbol __imp__IsDebuggerPresent@0 referenced in function "void __cdecl failwithmessage(void *,int,int,char const *)" (?failwithmessage@@YAXPAXHHPBD@Z)
+MSVCRTD.lib(utility_desktop.obj) : error LNK2001: unresolved external symbol __imp__IsDebuggerPresent@0
+MSVCRTD.lib(error.obj) : error LNK2019: unresolved external symbol __imp__RaiseException@16 referenced in function "void __cdecl notify_debugger(struct tagEXCEPTION_VISUALCPP_DEBUG_INFO const &)" (?notify_debugger@@YAXABUtagEXCEPTION_VISUALCPP_DEBUG_INFO@@@Z)
+MSVCRTD.lib(error.obj) : error LNK2019: unresolved external symbol __imp__MultiByteToWideChar@24 referenced in function "void __cdecl failwithmessage(void *,int,int,char const *)" (?failwithmessage@@YAXPAXHHPBD@Z)
+MSVCRTD.lib(error.obj) : error LNK2019: unresolved external symbol __imp__WideCharToMultiByte@32 referenced in function "void __cdecl failwithmessage(void *,int,int,char const *)" (?failwithmessage@@YAXPAXHHPBD@Z)
+MSVCRTD.lib(gs_report.obj) : error LNK2019: unresolved external symbol __imp__UnhandledExceptionFilter@4 referenced in function ___raise_securityfailure
+MSVCRTD.lib(utility_desktop.obj) : error LNK2001: unresolved external symbol __imp__UnhandledExceptionFilter@4
+MSVCRTD.lib(gs_report.obj) : error LNK2019: unresolved external symbol __imp__SetUnhandledExceptionFilter@4 referenced in function ___raise_securityfailure
+MSVCRTD.lib(utility_desktop.obj) : error LNK2001: unresolved external symbol __imp__SetUnhandledExceptionFilter@4
+MSVCRTD.lib(gs_report.obj) : error LNK2019: unresolved external symbol __imp__GetCurrentProcess@0 referenced in function ___raise_securityfailure
+MSVCRTD.lib(gs_report.obj) : error LNK2019: unresolved external symbol __imp__TerminateProcess@8 referenced in function ___raise_securityfailure
+MSVCRTD.lib(gs_report.obj) : error LNK2019: unresolved external symbol _IsProcessorFeaturePresent@4 referenced in function ___report_gsfailure
+MSVCRTD.lib(utility_desktop.obj) : error LNK2001: unresolved external symbol _IsProcessorFeaturePresent@4
+MSVCRTD.lib(cpu_disp.obj) : error LNK2001: unresolved external symbol _IsProcessorFeaturePresent@4
+MSVCRTD.lib(gs_support.obj) : error LNK2019: unresolved external symbol __imp__QueryPerformanceCounter@4 referenced in function ___get_entropy
+MSVCRTD.lib(gs_support.obj) : error LNK2019: unresolved external symbol __imp__GetCurrentProcessId@0 referenced in function ___get_entropy
+MSVCRTD.lib(gs_support.obj) : error LNK2019: unresolved external symbol __imp__GetSystemTimeAsFileTime@4 referenced in function ___get_entropy
+MSVCRTD.lib(tncleanup.obj) : error LNK2019: unresolved external symbol __imp__InitializeSListHead@4 referenced in function "void __cdecl __scrt_initialize_type_info(void)" (?__scrt_initialize_type_info@@YAXXZ)
+MSVCRTD.lib(utility_desktop.obj) : error LNK2019: unresolved external symbol __imp__GetStartupInfoW@4 referenced in function ___scrt_get_show_window_mode
+MSVCRTD.lib(utility_desktop.obj) : error LNK2019: unresolved external symbol __imp__GetModuleHandleW@4 referenced in function ___scrt_is_managed_app
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__GetLastError@0 referenced in function "struct HINSTANCE__ * __cdecl GetPdbDll(void)" (?GetPdbDll@@YAPAUHINSTANCE__@@XZ)
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__HeapAlloc@12 referenced in function "int __cdecl _RTC_GetSrcLine(unsigned char *,wchar_t *,unsigned long,int *,wchar_t *,unsigned long)" (?_RTC_GetSrcLine@@YAHPAEPA_WKPAH1K@Z)
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__HeapFree@12 referenced in function "int __cdecl _RTC_GetSrcLine(unsigned char *,wchar_t *,unsigned long,int *,wchar_t *,unsigned long)" (?_RTC_GetSrcLine@@YAHPAEPA_WKPAH1K@Z)
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__GetProcessHeap@0 referenced in function "int __cdecl _RTC_GetSrcLine(unsigned char *,wchar_t *,unsigned long,int *,wchar_t *,unsigned long)" (?_RTC_GetSrcLine@@YAHPAEPA_WKPAH1K@Z)
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__VirtualQuery@12 referenced in function "int __cdecl _RTC_GetSrcLine(unsigned char *,wchar_t *,unsigned long,int *,wchar_t *,unsigned long)" (?_RTC_GetSrcLine@@YAHPAEPA_WKPAH1K@Z)
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__FreeLibrary@4 referenced in function "struct HINSTANCE__ * __cdecl GetPdbDllFromInstallPath(void)" (?GetPdbDllFromInstallPath@@YAPAUHINSTANCE__@@XZ)
+MSVCRTD.lib(pdblkup.obj) : error LNK2019: unresolved external symbol __imp__GetProcAddress@8 referenced in function "struct HINSTANCE__ * __cdecl GetPdbDllFromInstallPath(void)" (?GetPdbDllFromInstallPath@@YAPAUHINSTANCE__@@XZ)
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\opengl32.Lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\OpenGL\glfw-3.3.2.bin.WIN64\lib-vc2019\glfw3.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\OpenGL\glfw-3.3.2.bin.WIN64\lib-vc2019\glfw3dll.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\OpenGL\glew-2.1.0\lib\Release\x64\glew32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\OpenGL\glew-2.1.0\lib\Release\x64\glew32s.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\assimp\lib\Debug\assimp-vc142-mtd.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\assimp\lib\Debug\IrrXMLd.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\assimp\lib\Debug\zlibd.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\kernel32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\user32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\gdi32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\winspool.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\comdlg32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\advapi32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\shell32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\ole32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\oleaut32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\uuid.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\odbc32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\odbccp32.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+C:\Users\dnlha\Documents\VS Projects\OpenGLTutorial\Debug\OpenGLBasics.exe : fatal error LNK1120: 89 unresolved externals

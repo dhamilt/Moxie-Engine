@@ -1,0 +1,15 @@
+#version 330 core
+
+in float texCoord;
+out vec4 fragColor;
+uniform vec4 startColor;
+uniform vec4 endColor;
+uniform bool _lerp;
+uniform vec4 lineColor;
+void main()
+{
+	if(!_lerp)
+		fragColor = lineColor;
+	else
+		fragColor = mix(startColor, endColor, texCoord);
+}
