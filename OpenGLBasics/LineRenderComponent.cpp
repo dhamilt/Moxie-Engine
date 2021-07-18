@@ -4,7 +4,8 @@
 LineRenderComponent::LineRenderComponent()
 {
 	name = "LineRenderComponent" + std::to_string(id);
-	printf("%s was spawned!\n", name.c_str());
+
+	Init();
 	id++;
 
 	renderer = new LineRenderer();

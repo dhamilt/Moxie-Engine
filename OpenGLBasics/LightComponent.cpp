@@ -6,7 +6,7 @@ extern GLSetup* GGLSPtr;
 LightComponent::LightComponent()
 {
 	name = "LightComponent" + std::to_string(id);
-	printf("%s was spawned!\n", name.c_str());
+	Init();
 	id++;
 }
 

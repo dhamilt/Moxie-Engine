@@ -9,6 +9,8 @@ public:
     EntityComponent();
     ~EntityComponent();
 
+    // Initialization function to be called by derived classes
+    void Init();
     // public member functions
     // Returns the local to world space model matrix
     mat4 GetLocalToWorldMatrix();

@@ -209,6 +209,14 @@ void Mesh::GetShaderFromPath(const char* vertexPath, const char* fragmentPath)
 	shader = new Shader(vertexPath, fragmentPath);
 }
 
+bool Mesh::operator==(const Graphic& other)
+{
+	const Mesh* tempCMP = dynamic_cast<const Mesh*>(&other);
+	if (!tempCMP) return false;
+
+	return memcmp(this, tempCMP, sizeof(Mesh)) == 0;
+}
+
 void Mesh::UpdateModelMatrixPos(const mat4& _model)
 {
 	model = _model;

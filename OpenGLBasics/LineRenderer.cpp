@@ -4,6 +4,7 @@
 
 LineRenderer::LineRenderer()
 {
+	type = typeid(*this).name();
 	glEnable(GL_LINE_SMOOTH);
 	shader = new Shader("Line.vertex", "Line.fragment");
 }
@@ -102,6 +103,13 @@ void LineRenderer::SetLineColor(const Color& color)
 void LineRenderer::SetLineWidth(float width)
 {
 	glLineWidth(width);
+}
+
+bool LineRenderer::operator==(const Graphic& other)
+{
+	const LineRenderer* lrCMP = dynamic_cast<const LineRenderer*>(&other);
+	if (!lrCMP) return false;
+	return memcmp(lrCMP, this, sizeof(LineRenderer)) == 0;
 }
 
 void LineRenderer::UpdateUVs()

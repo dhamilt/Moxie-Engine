@@ -25,6 +25,7 @@ c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\lightcom
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\linerendercomponent.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\linerenderer.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\lineshapercomponent.obj
+c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\log.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\mactor.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\mesh.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\meshcomponent.obj
@@ -43,12 +44,10 @@ c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_im
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_draw.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_demo.obj
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\log.obj
+c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\gui_base.obj
 c:\users\dnlha\documents\vs projects\moxieengine\x64\debug\moxie.exe
 c:\users\dnlha\documents\vs projects\moxieengine\x64\debug\moxie.ilk
 c:\users\dnlha\documents\vs projects\moxieengine\x64\debug\moxie.pdb
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\audioclass.obj.enc
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\openglbasics.pch
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\cl.command.1.tlog
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\cl.read.1.tlog
 c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\cl.write.1.tlog

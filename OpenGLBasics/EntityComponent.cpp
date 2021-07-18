@@ -4,12 +4,20 @@
 EntityComponent::EntityComponent()
 {
     id++;
+    
 }
 
 EntityComponent::~EntityComponent()
 {
     // remove reference to parent
     parent = nullptr;
+}
+
+void EntityComponent::Init()
+{
+    std::string message = name;
+    message += " was created.";
+    MLOG_MESSAGE(message.c_str());
 }
 
 mat4 EntityComponent::GetLocalToWorldMatrix()

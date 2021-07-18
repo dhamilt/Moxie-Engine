@@ -1,5 +1,4 @@
 #include "glPCH.h"
-
 #include "GLSetup.h"
 #include <cassert>
 #include "GameLoop.h"
@@ -118,6 +117,7 @@ void GLSetup::StartSDLWindow()
 
 	// Accept fragments that are closer to the camera
 	glDepthFunc(GL_LESS);
+
 }
 
 void GLSetup::UpdateLightingCollection(std::string lightComponentName, Light* lightInfo)
@@ -167,14 +167,7 @@ void GLSetup::Render()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
-
-		// Load the GUI window
-		windowLoaded = ImGui::Begin("GUI Window");
-
-		// if the GUI window could not be loaded,
-		// end the GUI window
-		if (!windowLoaded)
-			ImGui::End();
+		
 
 		// Keep a reference of the 4x4 view and projection matrices each frame
 		// in order to pass into the drawing of meshes
@@ -182,18 +175,17 @@ void GLSetup::Render()
 		
 		projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
 		
+		
+		// Call all Paint calls for UI elements 
+		// that exist on the GUI
+		for (int i = 0; i < uiElements.size(); i++)
+			uiElements[i]->Paint();
+						
 		// Send projection and view matrices to objects
 		// being rendered
 		for (int i = 0; i < renderObjs.size(); i++)
 			renderObjs[i]->Draw(projection, view);
 
-		/*ImGui::ShowDemoWindow();*/
-		
-		ImGui::ColorEdit4("My Color Picker", white4);
-
-		if(windowLoaded)
-			ImGui::End();
-				
 		// Render the GUI
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -204,10 +196,7 @@ void GLSetup::Render()
 	}
 
 
-	if (!gameLog)
-		gameLog = &Log::Get();
-
-	gameLog->Paint();
+	
 }
 
 void GLSetup::GetWindowDimensions(int& w, int& h)
@@ -226,21 +215,29 @@ mat4 GLSetup::GetProjection()
 	return projection;
 }
 
-void GLSetup::operator+=(Graphic* ptr)
+void GLSetup::AddRenderObject(Graphic* ptr)
 {
 	renderObjs.push_back(ptr);
 	printf("There are currently %d objects in the render queue.\n", (int)renderObjs.size());
 }
 
-void GLSetup::operator-=(Graphic* ptr)
+// Remove render object if found in queue
+void GLSetup::RemoveRenderObject(Graphic* ptr)
 {
-	int index = 0;
-	for (int i = 0; i < renderObjs.size(); i++)
+	int index = -1;
+	int i = 0;
+	while (i < renderObjs.size())
 	{
-		if (*renderObjs[i] == *ptr)
+		
+		if (ptr->id == renderObjs[i]->id && ptr->type == renderObjs[i]->type)
+		{
 			index = i;
+			break;
+		}
+		i++;
 	}
-	if (index < 1)
+
+	if (index >= 0)
 		renderObjs.erase(renderObjs.begin() + index);
 }
 
@@ -253,5 +250,27 @@ void GLSetup::ScrollWheelCallback(int axisVal)
 {
 	if(fov + axisVal >= fovMinConstraint && fov + axisVal <= fovMaxConstraint)
 	fov += axisVal;
+}
+
+void GLSetup::AddUIElement(GUI_Base* ptr)
+{
+	uiElements.push_back(ptr);
+}
+
+void GLSetup::RemoveUIElement(GUI_Base* ptr)
+{
+	int i = 0;
+	int index = -1;
+	while (i < uiElements.size())
+	{
+		if (ptr->GetName() == uiElements[i]->GetName() && ptr->id == uiElements[i]->id)
+		{
+			index = i;
+			break;
+		}
+		i++;
+	}
+	if (index >= 0)
+		uiElements.erase(uiElements.begin() + index);
 }
 

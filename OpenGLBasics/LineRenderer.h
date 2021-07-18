@@ -63,6 +63,7 @@ public:
 
     void SetLineWidth(float width);
 
+    virtual bool operator==(const Graphic& other);
     // TODO: Change this back to private once this
     // class can only be used through composition
 

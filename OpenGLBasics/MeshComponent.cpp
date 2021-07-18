@@ -4,7 +4,7 @@
 MeshComponent::MeshComponent()
 {	
 	name = "MeshComponent" + std::to_string(id);
-	printf("%s was spawned!\n", name.c_str());
+	Init();
 	id++;
 }
 

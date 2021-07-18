@@ -88,6 +88,8 @@ extern GameLoop* GGLPtr;
 
 int main(int argc, char* argv[])
 {	
+	// Delayed initialization("Lazy" init)
+	GGLPtr->Init();
 	/*ALCdevice* device = alcOpenDevice(NULL);
 	ALCcontext* context = alcCreateContext(device, NULL);*/
 	MSoundDataAsset* sound2 = new MSoundDataAsset("../Aritus - Summer With You.wav");

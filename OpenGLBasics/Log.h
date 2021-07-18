@@ -2,6 +2,8 @@
 #include "glPCH.h"
 #include <string>
 #include <imgui.h>
+#include "GUI_Base.h"
+#include <typeinfo>
 
 enum class MessageTypes
 {
@@ -11,32 +13,26 @@ enum class MessageTypes
 	Fatal
 };
 
-class Log
+class Log : public GUI_Base
 {
 public:
 	
-	static Log& Get()
-	{
-		static Log instance;
-		instance.CreateWindow();
-		instance.Message(MessageTypes::Message, "Window created.");
-		return instance;
-	}
+	Log() {	name = typeid(*this).name(); Message(MessageTypes::Message, "Window created.");};
+		
 
 	
 	static MessageTypes MessageType;
-	void Message(MessageTypes type, std::string message, ...);
-	void Paint();
-
+	void Message(MessageTypes type, const char* message, ...);
+	void Message(MessageTypes type, const char* message, const char* fileName, int line, const char* functionName, ...);
+	virtual void Paint()override;
+	virtual bool operator==( GUI_Base& other)override;
 private:
-	void CreateWindow();
-	Log() { };
-	Log(const Log&) {}
-	void operator=(const Log&) {};
-private:	
-	 SDL_Window* logWindow = nullptr;
-	 SDL_GLContext glContext = NULL;
-	 ImGuiContext* imGuiContext = nullptr;
+	//void CreateWindow();
+	
+	Log(const Log&) { name = typeid(*this).name(); }
+	void operator=(const Log&) { name = typeid(*this).name(); };
+public:
+	bool isWindowOpen;
 	 std::vector<std::string> logMessages;
 	 
 };

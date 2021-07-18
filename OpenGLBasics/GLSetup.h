@@ -10,7 +10,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include <unordered_map>
-#include "Log.h"
+#include "GUI_Base.h"
 
 
 // TODO: IMPLEMENT A LIGHT STRUCT AND HAVE EVERY INITIALIZATION CALL
@@ -26,8 +26,10 @@ class GLSetup
 		mat4 GetCameraView();
 		mat4 GetProjection();
 		void Render();
-		void operator+=(Graphic* ptr);
-		void operator-=(Graphic* ptr);
+		void AddRenderObject(Graphic* ptr);
+		void RemoveRenderObject(Graphic* ptr);
+		void AddUIElement(GUI_Base* ptr);
+		void RemoveUIElement(GUI_Base* ptr);
 		void StartSDLWindow();		
 		void UpdateLightingCollection(std::string lightComponentName, Light* lightInfo);
 		void GetAllLightInfo(std::vector<Light>& _lightingInfo);
@@ -44,9 +46,9 @@ public:
 private:
 	int width = 1600, height = 900;		
 	SDL_Window* sdlWindow = nullptr;
-	Log* gameLog;
 	SDL_GLContext mainSDLContext;
 	std::vector<Graphic*> renderObjs;
+	std::vector<GUI_Base*> uiElements;
 	int mouseWheelPos = 0;
 	float fov = 60.0f;
 	float fovMinConstraint = 20.0f;
@@ -58,6 +60,7 @@ private:
 	std::unordered_map<std::string, Light> lightMap;
 	float white4[4]{White.r, White.g, White.b, White.a};
 	ImGuiContext* mainWindowGUIContext;
+
 
 };
 

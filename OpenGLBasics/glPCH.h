@@ -23,3 +23,4 @@
 #include <al.h>
 #include <alc.h>
 #include "SDL.h"
+#include "LogMacros.h"

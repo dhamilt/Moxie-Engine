@@ -26,7 +26,6 @@ GameLoop::GameLoop()
 	if(inputHandler->mouseCapture)
 		mouseCursor = inputHandler->mouseCapture;
 	
-	
 }
 
 void GameLoop::QuitLoop()
@@ -76,10 +75,7 @@ bool GameLoop::Loop()
 			InitializeAudio();
 			audioInitialized = true;
 		}*/
-		// Initialize the Log window for the project
-		// Once the main window is loaded
-		/*if (!logWindow && GGLSPtr->windowLoaded)
-			logWindow = &Log::Get();*/
+		
 		// Calculate the time since the last frame
 		double _deltaTime;
 		high_resolution_clock::time_point currentFrame = high_resolution_clock::now();
@@ -132,6 +128,12 @@ void GameLoop::RemoveMouseCapCallback(std::function<void(double, double)> callba
 InputHandler* GameLoop::GetMainInputHandle()
 {
 	return inputHandler;
+}
+
+void GameLoop::Init()
+{
+	// Create a Logger
+	logWindow = new Log();
 }
 
 

@@ -100,7 +100,11 @@ int AudioSource::GetSamples(int sampleCount, float* samples)
 	{
 		ALint byteOffset;
 		GetByteOffset(&byteOffset);
-		if (byteOffset != NULL)
+		int maximumByteOffsetAllowed = sound->songChunkSize - sampleCount;
+		// As long as the audio class was able to retrieve the byte offset of where 
+		// the audio file is currently, and the byte offset is less than or equal to
+		// the maximum byte offset possible given the current sample count
+		if (byteOffset != NULL && byteOffset<= maximumByteOffsetAllowed)
 		{
 			// Get the sample size being requested in bytes based on the number of channels provided
 			auto sampleSize = (sound->bitsPerSample / 8) * sampleCount * sound->numOfChannels;
@@ -180,7 +184,11 @@ int AudioSource::GetSamples(int sampleCount, std::vector<float>& samples)
 	{
 		ALint byteOffset;
 		GetByteOffset(&byteOffset);
-		if (byteOffset != NULL)
+		int maximumByteOffsetAllowed = sound->songChunkSize - sampleCount;
+		// As long as the audio class was able to retrieve the byte offset of where 
+		// the audio file is currently, and the byte offset is less than or equal to
+		// the maximum byte offset possible given the current sample count
+		if (byteOffset != NULL&& byteOffset <= maximumByteOffsetAllowed)
 		{
 			// Get the sample size being requested in bytes based on the number of channels provided
 			auto sampleSize = (sound->bitsPerSample / 8) * sampleCount * sound->numOfChannels;

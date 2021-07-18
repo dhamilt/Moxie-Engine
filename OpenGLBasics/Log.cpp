@@ -5,15 +5,8 @@
 
 
 
-void Log::Message(MessageTypes type, std::string message, ...)
-{
-	/*if (SDL_GL_GetCurrentContext() != glContext)
-		SDL_GL_MakeCurrent(logWindow, glContext);
-	
-	if (imGuiContext != ImGui::GetCurrentContext())
-		ImGui::SetCurrentContext(imGuiContext);
-
-	SDL_GL_SwapWindow(logWindow);*/
+void Log::Message(MessageTypes type, const char* message, ...)
+{	
 
 	std::string  msg = "";
 	if (type == MessageTypes::Error)
@@ -24,112 +17,103 @@ void Log::Message(MessageTypes type, std::string message, ...)
 		msg += "LogMessage: ";
 	else
 		msg += "LogWarning: ";
-	std::string result = msg + message;
-	char buffer[125];
+	
+	char buffer[1024];
 
-	
-	
-	// Start a new frame for the Log Window GUI to render
-	/*ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
-	ImGui::NewFrame();
-	ImGui::Begin("Log Window");*/
-
-	//ImGui::ShowDemoWindow();
-	
 	
 	va_list args;
-	va_start(args, result);
-	vfprintf(stderr, result.c_str(), args/*, __FILE__, __FUNCTION__, __LINE__*/);
+	va_start(args, message);
+	vsprintf(buffer, message, args);
+	va_end(args);
+	
+	msg += buffer;
+	msg += "\n";
+
+	logMessages.push_back(msg);
+	
+}
+
+void Log::Message(MessageTypes type, const char* message, const char* fileName, int line, const char* functionName, ...)
+{
+	std::string result = "";
+	if (type == MessageTypes::Message)
+		result = "LogMessage: ";
+	else if (type == MessageTypes::Error)
+		result = "LogError: ";
+	else if (type == MessageTypes::Warning)
+		result = "LogWarning: ";
+	else
+		result = "LogFatal: ";
+
+	char buffer[1024];
+
+	va_list args;
+	va_start(args, message);
+	vsprintf(buffer, message, args);
 	va_end(args);
 
-	result +=  " ";
-	result += __FILE__;
+	result += buffer;
 	result += " ";
-	result += __FUNCTION__;
+	result += fileName;
+	result += ": Line ";
+	result += std::to_string(line);
 	result += " ";
-	result += std::to_string(__LINE__);
+	result += functionName;
 	result += "\n";
 
 	logMessages.push_back(result);
-	//ImGui::Text(result.c_str());
-	
-	//ImGui::End();
-	//// Render the GUI
-	//ImGui::Render();
-	//ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	
 }
 
 
 void Log::Paint()
-{
-	// Change window focus
-	if (SDL_GL_GetCurrentContext() != glContext)
-		SDL_GL_MakeCurrent(logWindow, glContext);
-
-	// Make sure the GUI is working in the Log window
-	if (imGuiContext != ImGui::GetCurrentContext())
-		ImGui::SetCurrentContext(imGuiContext);
-
-	// What color to use when clearing the screen
-	glClear(GL_COLOR_BUFFER_BIT);
-	glClearColor(0.0f, 0.25f, 1.0f, 1.0f);// Cyan background
-	
-		
-	
-		
-	// Start a new frame for the Log Window GUI to render
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
-	ImGui::NewFrame();
-	bool isOpen;
-	
-	ImGui::SetNextWindowPos(ImVec2());
-	ImGui::Begin("Log Window", &isOpen, ImGuiWindowFlags_AlwaysVerticalScrollbar/*|ImGuiWindowFlags_AlwaysAutoResize*/);
-	//ImVec2 windowPos = ImGui::GetWindowPos();
-	int width, height;
-	SDL_GetWindowSize(logWindow, &width, &height);
-	ImGui::SetWindowSize("Log Window", ImVec2(width, height));
+{		
+	if (!ImGui::Begin("Log Window", &isWindowOpen))
+	{
+		// if the window couldn't be loaded
+		// end the usage of this window
+		ImGui::End();
+		// leave the scope of this function
+		return;
+	}
 	for (int i = 0; i < logMessages.size(); i++)
 		ImGui::Text(logMessages[i].c_str());
 
 	ImGui::End();
-	// Render the GUI
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	ImGui::UpdatePlatformWindows();
-	SDL_GL_SwapWindow(logWindow);
 
 }
 
-void Log::CreateWindow()
-{
-	// Create a Log window
-	SDL_WindowFlags windowFlags = (SDL_WindowFlags)( SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	logWindow = SDL_CreateWindow("Log Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 900, 600, windowFlags);
-
-	// Create a context for this window
-	glContext = SDL_GL_CreateContext(logWindow);
-
-	// Set this window as the current context
-	SDL_GL_MakeCurrent(logWindow, glContext);
-	
-	// Setup GUI
-	IMGUI_CHECKVERSION();
-
-	// Create a new context for the log window
-	imGuiContext = ImGui::CreateContext();
-
-	// Make this the current context for the GUI
-	if(ImGui::GetCurrentContext() != imGuiContext)
-		ImGui::SetCurrentContext(imGuiContext);
-
-	// Link the GUI to the correct context and rendering frameworks
-	ImGui_ImplSDL2_InitForOpenGL(logWindow, glContext);
-	ImGui_ImplOpenGL3_Init("#version 330");
-
-
-	// Set the Gui style
-	ImGui::StyleColorsDark();
+bool Log::operator==( GUI_Base& other)
+{	
+	return GetName() == other.GetName();
 }
+
+//void Log::CreateWindow()
+//{
+//	// Create a Log window
+//	SDL_WindowFlags windowFlags = (SDL_WindowFlags)( SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+//	logWindow = SDL_CreateWindow("Log Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 900, 600, windowFlags);
+//
+//	// Create a context for this window
+//	glContext = SDL_GL_CreateContext(logWindow);
+//
+//	// Set this window as the current context
+//	SDL_GL_MakeCurrent(logWindow, glContext);
+//	
+//	// Setup GUI
+//	IMGUI_CHECKVERSION();
+//
+//	// Create a new context for the log window
+//	imGuiContext = ImGui::CreateContext();
+//
+//	// Make this the current context for the GUI
+//	if(ImGui::GetCurrentContext() != imGuiContext)
+//		ImGui::SetCurrentContext(imGuiContext);
+//
+//	// Link the GUI to the correct context and rendering frameworks
+//	ImGui_ImplSDL2_InitForOpenGL(logWindow, glContext);
+//	ImGui_ImplOpenGL3_Init("#version 330");
+//
+//
+//	// Set the Gui style
+//	ImGui::StyleColorsDark();
+//}

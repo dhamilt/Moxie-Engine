@@ -22,18 +22,20 @@ public:
 	// Starts up the audio engine
 	void InitializeAudio();
 	
-	
-//private:
 	bool Loop();
 	
 
-public:
 	void operator+=(BaseObject* ptr);
 	/*Public functions for subscribing and unsubscribing to mouse capture*/
 	void AddMouseCapCallback(std::function<void(double, double)> callback);
 	void RemoveMouseCapCallback(std::function<void(double, double)> callback);
 	InputHandler* GetMainInputHandle();
+	// Function call for delay initialization of features
+	// on main GameLoop class
+	void Init();
 
+public:
+	Log* logWindow;
 private:
 	std::vector<BaseObject*> objsInLoop;	 		
 	long subscriberCount = 0;
@@ -45,7 +47,7 @@ private:
 	MouseCapture* mouseCursor = nullptr;
 	std::thread audioThread;
 	bool audioInitialized;
-	Log* logWindow;
+	
 };
 
 extern GameLoop* GGLPtr;

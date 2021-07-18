@@ -6,9 +6,10 @@
 class Mesh: public Graphic
 {
 public:
-	Mesh() {};
+	Mesh() { type = typeid(this).name(); };
 	Mesh(std::vector<vertex> _vertices, std::vector<uint16_t> indices)
 	{
+		type = typeid(this).name();
 		vertSize = (uint32_t)_vertices.size();
 		indexSize = (uint32_t)indices.size();
 
@@ -24,6 +25,7 @@ public:
 
 	Mesh(std::vector<vector3> _vertices, std::vector<vector3> _normals, std::vector<uint16_t> indices)
 	{
+		type = typeid(this).name();
 		vertSize = (uint32_t)_vertices.size();
 		indexSize = (uint32_t)indices.size();
 
@@ -44,6 +46,7 @@ public:
 
 	Mesh(std::vector<vector3> _vertices, std::vector<vector2> _uvs, std::vector<vector3> _normals, std::vector<uint16_t> indices)
 	{
+		type = typeid(this).name();
 		vertSize = (uint32_t)_vertices.size();
 		indexSize = (uint32_t)indices.size();
 
@@ -66,16 +69,19 @@ public:
 
 	Mesh(std::vector<vertex> _vertices,  std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath) : Mesh(_vertices, indices)
 	{
+		type = typeid(this).name();
 		shader = new Shader(vertexPath, fragmentPath);
 	}
 
 	Mesh(std::vector<vector3> _vertices, std::vector<vector3> _normals, std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath) : Mesh(_vertices, _normals, indices)
 	{
+		type = typeid(this).name();
 		shader = new Shader(vertexPath, fragmentPath);
 	}
 
 	Mesh(std::vector<vector3> _vertices, std::vector<vector2> _uvs, std::vector<vector3> _normals, std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath): Mesh(_vertices, _uvs, _normals, indices)
 	{
+		type = typeid(this).name();
 		shader = new Shader(vertexPath, fragmentPath);
 	}
 
@@ -111,6 +117,7 @@ public:
 	void ApplyTexture(Texture* texture);
 	void GetPivot(vector3* pivotPoint);
 	void GetShaderFromPath(const char* vertexPath, const char* fragmentPath);
+	virtual bool operator ==(const Graphic& other) override;
 
 	//// TEMPORARY FUNCTIONS
 	//void ChangeColors();

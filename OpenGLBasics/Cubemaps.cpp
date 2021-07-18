@@ -7,6 +7,7 @@
 extern GLSetup* GGLSPtr;
 Cubemaps::Cubemaps(std::vector<std::string> files)
 {
+	type = typeid(*this).name();
 	// create space on the GPU for the cubemap as well as an identifier for it	
 	glGenTextures(1, &cubemapID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
@@ -100,4 +101,11 @@ void Cubemaps::Draw(mat4 projection, mat4 view)
 void Cubemaps::GetShaderFromPath(const char* vsPath, const char* fsPath)
 {
 	skyboxShader = new Shader(vsPath, fsPath);
+}
+
+bool Cubemaps::operator==(const Graphic& other)
+{
+	const Cubemaps* cmCMP = dynamic_cast<const Cubemaps*>(&other);
+	if (!cmCMP) return false;
+	return memcmp(cmCMP, this, sizeof(Cubemaps)) == 0;
 }

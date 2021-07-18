@@ -59,6 +59,7 @@ public:
 	void AddToBuffer();
 	virtual void Draw(mat4 projection, mat4 view) override;
 	void GetShaderFromPath(const char* vsPath, const char* fsPath);
+	virtual bool operator==(const Graphic& other);
 
 private:
 	Shader* skyboxShader;
