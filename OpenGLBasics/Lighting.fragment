@@ -1,0 +1,173 @@
+#version 330 core
+
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 LightColor;
+// Constant defining the maximum number of lights that will be rendered in a given scene
+#define MAX_LIGHTS 50
+
+uniform vec3 ambient;
+uniform vec3 diffuse;
+uniform vec3 specular;
+
+in vec3 normal;
+in vec3 fragPos;
+in vec2 texCoord;
+
+uniform vec4 lightPos;
+/*uniform vec3 lightDirection;*/
+uniform vec3 objectColor;
+
+uniform vec3 viewPos;
+
+uniform bool isBlurring;
+uniform bool horizontal;
+
+uniform bool isAlbedoTexValid;
+uniform sampler2D albedoTexture;
+uniform bool isDiffuseTexValid;
+uniform sampler2D diffuseTexture;
+uniform bool isSpecularTexValid;
+uniform sampler2D specularTexture;
+
+uniform float exposure;
+
+struct Light
+{
+	// int variable describing the type of light [Direction, Point, Spot, etc.]
+	int type;	
+	vec3 position;
+	vec3 direction;
+	float radius;
+
+	vec3 _ambient;
+	vec3 _diffuse;
+	vec3 _specular;
+
+	float constant;
+	float linear;
+	float quadratic;
+	
+	float lightPower;
+	vec3 lightColor;
+};
+
+// Returns the color info based on the direction light info
+vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir)
+{
+	vec3 lightDir = normalize(-light.direction);
+	// diffuse shading
+	float diff = max(dot(normal, lightDir), 0.0f);
+	// specular shading
+	vec3 reflectDir = -reflect(-lightDir, normal);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), /*shininess value*/ 5);
+	// combine results
+	vec3 _ambient, _diffuse, _specular;
+	if(isDiffuseTexValid)
+	{
+		_ambient = light._ambient * ambient * light.lightColor * texture(diffuseTexture, texCoord).rgb;
+		_diffuse = light._diffuse * diff * light.lightColor * texture(diffuseTexture, texCoord).rgb;
+	}
+	else
+	{
+		_ambient = light._ambient * ambient * light.lightColor;
+		_diffuse = light._diffuse * diff * light.lightColor;
+	}
+	if(isSpecularTexValid)
+		_specular = light._specular * spec * light.lightColor * texture(specularTexture, texCoord).rgb;
+	else
+		_specular = light._specular * spec * light.lightColor;
+
+	return(_ambient + _diffuse + _specular) * light.lightPower;
+};
+
+// Returns the color info based on the spot light info
+vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
+{
+	vec3 lightDir = normalize(light.position - fragPos);
+	// diffuse shading
+	float diff = max(dot(normal, lightDir), 0.0f);
+	// specular shading
+	vec3 reflectDir = reflect(-lightDir, normal);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), /*shininess value*/5.0f);
+	// attenuation
+	float distance = length(light.position - fragPos);	
+	float attenuation = light.lightPower / (light.constant + light.linear *
+											distance + light.quadratic * (distance* distance));
+	// combine results
+	vec3 _ambient	= light._ambient * ambient;
+	vec3 _diffuse	= light._diffuse * diff;
+	vec3 _specular	= light._specular * spec;
+	_ambient	*= attenuation;
+	_diffuse	*= attenuation;
+	_specular	*= attenuation;
+
+	return (_ambient + _specular + _diffuse);
+}
+
+float weights[5] = {0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f};
+
+uniform Light lights[MAX_LIGHTS];
+// Number of lights that exist in the scene
+uniform int lightSize;
+
+
+void main()
+{
+	// Properties
+	vec3 norm = normalize(normal);
+	vec3 viewDir = normalize(viewPos - fragPos);
+
+	// Lighting result
+	vec3 result = vec3(0.0f, 0.0f, 0.0f);
+	for(int i = 0; i < lightSize; i++)
+	{
+		// if the current light is a directional light
+		if(lights[i].type == 1)
+			result += CalcDirLight(lights[i], norm, viewDir);
+
+		// if the current light is a point light
+		if(lights[i].type == 2)
+			result += CalcSpotLight(lights[i], norm, fragPos, viewDir);
+		// if the current light is a spot light
+		// TODO
+	}
+
+	
+
+	// Add the object color
+	result *= objectColor;
+	// Add exposure to tonemapping
+	/*result = vec3(1.0f) - exp(result, exposure);*/
+	// Add tonemapping
+	const float gamma = 2.2f;
+	result = pow(result, vec3(1.0f / gamma));
+
+	if(isAlbedoTexValid)
+		FragColor = vec4(result, 1.0f) * texture(albedoTexture, texCoord);
+	else
+		FragColor = vec4(result, 1.0f);
+	
+	if(isBlurring)
+	{
+		vec2 tex_offset = 1.0f / textureSize(albedoTexture, 0); // returns the size of a single texel
+		vec3 blurResult = texture(albedoTexture, texCoord).rgb * weights[0]; // current fragment's contribution to the semi-kernel
+		for(int i = 1; i < 5; i++)
+		{
+			if(horizontal)
+			{
+				// horizontal
+				blurResult += texture(albedoTexture, texCoord + vec2(tex_offset.x * i, 0.0f)).rgb * weights[i];
+				blurResult += texture(albedoTexture, texCoord - vec2(tex_offset.x * i, 0.0f)).rgb * weights[i];
+			}
+			else
+			{
+				// vertical
+				blurResult += texture(albedoTexture, texCoord + vec2(0.0f, tex_offset.y * i)).rgb * weights[i];
+				blurResult += texture(albedoTexture, texCoord - vec2(0.0f, tex_offset.y * i)).rgb * weights[i];
+			}
+		}
+		LightColor = vec4(blurResult * result, 1.0f);
+	}
+	else
+		LightColor = FragColor;
+}

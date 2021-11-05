@@ -1,0 +1,5 @@
+﻿  OpenGLTutorial.cpp
+OpenGLTutorial.obj : error LNK2019: unresolved external symbol glfwCreateWindow referenced in function main
+C:\Users\Daniel Hamilton\Documents\VSProjects\OpenGLTutorial\..\..\OpenGL\glfw-3.3.bin.WIN32\lib-vc2019\glfw3.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+C:\Users\Daniel Hamilton\Documents\VSProjects\OpenGLTutorial\..\..\OpenGL\glew-2.1.0\lib\Release\Win32\glew32.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+C:\Users\Daniel Hamilton\Documents\VSProjects\OpenGLTutorial\x64\Debug\OpenGLTutorial.exe : fatal error LNK1120: 1 unresolved externals

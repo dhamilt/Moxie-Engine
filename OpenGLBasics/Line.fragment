@@ -1,0 +1,19 @@
+#version 330 core
+
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 lightColor;
+in float texCoord;
+
+uniform vec4 startColor;
+uniform vec4 endColor;
+uniform float brightnessFactor;
+uniform bool _lerp;
+uniform vec4 lineColor;
+void main()
+{
+	if(!_lerp)
+		fragColor = lineColor * brightnessFactor;
+	else
+		fragColor = mix(startColor * brightnessFactor, endColor * brightnessFactor, texCoord);
+	lightColor = vec4(fragColor.rgb, brightnessFactor);
+}
