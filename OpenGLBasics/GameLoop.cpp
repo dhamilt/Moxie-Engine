@@ -77,7 +77,7 @@ bool GameLoop::Loop()
 		}*/
 		
 		// Calculate the time since the last frame
-		double _deltaTime;
+		
 		high_resolution_clock::time_point currentFrame = high_resolution_clock::now();
 		duration<double> timeSpan = duration_cast<duration<double>>(currentFrame - lastFrame);
 		_deltaTime = timeSpan.count();

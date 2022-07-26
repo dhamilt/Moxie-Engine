@@ -23,6 +23,8 @@ class GLSetup
 		GLSetup();
 		~GLSetup();		
 		void GetWindowDimensions(int& w, int& h);
+		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
+		void GetViewportDimensions(int& _width, int& _height);
 		mat4 GetCameraView();
 		mat4 GetProjection();
 		void Render();
@@ -44,6 +46,7 @@ public:
 
 
 private:
+	GLuint screenTextureID;
 	int width = 1600, height = 900;		
 	SDL_Window* sdlWindow = nullptr;
 	SDL_GLContext mainSDLContext;

@@ -160,6 +160,9 @@
     <ClCompile Include="GUI_Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MViewport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vector3D.h">
@@ -355,6 +358,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LogMacros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MViewport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

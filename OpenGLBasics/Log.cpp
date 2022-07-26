@@ -67,18 +67,18 @@ void Log::Message(MessageTypes type, const char* message, const char* fileName, 
 
 void Log::Paint()
 {		
-	if (!ImGui::Begin("Log Window", &isWindowOpen))
-	{
-		// if the window couldn't be loaded
-		// end the usage of this window
-		ImGui::End();
-		// leave the scope of this function
-		return;
-	}
-	for (int i = 0; i < logMessages.size(); i++)
-		ImGui::Text(logMessages[i].c_str());
+	//if (!ImGui::Begin("Log Window", &isWindowOpen))
+	//{
+	//	// if the window couldn't be loaded
+	//	// end the usage of this window
+	//	ImGui::End();
+	//	// leave the scope of this function
+	//	return;
+	//}
+	//for (int i = 0; i < logMessages.size(); i++)
+	//	ImGui::Text(logMessages[i].c_str());
 
-	ImGui::End();
+	//ImGui::End();
 
 }
 

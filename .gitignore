@@ -3,3 +3,13 @@
 .vs/MoxieEngine/v16/.suo
 *.ilk
 *.obj
+*.idb
+*.pdb
+*.opendb
+*.suo
+*.db
+*.db-shm
+*.db-wal
+*.bin
+/.vs/MoxieEngine/v17/ipch
+/.vs/MoxieEngine/config

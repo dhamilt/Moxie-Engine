@@ -93,6 +93,8 @@ void GLSetup::StartSDLWindow()
 	mainWindowGUIContext = ImGui::CreateContext();	
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	// Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	// Set the GUI style
 	ImGui::StyleColorsDark();
@@ -175,11 +177,20 @@ void GLSetup::Render()
 		
 		projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
 		
-		
+		// Create docking space
+		ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+		ImGui::DockSpaceOverViewport(mainViewport, ImGuiDockNodeFlags_PassthruCentralNode);
+
 		// Call all Paint calls for UI elements 
 		// that exist on the GUI
 		for (int i = 0; i < uiElements.size(); i++)
+		{
+			mainViewport->GetWorkCenter();
+			ImGui::SetNextWindowPos(mainViewport->WorkPos);
+			ImGui::SetNextWindowSize(ImVec2(mainViewport->WorkSize.x, mainViewport->WorkSize.y/2));
+			ImGui::SetNextWindowViewport(mainViewport->ID);
 			uiElements[i]->Paint();
+		}
 						
 		// Send projection and view matrices to objects
 		// being rendered
@@ -203,6 +214,17 @@ void GLSetup::GetWindowDimensions(int& w, int& h)
 {
 	w = width;
 	h = height;
+}
+
+void GLSetup::GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID)
+{
+	
+}
+
+void GLSetup::GetViewportDimensions(int& _width, int& _height)
+{
+	_width = width;
+	_height = height;
 }
 
 mat4 GLSetup::GetCameraView()
@@ -255,6 +277,7 @@ void GLSetup::ScrollWheelCallback(int axisVal)
 void GLSetup::AddUIElement(GUI_Base* ptr)
 {
 	uiElements.push_back(ptr);
+	fprintf(stderr, "There are %d ui elements being drawn.", (int)uiElements.size());
 }
 
 void GLSetup::RemoveUIElement(GUI_Base* ptr)

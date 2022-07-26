@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 	lineEQ->GetSource()->SetVolume(.5f);
 	// Change the color of the component
 	lineEQ->AddLerpColors(Cyan, Green);
-	lineEQ->renderer->SetLineWidth(1.f);
+	lineEQ->renderer->SetLineWidth(2.f);
 	// then play the audio source
 	lineEQ->PlaySource(true);
 	// Add the component to an actor
