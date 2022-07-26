@@ -34,7 +34,7 @@ void MViewport::Paint()
 	// Bind the render buffer
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);	
 	
-	ImGui::Begin("Viewport");
+	ImGui::Begin("Viewport", &windowOpen);
 	ImVec2 windowSize = ImGui::GetWindowSize();
 	// If the viewport image has been resized
 	if ((int)windowSize.x != width || (int)windowSize.y != height)
