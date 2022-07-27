@@ -40,7 +40,10 @@ void GLSetup::Init()
 	viewport = new MViewport();
 }
 
-
+ImGuiContext* GLSetup::GetCurrentContext()
+{
+	return mainWindowGUIContext;
+}
 
 void GLSetup::StartSDLWindow()
 {
@@ -50,11 +53,10 @@ void GLSetup::StartSDLWindow()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//glfwWindowHint(GLFW_SAMPLES, 4); // 4x anti-aliasing
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+	
 
 	// Creates a window using SDL
 	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -97,6 +99,9 @@ void GLSetup::StartSDLWindow()
 	IMGUI_CHECKVERSION();
 	mainWindowGUIContext = ImGui::CreateContext();	
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
+	io.ConfigViewportsNoAutoMerge = true;
+	io.ConfigViewportsNoTaskBarIcon = true;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	// Enable Docking
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -225,11 +230,16 @@ void GLSetup::Render()
 
 		// Call all Paint calls for UI elements 
 		// that exist on the GUI
-		for (int i = 0; i < uiElements.size(); i++)
+		GLuint uiCount = (GLuint)uiElements.size();
+
+		for (int i = 0; i < uiCount; i++)
 			uiElements[i]->Paint();
 						
 		// Render the GUI
 		ImGui::Render();
+		// What color to use when clearing the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();

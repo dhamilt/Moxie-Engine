@@ -23,6 +23,7 @@ class GLSetup
 		GLSetup();
 		~GLSetup();
 		void Init();
+		ImGuiContext* GetCurrentContext();
 		void GetWindowDimensions(int& w, int& h);
 		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
 		void GetViewportDimensions(int& _width, int& _height);

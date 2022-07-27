@@ -182,10 +182,10 @@ int main(int argc, char* argv[])
 	// Change the number of samples it's capturing
 	lineEQ->ChangeSampleCount(1024);
 	// Change the volume of the component
-	lineEQ->GetSource()->SetVolume(.5f);
+	lineEQ->GetSource()->SetVolume(.05f);
 	// Change the color of the component
 	lineEQ->AddLerpColors(Cyan, Green);
-	lineEQ->renderer->SetLineWidth(2.f);
+	lineEQ->renderer->SetLineWidth(3.f);
 	// then play the audio source
 	lineEQ->PlaySource(true);
 	// Add the component to an actor
