@@ -1,56 +1,57 @@
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.pch
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\vc142.pdb
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\vc142.idb
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\assetimportlibrary.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\audioclass.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\audiocommand.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\audioeqcomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\audiosource.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\axiscommand.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\baseobject.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\buttoncommand.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\command.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\cubemaps.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\entitycomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\camera.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\entity.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\eventhandler.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\gameloop.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\glsetup.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\glwindow.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\graphic.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\inputhandler.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\light.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\lightcomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\linerendercomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\linerenderer.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\lineshapercomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\log.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\mactor.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\mesh.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\meshcomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\mousecapture.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxieevents.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\mylightcomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\rotatinglightcomponent.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\shapetransformationlibrary.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\soundengine.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\texture.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\wavreader.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_widgets.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_tables.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_impl_sdl.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_impl_opengl3.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_draw.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui_demo.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\imgui.obj
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\gui_base.obj
-c:\users\dnlha\documents\vs projects\moxieengine\x64\debug\moxie.exe
-c:\users\dnlha\documents\vs projects\moxieengine\x64\debug\moxie.ilk
-c:\users\dnlha\documents\vs projects\moxieengine\x64\debug\moxie.pdb
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\cl.command.1.tlog
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\cl.read.1.tlog
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\cl.write.1.tlog
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\link.command.1.tlog
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\link.read.1.tlog
-c:\users\dnlha\documents\vs projects\moxieengine\openglbasics\x64\debug\moxie.tlog\link.write.1.tlog
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\vc143.pdb
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\vc143.idb
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_widgets.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_tables.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_impl_sdl.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_impl_opengl3.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_draw.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_demo.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.pch
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\assetimportlibrary.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\audioclass.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\audiocommand.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\audioeqcomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\audiosource.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\axiscommand.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\baseobject.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\buttoncommand.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\camera.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\command.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\cubemaps.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\entity.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\entitycomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\eventhandler.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\glsetup.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\glwindow.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\gui_base.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\gameloop.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\graphic.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\inputhandler.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\light.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\lightcomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\linerendercomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\linerenderer.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\lineshapercomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\log.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\mactor.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\mesh.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\meshcomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\mousecapture.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxieevents.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\mylightcomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\rotatinglightcomponent.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\shapetransformationlibrary.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\soundengine.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\texture.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\wavreader.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\mviewport.obj
+d:\moxieengine\moxie-engine\x64\debug\moxie.exe
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.ilk
+d:\moxieengine\moxie-engine\x64\debug\moxie.pdb
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.tlog\cl.command.1.tlog
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.tlog\cl.read.1.tlog
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.tlog\cl.write.1.tlog
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.tlog\link.command.1.tlog
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.tlog\link.read.1.tlog
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.tlog\link.write.1.tlog

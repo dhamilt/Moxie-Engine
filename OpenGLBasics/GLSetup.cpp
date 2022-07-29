@@ -4,6 +4,7 @@
 #include "GameLoop.h"
 
 
+
 extern GLSetup* GGLSPtr = new GLSetup();
 extern GameLoop* GGLPtr;
 
@@ -35,7 +36,20 @@ GLSetup::~GLSetup()
 	glfwTerminate();
 }
 
+void GLSetup::Init()
+{
+	viewport = new MViewport();
+}
 
+ImGuiContext* GLSetup::GetCurrentContext()
+{
+	return mainWindowGUIContext;
+}
+
+bool GLSetup::IsViewportInFocus()
+{
+	return viewportInFocus;
+}
 
 void GLSetup::StartSDLWindow()
 {
@@ -45,11 +59,10 @@ void GLSetup::StartSDLWindow()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//glfwWindowHint(GLFW_SAMPLES, 4); // 4x anti-aliasing
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+	
 
 	// Creates a window using SDL
 	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -92,7 +105,12 @@ void GLSetup::StartSDLWindow()
 	IMGUI_CHECKVERSION();
 	mainWindowGUIContext = ImGui::CreateContext();	
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
+	io.ConfigViewportsNoAutoMerge = true;
+	io.ConfigViewportsNoTaskBarIcon = true;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	// Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	// Set the GUI style
 	ImGui::StyleColorsDark();
@@ -101,7 +119,27 @@ void GLSetup::StartSDLWindow()
 	ImGui_ImplSDL2_InitForOpenGL(sdlWindow, mainSDLContext);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
-	
+	// Setup an initial Framebuffer
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	// Create an attachment texture
+	glGenTextures(1, &screenTextureID);		
+	glBindTexture(GL_TEXTURE_2D, screenTextureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Attach it to Framebuffer
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTextureID, 0);
+	// Create a Renderbuffer Object
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	// Attach it to Framebuffer
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	// Remove bindings
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	// Setup main camera
 	mainCamera = new Camera(vector3(0, 1, 0));
@@ -112,8 +150,14 @@ void GLSetup::StartSDLWindow()
 
 	// Set up mouse scroll wheel callback for changing the fov
 	GGLPtr->GetMainInputHandle()->scrollWheel->Subscribe(std::bind(&GLSetup::ScrollWheelCallback, this, std::placeholders::_1));
-	// Enable Depth test
+	// Enable Depth and Stencil test
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	// Stencil parameters
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilMask(0xFF);
 
 	// Accept fragments that are closer to the camera
 	glDepthFunc(GL_LESS);
@@ -159,38 +203,60 @@ void GLSetup::Render()
 		if (mainWindowGUIContext != ImGui::GetCurrentContext())
 			ImGui::SetCurrentContext(mainWindowGUIContext);
 
+		// Use the initial framebuffer to record all render data for this frame
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
 		// What color to use when clearing the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
 		
-		// Start a new frame for the GUI to render
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
-		
-
-		// Keep a reference of the 4x4 view and projection matrices each frame
+			// Keep a reference of the 4x4 view and projection matrices each frame
 		// in order to pass into the drawing of meshes
 		view = mainCamera->GetViewMatrix();
-		
+
 		projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
+
+
 		
-		
-		// Call all Paint calls for UI elements 
-		// that exist on the GUI
-		for (int i = 0; i < uiElements.size(); i++)
-			uiElements[i]->Paint();
-						
 		// Send projection and view matrices to objects
 		// being rendered
 		for (int i = 0; i < renderObjs.size(); i++)
 			renderObjs[i]->Draw(projection, view);
 
+		// Stop capturing render data for initial framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// Start a new frame for the GUI to render
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+			
+		// Create docking space
+		ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+		ImGui::DockSpaceOverViewport(mainViewport, ImGuiDockNodeFlags_PassthruCentralNode);
+
+		// Call all Paint calls for UI elements 
+		// that exist on the GUI
+		GLuint uiCount = (GLuint)uiElements.size();
+		
+		for (GLuint i = 0; i < uiCount; i++)
+		{
+			ImGui::SetNextWindowBgAlpha(0.0f);
+			uiElements[i]->Paint();
+		}
+
+		windowInFocus = mainWindowGUIContext->NavWindow;
+		
+		viewportInFocus = !strcmp("Viewport", windowInFocus->Name);
 		// Render the GUI
 		ImGui::Render();
+		// What color to use when clearing the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
+
+
 		// Refresh screen with new buffer
 		SDL_GL_SwapWindow(sdlWindow);
 	}
@@ -203,6 +269,18 @@ void GLSetup::GetWindowDimensions(int& w, int& h)
 {
 	w = width;
 	h = height;
+}
+
+void GLSetup::GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID)
+{
+	textureID = screenTextureID;
+	renderbufferObjectID = rbo;
+}
+
+void GLSetup::GetViewportDimensions(int& _width, int& _height)
+{
+	_width = width;
+	_height = height;
 }
 
 mat4 GLSetup::GetCameraView()
@@ -255,6 +333,7 @@ void GLSetup::ScrollWheelCallback(int axisVal)
 void GLSetup::AddUIElement(GUI_Base* ptr)
 {
 	uiElements.push_back(ptr);
+	fprintf(stderr, "There are %d ui elements being drawn.", (int)uiElements.size());
 }
 
 void GLSetup::RemoveUIElement(GUI_Base* ptr)

@@ -37,6 +37,7 @@ public:
 public:
 	Log* logWindow;
 private:
+	double _deltaTime;
 	std::vector<BaseObject*> objsInLoop;	 		
 	long subscriberCount = 0;
 	high_resolution_clock::time_point lastFrame;

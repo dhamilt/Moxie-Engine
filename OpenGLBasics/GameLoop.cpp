@@ -21,7 +21,7 @@ GameLoop::GameLoop()
 	// Initialize the input handling class
 	inputHandler = new InputHandler();
 		
-	SDL_CaptureMouse(SDL_TRUE);
+	//SDL_CaptureMouse(SDL_TRUE);
 
 	if(inputHandler->mouseCapture)
 		mouseCursor = inputHandler->mouseCapture;
@@ -48,24 +48,36 @@ bool GameLoop::Loop()
 	while (isLooping)
 	{
 		// Poll the events		
-		if (inputHandler->PollInputEvents(&event))
+		if (/**/ SDL_PollEvent(&event))
 		{
+			
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			// If the viewport is in focus
+			if (GGLSPtr->IsViewportInFocus())
+				// take mouse inputs
+				inputHandler->PollInputEvents(&event);
 			if (event.type == SDL_QUIT)
 			{
 				isLooping = false;
 				break;
 			}			
 
-			//// Get all Keyboard Events
-			const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
-
-			// if the escape key is pressed
-			if (keyboardState[SDL_SCANCODE_ESCAPE])
+			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
 			{
-				// exit the current loop and the main game loop
 				isLooping = false;
 				break;
 			}
+
+			////// Get all Keyboard Events
+			//const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
+
+			//// if the escape key is pressed
+			//if (keyboardState[SDL_SCANCODE_ESCAPE])
+			//{
+			//	// exit the current loop and the main game loop
+			//	isLooping = false;
+			//	break;
+			//}
 						
 		}
 
@@ -77,7 +89,7 @@ bool GameLoop::Loop()
 		}*/
 		
 		// Calculate the time since the last frame
-		double _deltaTime;
+		
 		high_resolution_clock::time_point currentFrame = high_resolution_clock::now();
 		duration<double> timeSpan = duration_cast<duration<double>>(currentFrame - lastFrame);
 		_deltaTime = timeSpan.count();
