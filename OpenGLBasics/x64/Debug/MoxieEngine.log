@@ -1,8 +1,6 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(514,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (OpenGLBasics.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  MViewport.cpp
-D:\MoxieEngine\Moxie-Engine\OpenGLBasics\MViewport.cpp(68,38): warning C4312: 'type cast': conversion from 'GLuint' to 'ImTextureID' of greater size
+  GLSetup.cpp
 LINK : warning LNK4044: unrecognized option '/MDd'; ignored
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   MoxieEngine.vcxproj -> D:\MoxieEngine\Moxie-Engine\x64\Debug\Moxie.exe
   0 File(s) copied
   0 File(s) copied

@@ -4,6 +4,7 @@
 #include "GameLoop.h"
 
 
+
 extern GLSetup* GGLSPtr = new GLSetup();
 extern GameLoop* GGLPtr;
 
@@ -43,6 +44,11 @@ void GLSetup::Init()
 ImGuiContext* GLSetup::GetCurrentContext()
 {
 	return mainWindowGUIContext;
+}
+
+bool GLSetup::IsViewportInFocus()
+{
+	return viewportInFocus;
 }
 
 void GLSetup::StartSDLWindow()
@@ -231,10 +237,16 @@ void GLSetup::Render()
 		// Call all Paint calls for UI elements 
 		// that exist on the GUI
 		GLuint uiCount = (GLuint)uiElements.size();
-
-		for (int i = 0; i < uiCount; i++)
+		
+		for (GLuint i = 0; i < uiCount; i++)
+		{
+			ImGui::SetNextWindowBgAlpha(0.0f);
 			uiElements[i]->Paint();
-						
+		}
+
+		windowInFocus = mainWindowGUIContext->NavWindow;
+		
+		viewportInFocus = !strcmp("Viewport", windowInFocus->Name);
 		// Render the GUI
 		ImGui::Render();
 		// What color to use when clearing the screen

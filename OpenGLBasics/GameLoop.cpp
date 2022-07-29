@@ -48,9 +48,14 @@ bool GameLoop::Loop()
 	while (isLooping)
 	{
 		// Poll the events		
-		if (/*inputHandler->PollInputEvents(&event)*/ SDL_PollEvent(&event))
+		if (/**/ SDL_PollEvent(&event))
 		{
+			
 			ImGui_ImplSDL2_ProcessEvent(&event);
+			// If the viewport is in focus
+			if (GGLSPtr->IsViewportInFocus())
+				// take mouse inputs
+				inputHandler->PollInputEvents(&event);
 			if (event.type == SDL_QUIT)
 			{
 				isLooping = false;
