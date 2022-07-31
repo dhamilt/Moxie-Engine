@@ -19,5 +19,6 @@ public:
 private:
 	MouseCaptureSignature mcDelegate;
 	int width, height;
+	double desiredPosX = 0.0f, desiredPosY = 0.0f;
 };
 

@@ -270,6 +270,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="RotatingLightComponent.cpp" />
     <ClCompile Include="ShapeTransformationLibrary.cpp" />
     <ClCompile Include="SoundEngine.cpp" />
+    <ClCompile Include="StandaloneWindow.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="WavReader.cpp" />
   </ItemGroup>
@@ -311,6 +312,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="Graphic.h" />
     <ClInclude Include="GUI_Base.h" />
     <ClInclude Include="ImageLibrary.h" />
+    <ClInclude Include="ImGuiInput.h" />
     <ClInclude Include="imgui\imconfig.h">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
     </ClInclude>
@@ -368,6 +370,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="SoundAsset.h" />
     <ClInclude Include="SoundEngine.h" />
     <ClInclude Include="SpriteRenderer.h" />
+    <ClInclude Include="StandaloneWindow.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureData.h" />

@@ -88,18 +88,12 @@ extern GameLoop* GGLPtr;
 
 int main(int argc, char* argv[])
 {	
-	// Delayed initialization("Lazy" init)
-	GGLPtr->Init();
+	// Delayed initialization("Lazy" init)	
 	GGLSPtr->Init();
-	/*ALCdevice* device = alcOpenDevice(NULL);
-	ALCcontext* context = alcCreateContext(device, NULL);*/
+	GGLPtr->Init();
 	MSoundDataAsset* sound2 = new MSoundDataAsset("../Aritus - Summer With You.wav");
 	MSoundDataAsset* sound = new MSoundDataAsset("../Large Professor - Frantic Barz (NIKK BLVKK Remix).wav");
-	AudioSource* source = new AudioSource(/*device, context,*/ sound);
-	//AudioSource* source2 = new AudioSource(device, context, sound);
-	//source->SetSound(sound);
-	//source2->SetSound(sound2);
-	//source->Play();
+	AudioSource* source = new AudioSource(/*device, context,*/ sound);	
 	int i = 0;
 	int maxPlayTimeInSeconds = 120;
 	double time = 0.0f;
@@ -190,55 +184,7 @@ int main(int argc, char* argv[])
 	lineEQ->PlaySource(true);
 	// Add the component to an actor
 	actor->AddComponent(lineEQ);
-	//// Stay in the loop while the song from the component is playing
-	//while (lineEQ->IsPlaying())
-	//{
-	//	SDL_Delay(100);
-	//}
-
-	//// Create a LineRenderComponent
-	//LineShaperComponent* lineShaperComponent = new LineShaperComponent();
-	//LineShaperComponent* secondShaper = new LineShaperComponent();
-	//secondShaper->SetShape(Shapes::MaurerRose);
-	//secondShaper->SetTimeOffset(-0.475f);
-	//
-	//
-	//std::vector<vector3>linePoints;
-	//
-	//float maxRange = 10.0f;
-	//int maxNumOfLinePoints = 120;
-
-	//for (int i = 0; i < maxNumOfLinePoints; i++)
-	//{
-	//	float horizontalVal = 0.0f;
-	//	horizontalVal = -maxRange + (float)i / (float)maxNumOfLinePoints * (maxRange - (-maxRange));
-	//	
-
-	//	linePoints.push_back(vector3(horizontalVal, 1.0f, 3.0f));
-	//}
-	//
-	//lineShaperComponent->renderer->SetLineColor(Red);	
-	//secondShaper->renderer->SetLineColor(White);
-	//// Set Line width
-	//lineShaperComponent->SetLineWidth(5.0f);
-	//secondShaper->SetLineWidth(5.0f);
-	//lineShaperComponent->SetScale(5.0f);
-	//secondShaper->SetScale(5.0f);
-	//lineShaperComponent->SetRevolutionCount(10.0f);
-	//secondShaper->SetRevolutionCount(10.0f);
-	//lineShaperComponent->SetTimeScale(10.0f);
-	//secondShaper->SetTimeScale(50.f);
-	//LineRenderer* lineRenderer = lineShaperComponent->renderer;
-	//LineRenderer* secondRenderer = secondShaper->renderer;
-	//lineRenderer->AddPoints(linePoints);	
-	//actor->AddComponent(lineShaperComponent);
-	//actor->AddComponent(secondShaper);
-	//lineShaperComponent->transform.Translate(vector3(0, 3, 6));
-	//secondShaper->transform.Translate(vector3(0, 3, 6));
-	//// Print the forward vector of the light component	
-	//quaternion lightRotation = lightComponent->GetWorldRotation();
-	//vector3 forward = lightRotation* vector3(0, 0, 1);
-	//printf("%1.2f, %1.2f, %1.2f", forward.x, forward.y, forward.z);
+	
 	
 	actor->transform.SetPosition(vector3(0, -2, 0));
 	GGLPtr->Loop();

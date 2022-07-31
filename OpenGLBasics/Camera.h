@@ -20,7 +20,7 @@ public:
 	mat4 GetViewMatrix();
 	void MoveCamera(MOX_Events movementOptions);
 	void RotateCamera(double xPos, double yPos);
-	void  OnMouseUp(); // should be called for the first frame the mouse button was released
+	void  OnMouseButtonDown(); // should be called for the first frame the mouse button was released
 	
 
 private:	

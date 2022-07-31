@@ -8,6 +8,8 @@ d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_draw.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui_demo.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\imgui.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.pch
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\glsetup.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\gameloop.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\assetimportlibrary.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\audioclass.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\audiocommand.obj
@@ -22,10 +24,8 @@ d:\moxieengine\moxie-engine\openglbasics\x64\debug\cubemaps.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\entity.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\entitycomponent.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\eventhandler.obj
-d:\moxieengine\moxie-engine\openglbasics\x64\debug\glsetup.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\glwindow.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\gui_base.obj
-d:\moxieengine\moxie-engine\openglbasics\x64\debug\gameloop.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\graphic.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\inputhandler.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\light.obj
@@ -33,8 +33,8 @@ d:\moxieengine\moxie-engine\openglbasics\x64\debug\lightcomponent.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\linerendercomponent.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\linerenderer.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\lineshapercomponent.obj
-d:\moxieengine\moxie-engine\openglbasics\x64\debug\log.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\mactor.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\mviewport.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\mesh.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\meshcomponent.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\mousecapture.obj
@@ -45,7 +45,8 @@ d:\moxieengine\moxie-engine\openglbasics\x64\debug\shapetransformationlibrary.ob
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\soundengine.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\texture.obj
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\wavreader.obj
-d:\moxieengine\moxie-engine\openglbasics\x64\debug\mviewport.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\log.obj
+d:\moxieengine\moxie-engine\openglbasics\x64\debug\standalonewindow.obj
 d:\moxieengine\moxie-engine\x64\debug\moxie.exe
 d:\moxieengine\moxie-engine\openglbasics\x64\debug\moxie.ilk
 d:\moxieengine\moxie-engine\x64\debug\moxie.pdb

@@ -15,15 +15,27 @@ MouseCapture::~MouseCapture()
 
 void MouseCapture::TrackMouseCursor()
 {
-	int _x = 0, _y = 0;
-	SDL_GetMouseState(&_x, &_y);
-	if(width==NULL)
-		GGLSPtr->GetWindowDimensions(width, height);
-	double relX = (double)_x / (double)width;
-	double relY = (double)_y / (double)height;
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-	printf("\rX: %f, Y: %f", relX, relY);
-	BroadcastMouseInput(&relX, &relY);	
+	double _x = 0.0f, _y = 0.0f;
+	
+	// Get the mouse movement delta from ImGui
+	_x = io.MouseDelta.x;
+	_y = io.MouseDelta.y;
+
+	// Get the current window dimensions
+	GGLSPtr->GetWindowDimensions(width, height);
+
+	// Get mouse delta relative to screen resolutions
+	double relX = _x / (double)width;
+	double relY = _y / (double)height;
+
+	// Offset desired position by relative mouse position
+	desiredPosX += relX;
+	desiredPosY += relY;
+
+	// Broadcast desired position to all listeners
+	BroadcastMouseInput(&desiredPosX, &desiredPosY);	
 }
 
 void MouseCapture::Subscribe(MouseCapCallback param)

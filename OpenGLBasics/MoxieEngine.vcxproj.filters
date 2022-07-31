@@ -163,6 +163,9 @@
     <ClCompile Include="MViewport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StandaloneWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vector3D.h">
@@ -361,6 +364,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MViewport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StandaloneWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -19,8 +19,8 @@ GameLoop::GameLoop()
 		printf("SDL could not initialize! SDL_ERROR: %s\n", SDL_GetError());
 	
 	// Initialize the input handling class
+	// without capturing the mouse
 	inputHandler = new InputHandler();
-		
 	//SDL_CaptureMouse(SDL_TRUE);
 
 	if(inputHandler->mouseCapture)
@@ -48,14 +48,12 @@ bool GameLoop::Loop()
 	while (isLooping)
 	{
 		// Poll the events		
-		if (/**/ SDL_PollEvent(&event))
+		if (SDL_PollEvent(&event))
 		{
 			
 			ImGui_ImplSDL2_ProcessEvent(&event);
-			// If the viewport is in focus
-			if (GGLSPtr->IsViewportInFocus())
-				// take mouse inputs
-				inputHandler->PollInputEvents(&event);
+			if(GGLSPtr->IsViewportInFocus())
+				inputHandler->PollInputEvents();
 			if (event.type == SDL_QUIT)
 			{
 				isLooping = false;
@@ -66,30 +64,11 @@ bool GameLoop::Loop()
 			{
 				isLooping = false;
 				break;
-			}
-
-			////// Get all Keyboard Events
-			//const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
-
-			//// if the escape key is pressed
-			//if (keyboardState[SDL_SCANCODE_ESCAPE])
-			//{
-			//	// exit the current loop and the main game loop
-			//	isLooping = false;
-			//	break;
-			//}
+			}						
 						
-		}
-
-		// Initialize the audio
-		/*if (!audioInitialized)
-		{
-			InitializeAudio();
-			audioInitialized = true;
-		}*/
+		}		
 		
-		// Calculate the time since the last frame
-		
+		// Calculate the time since the last frame		
 		high_resolution_clock::time_point currentFrame = high_resolution_clock::now();
 		duration<double> timeSpan = duration_cast<duration<double>>(currentFrame - lastFrame);
 		_deltaTime = timeSpan.count();
@@ -142,10 +121,22 @@ InputHandler* GameLoop::GetMainInputHandle()
 	return inputHandler;
 }
 
+
 void GameLoop::Init()
 {
 	// Create a Logger
 	logWindow = new Log();
+
+	
+}
+
+void GameLoop::InitializeInputs()
+{
+	//// TEMPORARY
+	// Create WASD keystroke watchers
+	//inputHandler->WatchKeyStrokes({ ImGuiKey_W, ImGuiKey_A, ImGuiKey_S, ImGuiKey_D }, ButtonState_Pressed);
+	// Create Left Mouse button watcher
+	inputHandler->WatchMouseInputs(MouseButton_Left | MouseButton_Right, ButtonState_Pressed | ButtonState_Released);
 }
 
 
