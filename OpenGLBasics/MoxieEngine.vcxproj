@@ -30,26 +30,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -234,13 +234,14 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
-      <DeploymentContent>true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="imgui\imgui_impl_sdl.cpp">
       <DeploymentContent>true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_impl_sdlrenderer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="imgui\imgui_tables.cpp">
@@ -261,14 +262,17 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="LineShaperComponent.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="MActor.cpp" />
+    <ClCompile Include="MainMenu.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="MoxieEvents.cpp" />
+    <ClCompile Include="MViewport.cpp" />
     <ClCompile Include="MyLightComponent.cpp" />
     <ClCompile Include="RotatingLightComponent.cpp" />
     <ClCompile Include="ShapeTransformationLibrary.cpp" />
     <ClCompile Include="SoundEngine.cpp" />
+    <ClCompile Include="StandaloneWindow.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="WavReader.cpp" />
   </ItemGroup>
@@ -310,6 +314,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="Graphic.h" />
     <ClInclude Include="GUI_Base.h" />
     <ClInclude Include="ImageLibrary.h" />
+    <ClInclude Include="ImGuiInput.h" />
     <ClInclude Include="imgui\imconfig.h">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
     </ClInclude>
@@ -321,10 +326,12 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
       <DeploymentContent>true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
     </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="imgui\imgui_impl_sdl.h">
       <DeploymentContent>true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
     </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_sdlrenderer.h" />
     <ClInclude Include="imgui\imgui_internal.h">
       <DeploymentContent>true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
@@ -351,11 +358,13 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="Log.h" />
     <ClInclude Include="LogMacros.h" />
     <ClInclude Include="MActor.h" />
+    <ClInclude Include="MainMenu.h" />
     <ClInclude Include="MathLibrary.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="MouseCapture.h" />
     <ClInclude Include="MoxieEvents.h" />
+    <ClInclude Include="MViewport.h" />
     <ClInclude Include="MyLightComponent.h" />
     <ClInclude Include="CircularLinkedList.h" />
     <ClInclude Include="ObjectPool.h" />
@@ -366,6 +375,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="SoundAsset.h" />
     <ClInclude Include="SoundEngine.h" />
     <ClInclude Include="SpriteRenderer.h" />
+    <ClInclude Include="StandaloneWindow.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureData.h" />

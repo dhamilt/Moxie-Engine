@@ -13,6 +13,12 @@ enum class MessageTypes
 	Fatal
 };
 
+struct MessageInfo
+{
+	MessageTypes messageType = MessageTypes::Message;
+	std::string message = "Default Message";
+};
+
 class Log : public GUI_Base
 {
 public:
@@ -33,7 +39,7 @@ private:
 	void operator=(const Log&) { name = typeid(*this).name(); };
 public:
 	bool isWindowOpen;
-	 std::vector<std::string> logMessages;
+	 std::vector<MessageInfo> logMessages;
 	 
 };
 

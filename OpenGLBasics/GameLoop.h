@@ -30,13 +30,20 @@ public:
 	void AddMouseCapCallback(std::function<void(double, double)> callback);
 	void RemoveMouseCapCallback(std::function<void(double, double)> callback);
 	InputHandler* GetMainInputHandle();
+	// Creates input watchers in ImGui for mouse buttons
+	void AddMouseButtonWatcher();
+
+	// Creates input watchers in ImGui for keystrokes
+	
 	// Function call for delay initialization of features
 	// on main GameLoop class
 	void Init();
-
+	// Initialization of inputs
+	void InitializeInputs();
 public:
-	Log* logWindow;
+	Log* logWindow = nullptr;
 private:
+	double _deltaTime = 0.0f;
 	std::vector<BaseObject*> objsInLoop;	 		
 	long subscriberCount = 0;
 	high_resolution_clock::time_point lastFrame;
@@ -46,7 +53,7 @@ private:
 	InputHandler* inputHandler = nullptr;
 	MouseCapture* mouseCursor = nullptr;
 	std::thread audioThread;
-	bool audioInitialized;
+	bool audioInitialized = false;
 	
 };
 

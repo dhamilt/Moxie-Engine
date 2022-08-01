@@ -4,18 +4,19 @@
 #include "GameLoop.h"
 
 
+
 extern GLSetup* GGLSPtr = new GLSetup();
 extern GameLoop* GGLPtr;
 
 GLSetup::GLSetup()
 {
-	bool result = glfwInit();
+	/*bool result = glfwInit();
 	if (!result)
 	{
 		perror("Unable to initialize GLFW!");
 		assert(result);
 		throw std::runtime_error("Rendering framework could not be initialized!");
-	}
+	}*/
 
 	StartSDLWindow();	
 }
@@ -32,29 +33,56 @@ GLSetup::~GLSetup()
 		SDL_DestroyWindow(sdlWindow);
 	
 	// End usage of GLFW
-	glfwTerminate();
+	//glfwTerminate();
 }
 
+void GLSetup::Init()
+{
+	// Create main menu bar for app
+	mainMenu = new MainMenu();
+	// Create viewport for application
+	viewport = new MViewport();
+}
 
+ImGuiContext* GLSetup::GetCurrentContext()
+{
+	return mainWindowGUIContext;
+}
+
+bool GLSetup::IsViewportInFocus()
+{
+	return viewportInFocus;
+}
 
 void GLSetup::StartSDLWindow()
 {
+	// Setup SDL
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
+	{
+		printf("Error: %s\n", SDL_GetError());
+		return;
+	}
+	
 	// Set the minimum OpenGL version this program run on
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	//glfwWindowHint(GLFW_SAMPLES, 4); // 4x anti-aliasing
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
-
+	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	// Enable the Depth and Stencil Buffers
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	// Creates a window using SDL
 	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	sdlWindow = SDL_CreateWindow("Moxie Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
-
+	// Make the window the current context 
+	SDL_GL_MakeCurrent(sdlWindow, mainSDLContext);
+	// Lower the number of buffer swaps for each frame
+		// in order to optimize efficiency(V-Sync)
+	SDL_GL_SetSwapInterval(1);
+	// Create an OpenGL context associated with the SDL window
+	mainSDLContext = SDL_GL_CreateContext(sdlWindow);
 	if (!sdlWindow)
 	{
 		printf("Error! %s\n", SDL_GetError());
@@ -62,37 +90,36 @@ void GLSetup::StartSDLWindow()
 		throw std::runtime_error("Context window could not be created!");
 	}
 	
-	// Create an OpenGL context associated with the SDL window
-	mainSDLContext = SDL_GL_CreateContext(sdlWindow);
+	
 
-	// Make the window the current context 
-	SDL_GL_MakeCurrent(sdlWindow, mainSDLContext);	
+	
 
 	// Initialize GLEW
 	glewExperimental = GL_TRUE;
 	bool glewResult = glewInit();
-	if (glewResult == GLEW_OK)
+	// if OpenGL extension library doesn't initialize properly
+	if (glewResult != GLEW_OK)
 	{
-		// Lower the number of buffer swaps for each frame
-		// in order to optimize efficiency(V-Sync)
-		SDL_GL_SetSwapInterval(1);
-
-		//glfwGetFramebufferSize(window, &width, &height);
-		//glViewport(0, 0, width, height);
-		// Get the pixel dimensions for the framebuffer
-		SDL_GL_GetDrawableSize(sdlWindow, &width, &height);
-	}
-	// otherwise throw an exception
-	else
-	{
+		// Throw an exception
 		assert(glewResult == GLEW_OK);
-		throw std::runtime_error("GLEW could not be initialized!");
+		throw std::runtime_error("GLEW could not be initialized!");		
 	}
+	
 	// Setup GUI
 	IMGUI_CHECKVERSION();
 	mainWindowGUIContext = ImGui::CreateContext();	
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	/*io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+	io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;*/	
+
+	// Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	
+	io.ConfigViewportsNoAutoMerge = true;
+	io.ConfigViewportsNoTaskBarIcon = false;
+	io.ConfigDockingTransparentPayload = true;
+	io.ConfigDockingAlwaysTabBar = true;
 
 	// Set the GUI style
 	ImGui::StyleColorsDark();
@@ -103,17 +130,45 @@ void GLSetup::StartSDLWindow()
 
 	
 
+	// Setup an initial Framebuffer
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	// Create an attachment texture
+	glGenTextures(1, &screenTextureID);		
+	glBindTexture(GL_TEXTURE_2D, screenTextureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Attach it to Framebuffer
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTextureID, 0);
+	// Create a Renderbuffer Object
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	// Attach it to Framebuffer
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	// Remove bindings
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+
 	// Setup main camera
 	mainCamera = new Camera(vector3(0, 1, 0));
-
 	// Set up mouse capture callback for rotating the camera
 	GGLPtr->AddMouseCapCallback(std::bind(&Camera::RotateCamera, mainCamera, std::placeholders::_1, std::placeholders::_2));
-	GGLPtr->GetMainInputHandle()->leftMouseButton->Subscribe(std::bind(&Camera::OnMouseUp, mainCamera), MOX_RELEASED);
+	GGLPtr->GetMainInputHandle()->leftMouseButton->Subscribe(std::bind(&Camera::OnMouseButtonDown, mainCamera), MOX_RELEASED);
 
 	// Set up mouse scroll wheel callback for changing the fov
 	GGLPtr->GetMainInputHandle()->scrollWheel->Subscribe(std::bind(&GLSetup::ScrollWheelCallback, this, std::placeholders::_1));
-	// Enable Depth test
+	// Enable Depth and Stencil test
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	// Stencil parameters
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilMask(0xFF);
 
 	// Accept fragments that are closer to the camera
 	glDepthFunc(GL_LESS);
@@ -150,47 +205,82 @@ void GLSetup::Render()
 {
 	// Run one frame of the Render thread
 	if (sdlWindow)
-	{
-		// Make sure SDL working in the context of this window
-		if (mainSDLContext != SDL_GL_GetCurrentContext())
-			SDL_GL_MakeCurrent(sdlWindow, mainSDLContext);
+	{		
+		
+			
 
-		// Make sure the GUI is working in the main window
-		if (mainWindowGUIContext != ImGui::GetCurrentContext())
-			ImGui::SetCurrentContext(mainWindowGUIContext);
+		// Use the initial framebuffer to record all render data for this frame
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
 		// What color to use when clearing the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
 		
-		// Start a new frame for the GUI to render
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
-		
-
-		// Keep a reference of the 4x4 view and projection matrices each frame
+			// Keep a reference of the 4x4 view and projection matrices each frame
 		// in order to pass into the drawing of meshes
 		view = mainCamera->GetViewMatrix();
-		
+
 		projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
+
+
 		
-		
-		// Call all Paint calls for UI elements 
-		// that exist on the GUI
-		for (int i = 0; i < uiElements.size(); i++)
-			uiElements[i]->Paint();
-						
 		// Send projection and view matrices to objects
 		// being rendered
 		for (int i = 0; i < renderObjs.size(); i++)
 			renderObjs[i]->Draw(projection, view);
 
+		// Stop capturing render data for initial framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// Start a new frame for the GUI to render
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+		
+		//// Create docking space
+		ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+		ImGui::DockSpaceOverViewport(mainViewport, ImGuiDockNodeFlags_PassthruCentralNode);
+
+		// Call all Paint calls for UI elements 
+		// that exist on the GUI
+		GLuint uiCount = (GLuint)uiElements.size();
+		
+		for (GLuint i = 0; i < uiCount; i++)
+		{
+			ImGui::SetNextWindowBgAlpha(0.0f);
+			uiElements[i]->Paint();
+		}
+
+		// if quit button is selected
+		if (mainMenu->IsExitingApplication())
+			// queue the main game loop to quit
+			GGLPtr->QuitLoop();
+
+		windowInFocus = mainWindowGUIContext->NavWindow;
+		// if there is a window in focus
+		if (windowInFocus)
+			viewportInFocus = !strcmp("Viewport", windowInFocus->Name);
+		else
+			viewportInFocus = false;
+
 		// Render the GUI
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
+		// What color to use when clearing the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());		
+		
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		// If multi viewports are enabled
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			SDL_GLContext backupContext = SDL_GL_GetCurrentContext();
+			SDL_Window* backupWindow = SDL_GL_GetCurrentWindow();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			// Make sure SDL working in the context of this window
+			SDL_GL_MakeCurrent(backupWindow, backupContext);
+		}		
+		
 		// Refresh screen with new buffer
 		SDL_GL_SwapWindow(sdlWindow);
 	}
@@ -203,6 +293,22 @@ void GLSetup::GetWindowDimensions(int& w, int& h)
 {
 	w = width;
 	h = height;
+}
+
+void GLSetup::GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID)
+{
+	textureID = screenTextureID;
+	renderbufferObjectID = rbo;
+}
+
+void GLSetup::GetViewportDimensions(int& _width, int& _height)
+{	
+	if (viewportInFocus)
+	{
+		ImVec2 windowSize = windowInFocus->Size;
+		_width = (int)windowSize.x;
+		_height = (int)windowSize.y;
+	}
 }
 
 mat4 GLSetup::GetCameraView()
@@ -255,6 +361,7 @@ void GLSetup::ScrollWheelCallback(int axisVal)
 void GLSetup::AddUIElement(GUI_Base* ptr)
 {
 	uiElements.push_back(ptr);
+	fprintf(stderr, "There are %d ui elements being drawn.", (int)uiElements.size());
 }
 
 void GLSetup::RemoveUIElement(GUI_Base* ptr)

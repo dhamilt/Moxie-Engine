@@ -2,6 +2,7 @@
 #include "MViewport.h"
 #include "GLSetup.h"
 
+
 extern GLSetup* GGLSPtr;
 MViewport::MViewport()
 {
@@ -34,7 +35,13 @@ void MViewport::Paint()
 	// Bind the render buffer
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);	
 	
-	ImGui::Begin("Viewport");
+	// TODO: Return true if Viewport ImGui window is focused
+	// Get the current window	
+	if (ImGui::IsWindowFocused())
+		printf("Viewport is focused\n");
+	
+	ImGui::Begin("Viewport", &windowOpen);
+	
 	ImVec2 windowSize = ImGui::GetWindowSize();
 	// If the viewport image has been resized
 	if ((int)windowSize.x != width || (int)windowSize.y != height)

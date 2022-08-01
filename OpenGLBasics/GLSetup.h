@@ -10,7 +10,9 @@
 #include "Camera.h"
 #include "Light.h"
 #include <unordered_map>
-#include "GUI_Base.h"
+#include "MViewport.h"
+#include "imgui/imgui_internal.h"
+#include "MainMenu.h"
 
 
 // TODO: IMPLEMENT A LIGHT STRUCT AND HAVE EVERY INITIALIZATION CALL
@@ -21,8 +23,13 @@ class GLSetup
 {
 	public:
 		GLSetup();
-		~GLSetup();		
+		~GLSetup();
+		void Init();
+		ImGuiContext* GetCurrentContext();		
+		bool IsViewportInFocus();
 		void GetWindowDimensions(int& w, int& h);
+		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
+		void GetViewportDimensions(int& _width, int& _height);
 		mat4 GetCameraView();
 		mat4 GetProjection();
 		void Render();
@@ -44,6 +51,12 @@ public:
 
 
 private:
+	// Framebuffer ID
+	GLuint screenTextureID;
+	// Framebuffer Object and Renderbuffer Object
+	GLuint fbo, rbo;
+	// Viewport
+	MViewport* viewport;
 	int width = 1600, height = 900;		
 	SDL_Window* sdlWindow = nullptr;
 	SDL_GLContext mainSDLContext;
@@ -60,6 +73,9 @@ private:
 	std::unordered_map<std::string, Light> lightMap;
 	float white4[4]{White.r, White.g, White.b, White.a};
 	ImGuiContext* mainWindowGUIContext;
+	ImGuiWindow* windowInFocus;
+	bool viewportInFocus;
+	MainMenu* mainMenu;
 
 
 };

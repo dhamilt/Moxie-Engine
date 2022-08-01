@@ -7,16 +7,17 @@
 
 void Log::Message(MessageTypes type, const char* message, ...)
 {	
-
-	std::string  msg = "";
+	MessageInfo msgInfo;
+	msgInfo.messageType = type;
+	std::string  result = "";
 	if (type == MessageTypes::Error)
-		msg += "LogError: ";
+		result += "LogError: ";
 	else if (type == MessageTypes::Fatal)
-		msg += "LogFatal: ";
+		result += "LogFatal: ";
 	else if (type == MessageTypes::Message)
-		msg += "LogMessage: ";
+		result += "LogMessage: ";
 	else
-		msg += "LogWarning: ";
+		result += "LogWarning: ";
 	
 	char buffer[1024];
 
@@ -26,15 +27,18 @@ void Log::Message(MessageTypes type, const char* message, ...)
 	vsprintf(buffer, message, args);
 	va_end(args);
 	
-	msg += buffer;
-	msg += "\n";
+	result += buffer;
+	result += "\n";
 
-	logMessages.push_back(msg);
+	msgInfo.message = result;
+	logMessages.push_back(msgInfo);
 	
 }
 
 void Log::Message(MessageTypes type, const char* message, const char* fileName, int line, const char* functionName, ...)
 {
+	MessageInfo msgInfo;
+	msgInfo.messageType = type;
 	std::string result = "";
 	if (type == MessageTypes::Message)
 		result = "LogMessage: ";
@@ -61,7 +65,9 @@ void Log::Message(MessageTypes type, const char* message, const char* fileName, 
 	result += functionName;
 	result += "\n";
 
-	logMessages.push_back(result);
+	
+	msgInfo.message = result;
+	logMessages.push_back(msgInfo);
 }
 
 
@@ -75,8 +81,19 @@ void Log::Paint()
 		// leave the scope of this function
 		return;
 	}
-	for (int i = 0; i < logMessages.size(); i++)
-		ImGui::Text(logMessages[i].c_str());
+	for (auto it = logMessages.begin(); it != logMessages.end(); it++)
+	{
+		if(it->messageType == MessageTypes::Message)
+			ImGui::Text(it->message.c_str());
+		else
+		{
+			if (it->messageType == MessageTypes::Warning)
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), it->message.c_str());
+			else
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), it->message.c_str());
+		}
+		
+	}
 
 	ImGui::End();
 
@@ -87,33 +104,3 @@ bool Log::operator==( GUI_Base& other)
 	return GetName() == other.GetName();
 }
 
-//void Log::CreateWindow()
-//{
-//	// Create a Log window
-//	SDL_WindowFlags windowFlags = (SDL_WindowFlags)( SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-//	logWindow = SDL_CreateWindow("Log Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 900, 600, windowFlags);
-//
-//	// Create a context for this window
-//	glContext = SDL_GL_CreateContext(logWindow);
-//
-//	// Set this window as the current context
-//	SDL_GL_MakeCurrent(logWindow, glContext);
-//	
-//	// Setup GUI
-//	IMGUI_CHECKVERSION();
-//
-//	// Create a new context for the log window
-//	imGuiContext = ImGui::CreateContext();
-//
-//	// Make this the current context for the GUI
-//	if(ImGui::GetCurrentContext() != imGuiContext)
-//		ImGui::SetCurrentContext(imGuiContext);
-//
-//	// Link the GUI to the correct context and rendering frameworks
-//	ImGui_ImplSDL2_InitForOpenGL(logWindow, glContext);
-//	ImGui_ImplOpenGL3_Init("#version 330");
-//
-//
-//	// Set the Gui style
-//	ImGui::StyleColorsDark();
-//}
