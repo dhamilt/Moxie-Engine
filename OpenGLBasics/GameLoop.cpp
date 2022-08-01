@@ -23,6 +23,7 @@ GameLoop::GameLoop()
 	inputHandler = new InputHandler();
 
 	if(inputHandler->mouseCapture)
+	//SDL_CaptureMouse(SDL_TRUE);
 		mouseCursor = inputHandler->mouseCapture;	
 }
 

@@ -15,9 +15,9 @@ InputHandler::InputHandler()
 	scrollWheel = new AxisCommand();
 
 	capturingCursor = true;
-	leftMouseButton->Subscribe(std::bind(&MouseCapture::TrackMouseCursor, mouseCapture), MOX_HELD);
-	leftMouseButton->Subscribe(std::bind(&MouseCapture::TrackMouseCursor, mouseCapture), MOX_PRESSED);
-	leftMouseButton->Subscribe(std::bind(&MouseCapture::ResetMouseCapture, mouseCapture), MOX_RELEASED);
+	rightMouseButton->Subscribe(std::bind(&MouseCapture::TrackMouseCursor, mouseCapture), MOX_HELD);
+	rightMouseButton->Subscribe(std::bind(&MouseCapture::TrackMouseCursor, mouseCapture), MOX_PRESSED);
+	rightMouseButton->Subscribe(std::bind(&MouseCapture::ResetMouseCapture, mouseCapture), MOX_RELEASED);
 }
 
 InputHandler::InputHandler(bool captureMouseCursor)
