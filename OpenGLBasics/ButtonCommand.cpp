@@ -41,9 +41,7 @@ void ButtonCommand::Unsubscribe(std::function<void()> callback, int eventType)
 }
 
 void ButtonCommand::OnPressed()
-{
-	/*SDL_Delay(200);*/
-	// Once pressed, the button is being held
+{	
 	isHeld = true;
 	Execute(MOX_PRESSED);
 }

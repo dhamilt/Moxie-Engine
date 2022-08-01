@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "MViewport.h"
 #include "imgui/imgui_internal.h"
+#include "MainMenu.h"
 
 
 // TODO: IMPLEMENT A LIGHT STRUCT AND HAVE EVERY INITIALIZATION CALL
@@ -24,7 +25,7 @@ class GLSetup
 		GLSetup();
 		~GLSetup();
 		void Init();
-		ImGuiContext* GetCurrentContext();
+		ImGuiContext* GetCurrentContext();		
 		bool IsViewportInFocus();
 		void GetWindowDimensions(int& w, int& h);
 		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
@@ -74,6 +75,7 @@ private:
 	ImGuiContext* mainWindowGUIContext;
 	ImGuiWindow* windowInFocus;
 	bool viewportInFocus;
+	MainMenu* mainMenu;
 
 
 };

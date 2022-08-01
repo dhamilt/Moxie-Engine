@@ -15,15 +15,42 @@ MouseCapture::~MouseCapture()
 
 void MouseCapture::TrackMouseCursor()
 {
-	int _x = 0, _y = 0;
-	SDL_GetMouseState(&_x, &_y);
-	if(width==NULL)
-		GGLSPtr->GetWindowDimensions(width, height);
-	double relX = (double)_x / (double)width;
-	double relY = (double)_y / (double)height;
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	// if the previous cursor position has been cached
+	if (prevCursorPosX != -FLT_MAX && prevCursorPosY != -FLT_MAX)	
+	{
+		double _x = 0.0f, _y = 0.0f;
+		vector2 mouseDelta = vector2(io.MousePos.x -prevCursorPosX, io.MousePos.y - prevCursorPosY);
+		// Get the mouse movement delta from ImGui
+		_x = mouseDelta.x;
+		_y = mouseDelta.y;
 
-	printf("\rX: %f, Y: %f", relX, relY);
-	BroadcastMouseInput(&relX, &relY);	
+		printf("\rMouse Delta: (%f, %f)", mouseDelta.x, mouseDelta.y);
+
+		// Get the current window dimensions
+		GGLSPtr->GetViewportDimensions(width, height);
+
+		// Get mouse delta relative to screen resolutions
+		double relX = _x / (double)width;
+		double relY = _y / (double)height;
+
+		// Offset desired position by relative mouse position
+		desiredPosX += relX;
+		desiredPosY += relY;
+
+
+		// Broadcast desired position to all listeners
+		BroadcastMouseInput(&desiredPosX, &desiredPosY);
+	}
+	// cache the current mouse position
+	prevCursorPosX = io.MousePos.x;
+	prevCursorPosY = io.MousePos.y;
+}
+
+void MouseCapture::ResetMouseCapture()
+{
+	prevCursorPosX = -FLT_MAX;
+	prevCursorPosY = -FLT_MAX;
 }
 
 void MouseCapture::Subscribe(MouseCapCallback param)
