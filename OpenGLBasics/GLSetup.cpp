@@ -107,14 +107,16 @@ void GLSetup::StartSDLWindow()
 	mainWindowGUIContext = ImGui::CreateContext();	
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	
-	
+	/*io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+	io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;*/	
+
 	// Enable Docking
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	
 	io.ConfigViewportsNoAutoMerge = true;
 	io.ConfigViewportsNoTaskBarIcon = false;
 	io.ConfigDockingTransparentPayload = true;
-	//io.ConfigDockingAlwaysTabBar = true;
+	io.ConfigDockingAlwaysTabBar = true;
 
 	// Set the GUI style
 	ImGui::StyleColorsDark();
@@ -201,8 +203,7 @@ void GLSetup::Render()
 	// Run one frame of the Render thread
 	if (sdlWindow)
 	{		
-		// Make sure SDL working in the context of this window
-		SDL_GL_MakeCurrent(sdlWindow, mainSDLContext);
+		
 			
 
 		// Use the initial framebuffer to record all render data for this frame
@@ -229,11 +230,9 @@ void GLSetup::Render()
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		// Start a new frame for the GUI to render
 		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame(sdlWindow);
+		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
-		/*ImGuiIO& io = ImGui::GetIO(); (void)io;
-		io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
-		io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;*/
+		
 		//// Create docking space
 		ImGuiViewport* mainViewport = ImGui::GetMainViewport();
 		ImGui::DockSpaceOverViewport(mainViewport, ImGuiDockNodeFlags_PassthruCentralNode);
@@ -261,10 +260,19 @@ void GLSetup::Render()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());		
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-		mainSDLContext = SDL_GL_GetCurrentContext();
-		mainWindowGUIContext = ImGui::GetCurrentContext();
+		
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		// If multi viewports are enabled
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			SDL_GLContext backupContext = SDL_GL_GetCurrentContext();
+			SDL_Window* backupWindow = SDL_GL_GetCurrentWindow();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			// Make sure SDL working in the context of this window
+			SDL_GL_MakeCurrent(backupWindow, backupContext);
+		}		
+		
 		// Refresh screen with new buffer
 		SDL_GL_SwapWindow(sdlWindow);
 	}
@@ -286,9 +294,13 @@ void GLSetup::GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObject
 }
 
 void GLSetup::GetViewportDimensions(int& _width, int& _height)
-{
-	_width = width;
-	_height = height;
+{	
+	if (viewportInFocus)
+	{
+		ImVec2 windowSize = windowInFocus->Size;
+		_width = (int)windowSize.x;
+		_height = (int)windowSize.y;
+	}
 }
 
 mat4 GLSetup::GetCameraView()

@@ -52,8 +52,10 @@ bool GameLoop::Loop()
 		{
 			
 			ImGui_ImplSDL2_ProcessEvent(&event);
+
 			if(GGLSPtr->IsViewportInFocus())
 				inputHandler->PollInputEvents();
+
 			if (event.type == SDL_QUIT)
 			{
 				isLooping = false;
@@ -134,7 +136,7 @@ void GameLoop::InitializeInputs()
 {
 	//// TEMPORARY
 	// Create WASD keystroke watchers
-	//inputHandler->WatchKeyStrokes({ ImGuiKey_W, ImGuiKey_A, ImGuiKey_S, ImGuiKey_D }, ButtonState_Pressed);
+	inputHandler->WatchKeyStrokes({ ImGuiKey_W, ImGuiKey_A, ImGuiKey_S, ImGuiKey_D }, ButtonState_Pressed);
 	// Create Left Mouse button watcher
 	inputHandler->WatchMouseInputs(MouseButton_Left | MouseButton_Right, ButtonState_Pressed | ButtonState_Released);
 }
