@@ -262,6 +262,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="LineShaperComponent.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="MActor.cpp" />
+    <ClCompile Include="MainMenu.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
@@ -357,6 +358,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="Log.h" />
     <ClInclude Include="LogMacros.h" />
     <ClInclude Include="MActor.h" />
+    <ClInclude Include="MainMenu.h" />
     <ClInclude Include="MathLibrary.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshComponent.h" />

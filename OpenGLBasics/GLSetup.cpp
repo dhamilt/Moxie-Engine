@@ -38,6 +38,9 @@ GLSetup::~GLSetup()
 
 void GLSetup::Init()
 {
+	// Create main menu bar for app
+	mainMenu = new MainMenu();
+	// Create viewport for application
 	viewport = new MViewport();
 }
 
@@ -246,6 +249,11 @@ void GLSetup::Render()
 			ImGui::SetNextWindowBgAlpha(0.0f);
 			uiElements[i]->Paint();
 		}
+
+		// if quit button is selected
+		if (mainMenu->IsExitingApplication())
+			// queue the main game loop to quit
+			GGLPtr->QuitLoop();
 
 		windowInFocus = mainWindowGUIContext->NavWindow;
 		// if there is a window in focus

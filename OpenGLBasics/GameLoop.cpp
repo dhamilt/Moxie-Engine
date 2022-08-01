@@ -21,11 +21,9 @@ GameLoop::GameLoop()
 	// Initialize the input handling class
 	// without capturing the mouse
 	inputHandler = new InputHandler();
-	//SDL_CaptureMouse(SDL_TRUE);
 
 	if(inputHandler->mouseCapture)
-		mouseCursor = inputHandler->mouseCapture;
-	
+		mouseCursor = inputHandler->mouseCapture;	
 }
 
 void GameLoop::QuitLoop()
@@ -50,23 +48,25 @@ bool GameLoop::Loop()
 		// Poll the events		
 		if (SDL_PollEvent(&event))
 		{
-			
+			// if the user requests to quit 
+			if (event.type == SDL_QUIT)
+			{
+				// exit the application
+				isLooping = false;
+				break;
+			}
+			// if the user clicks the exit button
+			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
+			{
+				// exit the application
+				isLooping = false;
+				break;
+			}
+
 			ImGui_ImplSDL2_ProcessEvent(&event);
 
 			if(GGLSPtr->IsViewportInFocus())
-				inputHandler->PollInputEvents();
-
-			if (event.type == SDL_QUIT)
-			{
-				isLooping = false;
-				break;
-			}			
-
-			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
-			{
-				isLooping = false;
-				break;
-			}						
+				inputHandler->PollInputEvents();		
 						
 		}		
 		

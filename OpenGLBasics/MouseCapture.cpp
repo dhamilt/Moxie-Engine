@@ -29,7 +29,7 @@ void MouseCapture::TrackMouseCursor()
 
 		// Get the current window dimensions
 		GGLSPtr->GetViewportDimensions(width, height);
-		//printf("%dx%d\n", width, height);
+
 		// Get mouse delta relative to screen resolutions
 		double relX = _x / (double)width;
 		double relY = _y / (double)height;
@@ -39,7 +39,6 @@ void MouseCapture::TrackMouseCursor()
 		desiredPosY += relY;
 
 
-		//printf("\r Desired Mouse Delta: (%lf, %lf)", desiredPosX, desiredPosY);
 		// Broadcast desired position to all listeners
 		BroadcastMouseInput(&desiredPosX, &desiredPosY);
 	}
