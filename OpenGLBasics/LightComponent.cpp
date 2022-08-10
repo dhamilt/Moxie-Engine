@@ -5,14 +5,14 @@
 extern GLSetup* GGLSPtr;
 LightComponent::LightComponent()
 {
-	name = "LightComponent" + std::to_string(id);
+	name = "LightComponent" + std::to_string(component_id);
 	Init();
-	id++;
+	component_id++;
 }
 
 LightComponent::LightComponent(LightTypes _lightType) : lightType(_lightType)
 {
-	name = "LightComponent" + std::to_string(id);
+	name = "LightComponent" + std::to_string(component_id);
 	printf("%s was spawned!\n", name.c_str());
 }
 
@@ -32,6 +32,6 @@ Light LightComponent::ToLight()
 		info.lightIntensity = this->intensity;
 		info.lightColor = this->lightColor;
 		info.position = this->GetWorldPosition();
-		info.direction = this->GetWorldRotation() * vector3(0,0,1);
+		info.direction = this->GetWorldRotation() * DVector3(0,0,1);
 	return info;
 }

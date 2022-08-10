@@ -56,7 +56,7 @@ void LineShaperComponent::Update(double deltaTime)
 			maurerTimeDelta += float(deltaTime) *timeScale;
 
 		printf("\r%f", maurerTimeDelta);
-		ShapeTransformationLibrary::GetMaurerRosePoints(currentPetalCount, maurerTimeDelta , .01f, .01f, vector3(0), points);
+		ShapeTransformationLibrary::GetMaurerRosePoints(currentPetalCount, maurerTimeDelta , .01f, .01f, DVector3(0), points);
 	}
 
 	renderer->AddNewPoints(points);

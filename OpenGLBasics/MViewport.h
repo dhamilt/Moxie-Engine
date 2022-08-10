@@ -2,11 +2,11 @@
 #include "GUI_Base.h"
 
 // GUI element that mimics the pixel data of whats being drawn on GL viewport(s)
-class MViewport : public GUI_Base
+class WViewport : public GUI_Base
 {
 public:
-	MViewport();
-	~MViewport();
+	WViewport();
+	~WViewport();
 	virtual void Paint() override;
 	bool operator==( GUI_Base& other);
 	bool FrameBufferErrorCheck(GLuint status);

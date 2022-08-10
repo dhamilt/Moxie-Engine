@@ -7,7 +7,7 @@ class AudioEQComponent :
 {
 public:
     AudioEQComponent() = delete;
-    AudioEQComponent(vector3 _start, vector3 _end);
+    AudioEQComponent(DVector3 _start, DVector3 _end);
     virtual void Update(double deltaTime) override;
     int AddSource(AudioSource* _source);
     int PlaySource(bool looping = false);
@@ -15,8 +15,8 @@ public:
     int IsPlaying();
     void ChangeSampleCount(int newSampleCount);
     void ChangeMaxHeightVariance(float newHeight);
-    void ChangeStartPoint(vector3 _start);
-    void ChangeEndPoint(vector3 _end);
+    void ChangeStartPoint(DVector3 _start);
+    void ChangeEndPoint(DVector3 _end);
     void AddInterpolatePoints(int numOfPointsToLerp);
     void AddLerpColors(Color startColor, Color endColor);
     
@@ -28,11 +28,11 @@ private:
     int numOfSamples = 2;
     int numOfInterpolatedPointsPerSample = 0;
     AudioSource* source = nullptr;
-    vector3 startPoint;
-    vector3 endPoint;
-    std::vector<vector3> linePoints;
-    std::vector<vector3> wavePoints;
-    std::vector<vector3> smoothWavePoints;
+    DVector3 startPoint;
+    DVector3 endPoint;
+    std::vector<DVector3> linePoints;
+    std::vector<DVector3> wavePoints;
+    std::vector<DVector3> smoothWavePoints;
     std::vector<float> samples;
 };
 

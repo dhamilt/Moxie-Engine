@@ -6,9 +6,7 @@
 class Shader
 {
 public:
-	// id of the shader program
-	unsigned int id;
-
+	
 	// new default constructor that accepts the vertex and fragment shader files
 	Shader(const char* vertexPath, const char* fragmentPath);
 	// Activate the shader
@@ -17,21 +15,38 @@ public:
 	void SetBool(const char* attributeName, const bool& val);
 	void SetFloat(const char* attributeName, const float& val);
 	void SetInt(const char* attributeName, const int& val);
-	void SetMat4(const char* attributeName, const mat4& val);
-	void SetFloat4(const char* attributeName, const vector4& val);
+	void SetMat4(const char* attributeName, const DMat4x4& val);
+	void SetFloat4(const char* attributeName, const DVector4& val);
 	void SetFloat4(const char* attributeName, const float& x, const float& y, const float& z, const float& w);
-	void SetFloat3(const char* attributeName, const vector3& val);
+	void SetFloat3(const char* attributeName, const DVector3& val);
 	void SetFloat3(const char* attributeName, const float& x, const float& y, const float& z);
-	void SetFloat2(const char* attributeName, const vector2& val);
+	void SetFloat2(const char* attributeName, const DVector2& val);
 	void SetFloat2(const char* attributeName, const float& x, const float& y);
+	int GetShaderID();
+	bool operator==(Shader other) { return GetShaderID() == other.GetShaderID(); }
 private:
 	// Hide the default constructor
 	Shader(){}
+	std::string vsPath;
+	std::string fsPath;
+	// id of the shader program
+	unsigned int id;
+	// shader parameter collections
+	std::map<std::string, DMat4x4>	matrixParamsCollection;
+	std::map<std::string, bool>		booleanParamsCollection;
+	std::map<std::string, float>	floatParamsCollection;
+	std::map<std::string, int>		integerParamsCollection;
+	std::map<std::string, DVector4>	float4ParamsCollection;
+	std::map<std::string, DVector3>	float3ParamsCollection;
+	std::map<std::string, DVector2> float2ParamsCollection;
 	
 };
 
 inline Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
+	vsPath = vertexPath;
+	fsPath = fragmentPath;
+
 	std::ifstream vertexShaderFile(vertexPath);
 	std::ifstream fragmentShaderFile(fragmentPath);
 	std::stringstream sstream;
@@ -111,55 +126,116 @@ inline Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 inline void Shader::Use()
 {
-	glUseProgram(id);
+	glUseProgram(id);	
+	
+	// load all matrix data
+	for (auto it = matrixParamsCollection.begin(); it != matrixParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		DMat4x4 val = it->second;
+		glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, glm::value_ptr(val));
+	}
+
+	// load all boolean data
+	for (auto it = booleanParamsCollection.begin(); it != booleanParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		bool val = it->second;
+		glUniform1i(glGetUniformLocation(id, name), (int)val);
+	}
+	
+	// load all integer data
+	for (auto it = integerParamsCollection.begin(); it != integerParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		int val = it->second;
+		glUniform1i(glGetUniformLocation(id, name), val);
+	}
+
+	// load all float data
+	for (auto it = floatParamsCollection.begin(); it != floatParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		float val = it->second;
+		glUniform1f(glGetUniformLocation(id, name), val);
+	}
+
+	// load all float4 data
+	for (auto it = float4ParamsCollection.begin(); it != float4ParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		DVector4 val = it->second;
+		glUniform4f(glGetUniformLocation(id, name), val.x, val.y, val.z, val.w);
+	}
+
+	// load all float3 data
+	for (auto it = float3ParamsCollection.begin(); it != float3ParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		DVector3 val = it->second;
+		glUniform3f(glGetUniformLocation(id, name), val.x, val.y, val.z);
+	}
+
+	// load all float2 data
+	for (auto it = float2ParamsCollection.begin(); it != float2ParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		DVector2 val = it->second;
+		glUniform2f(glGetUniformLocation(id, name), val.x, val.y);
+	}
 }
 
 inline void Shader::SetBool(const char* attributeName, const bool& val)
 {
-	glUniform1i(glGetUniformLocation(id, attributeName), (int)val);
+	booleanParamsCollection.insert_or_assign(attributeName, val);
 }
 
 inline void Shader::SetFloat(const char* attributeName, const float& val)
 {
-	glUniform1f(glGetUniformLocation(id, attributeName), val);
+	floatParamsCollection.insert_or_assign( attributeName, val );
 }
 
 inline void Shader::SetInt(const char* attributeName, const int& val)
 {
-	glUniform1i(glGetUniformLocation(id, attributeName), val);
+	integerParamsCollection.insert_or_assign( attributeName, val );
 }
 
-inline void Shader::SetMat4(const char* attributeName, const mat4& val)
+inline void Shader::SetMat4(const char* attributeName, const DMat4x4& val)
 {
-	glUniformMatrix4fv(glGetUniformLocation(id, attributeName), 1, GL_FALSE, glm::value_ptr(val));
+	matrixParamsCollection.insert_or_assign( attributeName, val );
 }
 
-inline void Shader::SetFloat4(const char* attributeName, const vector4& val)
+inline void Shader::SetFloat4(const char* attributeName, const DVector4& val)
 {
-	glUniform4f(glGetUniformLocation(id, attributeName), val.x, val.y, val.z, val.w);
+	float4ParamsCollection.insert_or_assign( attributeName, val );
 }
 
 inline void Shader::SetFloat4(const char* attributeName, const float& x, const float& y, const float& z, const float& w)
 {
-	glUniform4f(glGetUniformLocation(id, attributeName), x, y, z, w);
+	float4ParamsCollection.insert_or_assign( attributeName, DVector4(x, y, z, w) );
 }
 
-inline void Shader::SetFloat3(const char* attributeName, const vector3& val)
+inline void Shader::SetFloat3(const char* attributeName, const DVector3& val)
 {
-	glUniform3f(glGetUniformLocation(id, attributeName), val.x, val.y, val.z);
+	float3ParamsCollection.insert_or_assign( attributeName, val );
 }
 
 inline void Shader::SetFloat3(const char* attributeName, const float& x, const float& y, const float& z)
 {
-	glUniform3f(glGetUniformLocation(id, attributeName), x, y, z);
+	float3ParamsCollection.insert_or_assign( attributeName, DVector3(x, y, z) );
 }
 
-inline void Shader::SetFloat2(const char* attributeName, const vector2& val)
+inline void Shader::SetFloat2(const char* attributeName, const DVector2& val)
 {
-	glUniform2f(glGetUniformLocation(id, attributeName), val.x, val.y);
+	float2ParamsCollection.insert_or_assign( attributeName, val );
 }
 
 inline void Shader::SetFloat2(const char* attributeName, const float& x, const float& y)
 {
-	glUniform2f(glGetUniformLocation(id, attributeName), x, y);
+	float2ParamsCollection.insert_or_assign( attributeName, DVector2(x, y) );
+}
+
+inline int Shader::GetShaderID()
+{
+	return id;
 }

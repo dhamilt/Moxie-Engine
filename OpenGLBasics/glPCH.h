@@ -24,3 +24,4 @@
 #include <alc.h>
 #include "SDL.h"
 #include "LogMacros.h"
+#include "GLErrorReporting.h"

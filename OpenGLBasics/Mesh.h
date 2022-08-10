@@ -3,38 +3,40 @@
 #include "Shader.h"
 #include "Graphic.h"
 #include "Light.h"
+#include "MeshData.h"
 class Mesh: public Graphic
 {
 public:
 	Mesh() { type = typeid(this).name(); };
-	Mesh(std::vector<vertex> _vertices, std::vector<uint16_t> indices)
+
+	Mesh(std::vector<DVertex> _vertices, std::vector<uint16_t> indices)
 	{
 		type = typeid(this).name();
 		vertSize = (uint32_t)_vertices.size();
 		indexSize = (uint32_t)indices.size();
 
-		verts = new vertex[vertSize];
+		verts = new DVertex[vertSize];
 		indexBuf = new uint16_t[indexSize];
 
-		memcpy(verts, &_vertices[0], sizeof(vertex) * vertSize);
+		memcpy(verts, &_vertices[0], sizeof(DVertex) * vertSize);
 		memcpy(indexBuf, &indices[0], sizeof(uint16_t) * indexSize);
 
 		// pass in the vertex buffer data for opengl to render
 		AddDataToGLBuffer();
 	}
 
-	Mesh(std::vector<vector3> _vertices, std::vector<vector3> _normals, std::vector<uint16_t> indices)
+	Mesh(std::vector<DVector3> _vertices, std::vector<DVector3> _normals, std::vector<uint16_t> indices)
 	{
 		type = typeid(this).name();
 		vertSize = (uint32_t)_vertices.size();
 		indexSize = (uint32_t)indices.size();
 
-		positions = new vector3[vertSize];
-		normals = new vector3[vertSize];
+		positions = new DVector3[vertSize];
+		normals = new DVector3[vertSize];
 		indexBuf = new uint16_t[indexSize];
 
-		memcpy(positions, &_vertices[0], sizeof(vector3) * _vertices.size());
-		memcpy(normals, &_normals[0], sizeof(vector3) * _normals.size());
+		memcpy(positions, &_vertices[0], sizeof(DVector3) * _vertices.size());
+		memcpy(normals, &_normals[0], sizeof(DVector3) * _normals.size());
 		memcpy(indexBuf, &indices[0], sizeof(uint16_t) * indices.size());
 
 		// Create a vertex buffer to be passed in the vbo for the mesh
@@ -44,20 +46,20 @@ public:
 		AddDataToGLBuffer();
 	}
 
-	Mesh(std::vector<vector3> _vertices, std::vector<vector2> _uvs, std::vector<vector3> _normals, std::vector<uint16_t> indices)
+	Mesh(std::vector<DVector3> _vertices, std::vector<DVector2> _uvs, std::vector<DVector3> _normals, std::vector<uint16_t> indices)
 	{
 		type = typeid(this).name();
 		vertSize = (uint32_t)_vertices.size();
 		indexSize = (uint32_t)indices.size();
 
-		positions = new vector3[vertSize];
-		texCoords = new vector2[vertSize];
-		normals = new vector3[vertSize];
+		positions = new DVector3[vertSize];
+		texCoords = new DVector2[vertSize];
+		normals = new DVector3[vertSize];
 		indexBuf = new uint16_t[indexSize];
 
-		memcpy(positions, &_vertices[0], sizeof(vector3) * _vertices.size());
-		memcpy(texCoords, &_uvs[0], sizeof(vector2) * _uvs.size());
-		memcpy(normals, &_normals[0], sizeof(vector3) * _normals.size());
+		memcpy(positions, &_vertices[0], sizeof(DVector3) * _vertices.size());
+		memcpy(texCoords, &_uvs[0], sizeof(DVector2) * _uvs.size());
+		memcpy(normals, &_normals[0], sizeof(DVector3) * _normals.size());
 		memcpy(indexBuf, &indices[0], sizeof(uint16_t) * indices.size());
 
 		// Create a vertex buffer to be passed in the vbo for the mesh
@@ -67,19 +69,20 @@ public:
 		AddDataToGLBuffer();
 	}
 
-	Mesh(std::vector<vertex> _vertices,  std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath) : Mesh(_vertices, indices)
+	Mesh(std::vector<DVertex> _vertices,  std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath) 
+	{
+		meshData = new MeshDataParams(_vertices, indices);
+		type = typeid(this).name();
+		shader = new Shader(vertexPath, fragmentPath);
+	}
+
+	Mesh(std::vector<DVector3> _vertices, std::vector<DVector3> _normals, std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath) : Mesh(_vertices, _normals, indices)
 	{
 		type = typeid(this).name();
 		shader = new Shader(vertexPath, fragmentPath);
 	}
 
-	Mesh(std::vector<vector3> _vertices, std::vector<vector3> _normals, std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath) : Mesh(_vertices, _normals, indices)
-	{
-		type = typeid(this).name();
-		shader = new Shader(vertexPath, fragmentPath);
-	}
-
-	Mesh(std::vector<vector3> _vertices, std::vector<vector2> _uvs, std::vector<vector3> _normals, std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath): Mesh(_vertices, _uvs, _normals, indices)
+	Mesh(std::vector<DVector3> _vertices, std::vector<DVector2> _uvs, std::vector<DVector3> _normals, std::vector<uint16_t> indices, const char* vertexPath, const char* fragmentPath): Mesh(_vertices, _uvs, _normals, indices)
 	{
 		type = typeid(this).name();
 		shader = new Shader(vertexPath, fragmentPath);
@@ -99,7 +102,8 @@ public:
 			delete[] indexBuf;
 		if (shader)
 			delete shader;
-
+		if (meshData)
+			delete meshData;
 		// make sure the vertex info is no longer being passed into glsl
 		glDisableVertexAttribArray(0 | 1 | 2 | 3);
 
@@ -112,10 +116,12 @@ public:
 	// BASE CLASS FUNCTIONS
 	void CreateVertexBuffer();
 	void AddDataToGLBuffer();
-	
-	virtual void Draw(mat4 projetion, mat4 view) override;
+	// Import mesh data
+	void Import(std::vector<DVertex> _vertices, std::vector<uint16_t> indices, std::string meshName);
+	MeshDataParams* GetMeshData();
+	virtual void Draw(DMat4x4 projetion, DMat4x4 view) override;
 	void ApplyTexture(Texture* texture);
-	void GetPivot(vector3* pivotPoint);
+	void GetPivot(DVector3* pivotPoint);
 	void GetShaderFromPath(const char* vertexPath, const char* fragmentPath);
 	virtual bool operator ==(const Graphic& other) override;
 
@@ -123,10 +129,10 @@ public:
 	//void ChangeColors();
 
 	// vertex  buffer
-	vertex* verts = nullptr;
-	vector3* positions  = nullptr;
-	vector3* normals =  nullptr;
-	vector2* texCoords = nullptr;
+	DVertex* verts = nullptr;
+	DVector3* positions  = nullptr;
+	DVector3* normals =  nullptr;
+	DVector2* texCoords = nullptr;
 	uint16_t* indexBuf = nullptr;
 
 	// buffer lengths
@@ -146,14 +152,15 @@ public:
 		/// model matrix (aka transform) before drawing
 		/// </summary>
 		/// <param name="model"></param>
-		void UpdateModelMatrixPos(const mat4& _model);
+		void UpdateModelMatrixPos(const DMat4x4& _model);
 
 	private:
-	Color materialColor = Yellow;
-	mat4  model = mat4(1.0f);
-	uint8_t textureApplied = false;
-	GLuint textureID;
-	std::vector<Light> lightInfo;
-	friend class MeshComponent;
+		MeshDataParams* meshData;
+		Color materialColor = Yellow;
+		DMat4x4  model = DMat4x4(1.0f);
+		uint8_t textureApplied = false;
+		GLuint textureID;
+		std::vector<Light> lightInfo;
+		friend class MeshComponent;
 };
 

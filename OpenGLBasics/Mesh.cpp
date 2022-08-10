@@ -5,11 +5,11 @@
 extern GLSetup* GGLSetup;
 void Mesh::CreateVertexBuffer()
 {
-	verts = new vertex[vertSize];
+	verts = new DVertex[vertSize];
 
 	for (uint32_t i = 0; i < vertSize; i++)
 	{
-		vertex temp;
+		DVertex temp;
 
 		temp.pos = positions[i];
 
@@ -34,7 +34,7 @@ void Mesh::AddDataToGLBuffer()
 	glBindVertexArray(vao);
 	// the vertex buffer object
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertSize, verts, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(DVertex) * vertSize, verts, GL_STATIC_DRAW);
 	// the index buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexSize, indexBuf, GL_STATIC_DRAW);
@@ -46,8 +46,8 @@ void Mesh::AddDataToGLBuffer()
 		3, // number of dimensions
 		GL_FLOAT, // vertex buffer type
 		GL_FALSE, // normalized?
-		sizeof(vertex), // stride
-		(void*)offsetof(vertex, vertex::pos) // buffer offset
+		sizeof(DVertex), // stride
+		(void*)offsetof(DVertex, DVertex::pos) // buffer offset
 	);
 
 	// Add vertex texture coordinates for model	
@@ -57,8 +57,8 @@ void Mesh::AddDataToGLBuffer()
 		2,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(vertex),
-		(void*)offsetof(vertex, vertex::texCoord)
+		sizeof(DVertex),
+		(void*)offsetof(DVertex, DVertex::texCoord)
 	);
 
 	// Add vertex normals for model	
@@ -68,8 +68,8 @@ void Mesh::AddDataToGLBuffer()
 		3, // number of dimensions
 		GL_FLOAT, // value type for dimensions
 		GL_FALSE, // normalized?
-		sizeof(vertex), // stride
-		(void*)offsetof(vertex, vertex::normal)// buffer offset
+		sizeof(DVertex), // stride
+		(void*)offsetof(DVertex, DVertex::normal)// buffer offset
 	);
 
 	// Add vertex colors for model
@@ -79,12 +79,29 @@ void Mesh::AddDataToGLBuffer()
 		3, // number of dimensions
 		GL_FLOAT, // value type for dimensions
 		GL_FALSE, // normalized
-		sizeof(vertex), // stride
-		(void*)offsetof(vertex, vertex::color) // buffer offset
+		sizeof(DVertex), // stride
+		(void*)offsetof(DVertex, DVertex::color) // buffer offset
 	);
 }
 
-void Mesh::Draw(mat4 projection, mat4 view)
+void Mesh::Import(std::vector<DVertex> _vertices, std::vector<uint16_t> indices, std::string meshName)
+{
+	if (!meshData)
+		meshData = new MeshDataParams(_vertices, indices);
+	else
+	{
+		meshData->vertices	= _vertices;
+		meshData->indices	= indices;
+	}
+	meshData->name = meshName;
+}
+
+MeshDataParams* Mesh::GetMeshData()
+{
+	return meshData;
+}
+
+void Mesh::Draw(DMat4x4 projection, DMat4x4 view)
 {
 	// retreive the up to date light info
 	GGLSPtr->GetAllLightInfo(lightInfo);
@@ -189,7 +206,7 @@ void Mesh::ApplyTexture(Texture* texture)
 		perror("Texture is not valid!");
 }
 
-void Mesh::GetPivot(vector3* pivotPoint)
+void Mesh::GetPivot(DVector3* pivotPoint)
 {
 	// if the vertex buffer for the mesh has already been established
 	if (verts)
@@ -217,7 +234,7 @@ bool Mesh::operator==(const Graphic& other)
 	return memcmp(this, tempCMP, sizeof(Mesh)) == 0;
 }
 
-void Mesh::UpdateModelMatrixPos(const mat4& _model)
+void Mesh::UpdateModelMatrixPos(const DMat4x4& _model)
 {
 	model = _model;
 }

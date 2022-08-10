@@ -4,14 +4,14 @@
 #include "Color.h"
 struct Line
 {
-    vector3 startPoint   = vector3(0.0f);
-    vector3 endPoint     = vector3(1.0f);
+    DVector3 startPoint   = DVector3(0.0f);
+    DVector3 endPoint     = DVector3(1.0f);
     
 };
 
 struct LineGLInfo
 {
-    vector3 position;
+    DVector3 position;
     float u;
 };
 
@@ -22,7 +22,7 @@ class LineRenderer :
 public:
     LineRenderer();
     ~LineRenderer();
-    virtual void Draw(mat4 projection, mat4 view) override;
+    virtual void Draw(DMat4x4 projection, DMat4x4 view) override;
     /// <summary>
     /// Linear interpolate the line from the start
     /// color to the end
@@ -34,27 +34,27 @@ public:
     /// Adds a line point to the current collection of line points
     /// </summary>
     /// <param name="point">line point being added</param>
-    void AddPoint(vector3 point);
+    void AddPoint(DVector3 point);
     /// <summary>
     /// Clears the current collection of points and adds the new point
     /// to the collection
     /// </summary>
     /// <param name="point">line point being added</param>
-    void AddNewPoint(vector3 point);
+    void AddNewPoint(DVector3 point);
     /// <summary>
     /// Adds a collection of line points to the current
     ///  collection of line points
     /// </summary>
     /// <param name="points">line points being added</param>
-    void AddPoints(std::vector<vector3> points);
-    void AddPoints(vector3* points, const int& linePointCount);
+    void AddPoints(std::vector<DVector3> points);
+    void AddPoints(DVector3* points, const int& linePointCount);
     /// <summary>
     /// Clears the current collection of points and adds the new points
     /// to the collection
     /// </summary>
     /// <param name="points"></param>
-    void AddNewPoints(std::vector<vector3> points);
-    void AddNewPoints(vector3* points, const int& linePointCount);
+    void AddNewPoints(std::vector<DVector3> points);
+    void AddNewPoints(DVector3* points, const int& linePointCount);
     /// <summary>
     /// Changes the color of the line renderer
     /// </summary>
@@ -84,18 +84,18 @@ private:
     /// </summary>
     void UpdateLineBuffer();
     // Update the transform info (EntityComponent parent class only has access to it)
-    void UpdateTransform(const mat4& _transform);
+    void UpdateTransform(const DMat4x4& _transform);
 
-    std::vector<vector3> ToVectorArray();
+    std::vector<DVector3> ToVectorArray();
     // Private members
 private:
     Color lineColor = White;
     Color startColor, endColor;
     bool lerpColor = false;
-    std::vector<vector3> linePoints;
+    std::vector<DVector3> linePoints;
     std::vector<Line> lines;
     std::vector<LineGLInfo> linesBuffer;
-	mat4 cachedTransform = mat4(1.0f);
+	DMat4x4 cachedTransform = DMat4x4(1.0f);
     Shader* shader = nullptr;
     int pointCount = 0;
     GLuint vao, vbo;

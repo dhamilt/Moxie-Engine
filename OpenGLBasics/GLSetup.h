@@ -13,6 +13,8 @@
 #include "MViewport.h"
 #include "imgui/imgui_internal.h"
 #include "MainMenu.h"
+#include "RenderingPipeline.h"
+class Material;
 
 
 // TODO: IMPLEMENT A LIGHT STRUCT AND HAVE EVERY INITIALIZATION CALL
@@ -28,10 +30,20 @@ class GLSetup
 		ImGuiContext* GetCurrentContext();		
 		bool IsViewportInFocus();
 		void GetWindowDimensions(int& w, int& h);
+		float GetFarClippingPlane();
+		float GetNearClippingPlane();
+		void SetFarClippingPlane(float val);
+		void SetNearClippingPlane(float val);
 		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
 		void GetViewportDimensions(int& _width, int& _height);
-		mat4 GetCameraView();
-		mat4 GetProjection();
+		void AddMaterialToPipeline(std::string primitiveName, Material* mat);
+		void AddCubemapMaterial(Material* cubeMapMat);
+		void SubmitCubeMapData(std::vector<TextureData*> cubemapData);
+		void ImportMesh(Mesh* mesh);
+		void ImportMesh(std::string primitiveName, std::vector<DVertex> vertices, std::vector<uint16_t> indices);
+		BRenderingPipeline* GetPipeline();
+		DMat4x4 GetCameraView();
+		DMat4x4 GetProjection();
 		void Render();
 		void AddRenderObject(Graphic* ptr);
 		void RemoveRenderObject(Graphic* ptr);
@@ -56,8 +68,10 @@ private:
 	// Framebuffer Object and Renderbuffer Object
 	GLuint fbo, rbo;
 	// Viewport
-	MViewport* viewport;
-	int width = 1600, height = 900;		
+	WViewport* viewport;
+	int width = 800, height = 600;
+	float nearClippingPlane = 0.1f;
+	float farClippingPlane = 100.0f;
 	SDL_Window* sdlWindow = nullptr;
 	SDL_GLContext mainSDLContext;
 	std::vector<Graphic*> renderObjs;
@@ -66,8 +80,8 @@ private:
 	float fov = 60.0f;
 	float fovMinConstraint = 20.0f;
 	float fovMaxConstraint = 120.0f;
-	mat4 view = mat4(1);
-	mat4 projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
+	DMat4x4 view = DMat4x4(1);
+	DMat4x4 projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
 	// Array cache of all light info in the level
 	std::vector<Light> lightsCache;
 	std::unordered_map<std::string, Light> lightMap;
@@ -75,8 +89,8 @@ private:
 	ImGuiContext* mainWindowGUIContext;
 	ImGuiWindow* windowInFocus;
 	bool viewportInFocus;
-	MainMenu* mainMenu;
-
+	WMainMenu* mainMenu;
+	BRenderingPipeline* pipeline;
 
 };
 

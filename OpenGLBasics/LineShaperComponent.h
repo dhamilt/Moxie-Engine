@@ -38,7 +38,7 @@ public:
 private:
     float scale = 1.0f;
     float numOfRevolutions = 1.0f;
-    std::vector<vector3>points;
+    std::vector<DVector3>points;
     Shapes shape;
     double accumulatedDelta = 0.0f;
     float timeOffset;

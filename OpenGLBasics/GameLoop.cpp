@@ -14,6 +14,7 @@ GameLoop::GameLoop()
 	isLooping = true;
 	lastFrame = high_resolution_clock::now();	
 
+
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		printf("SDL could not initialize! SDL_ERROR: %s\n", SDL_GetError());
@@ -25,6 +26,7 @@ GameLoop::GameLoop()
 	if(inputHandler->mouseCapture)
 	//SDL_CaptureMouse(SDL_TRUE);
 		mouseCursor = inputHandler->mouseCapture;	
+	
 }
 
 void GameLoop::QuitLoop()
@@ -79,7 +81,8 @@ bool GameLoop::Loop()
 		// Call all subscribers' Update functions with the current deltaTime		
 			for (int i = 0; i < objsInLoop.size(); i++)
 				if(objsInLoop[i])
-					objsInLoop[i]->Update(_deltaTime);
+					if(objsInLoop[i]->hasTick)
+						objsInLoop[i]->Update(_deltaTime);
 
 		// Set the current frame time as the last frame
 		lastFrame = currentFrame;

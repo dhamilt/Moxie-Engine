@@ -14,7 +14,7 @@ public:
     /// </summary>
     /// <param name="points">List of all the points</param>
     /// <returns>The number of points in the line</returns>
-    int GetPoints(std::vector<vector3>& points);
+    int GetPoints(std::vector<DVector3>& points);
     // Public variables
 public:
     LineRenderer* renderer = nullptr;

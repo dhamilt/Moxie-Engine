@@ -1,12 +1,12 @@
 #include "glPCH.h"
 #include "MainMenu.h"
 
-MainMenu::MainMenu()
+WMainMenu::WMainMenu()
 {
 	name = typeid(*this).name();
 }
 
-void MainMenu::Paint()
+void WMainMenu::Paint()
 {
 	if (ImGui::BeginMainMenuBar())
 	{
@@ -18,7 +18,7 @@ void MainMenu::Paint()
 
 }
 
-void MainMenu::CreateMenuBar()
+void WMainMenu::CreateMenuBar()
 {
 	if (ImGui::BeginMenu("File"))
 	{
@@ -28,12 +28,12 @@ void MainMenu::CreateMenuBar()
 
 }
 
-bool MainMenu::operator==(GUI_Base& other)
+bool WMainMenu::operator==(GUI_Base& other)
 {
 	return GetName() == other.GetName();
 }
 
-bool MainMenu::IsExitingApplication()
+bool WMainMenu::IsExitingApplication()
 {
 	return exitApp;
 }

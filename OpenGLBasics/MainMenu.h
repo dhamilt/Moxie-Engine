@@ -1,10 +1,10 @@
 #pragma once
 #include "GUI_Base.h"
-class MainMenu :
+class WMainMenu :
     public GUI_Base
 {
 public:
-    MainMenu();
+    WMainMenu();
     virtual void Paint() override;
     virtual void CreateMenuBar();
     virtual bool operator==(GUI_Base& other) override;

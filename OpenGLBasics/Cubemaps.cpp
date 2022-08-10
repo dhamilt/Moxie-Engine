@@ -2,41 +2,31 @@
 #include "Cubemaps.h"
 #include "ImageLibrary.h"
 #include "GLSetup.h"
+#include "Material.h"
 
 
 extern GLSetup* GGLSPtr;
 Cubemaps::Cubemaps(std::vector<std::string> files)
 {
 	type = typeid(*this).name();
-	// create space on the GPU for the cubemap as well as an identifier for it	
-	glGenTextures(1, &cubemapID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
-
-	int width, height, channels;
-	void* data;
+	//// create space on the GPU for the cubemap as well as an identifier for it	
+	//glGenTextures(1, &cubemapID);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
+	std::vector<TextureData*> textureDataCache;
+	
 	// for each image of the cubemap
 	for (int i = 0; i < files.size(); i++)
 	{
 		std::string file = files[i];
+		TextureData* textureData = new TextureData();
 		// read and extract data from the file name
-		ImageLibrary::GetDataFromFile(file.c_str(), &data, &width, &height, &channels);
-		textures.push_back(data);
-		// then generate the portion of the cubemap the face is based on
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		ImageLibrary::GetDataFromFile(file.c_str(), &textureData->data, &textureData->width,
+									  &textureData->height, &textureData->channels);
+		
+		textureDataCache.push_back(textureData);		
 	}
 
-	// ensures that the textures on the cubemap are properly wrapped
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-	if (cubemapID)
-	{
-		valid = true;
-		AddToBuffer();
-	}
+	GGLSPtr->SubmitCubeMapData(textureDataCache);
 
 }
 
@@ -78,29 +68,38 @@ void Cubemaps::AddToBuffer()
 
 }
 
-void Cubemaps::Draw(mat4 projection, mat4 view)
+void Cubemaps::Draw(DMat4x4 projection, DMat4x4 view)
 {
-	glDepthMask(GL_FALSE);
-	if (skyboxShader)
-	{
-		skyboxShader->Use();
-		// Convert view matrix from mat4 to mat3 then back to mat4
-		// again in order to remove the translation
-		mat4 _view = mat4(mat3(view));
-		skyboxShader->SetMat4("view", _view);
-		skyboxShader->SetMat4("projection", projection);
-	}
+	//glDepthMask(GL_FALSE);
+	//if (skyboxShader)
+	//{
+	//	skyboxShader->Use();
+	//	// Convert view matrix from DMat4x4 to mat3 then back to DMat4x4
+	//	// again in order to remove the translation
+	//	DMat4x4 _view = DMat4x4(mat3(view));
+	//	skyboxShader->SetMat4("view", _view);
+	//	skyboxShader->SetMat4("projection", projection);
+	//}
 
-	glBindVertexArray(vao);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-	glDepthMask(GL_TRUE);
+	//glBindVertexArray(vao);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
+	//glDrawArrays(GL_TRIANGLES, 0, 36);
+	//glBindVertexArray(0);
+	//glDepthMask(GL_TRUE);
+}
+
+void Cubemaps::SetMaterial(Material* mat)
+{
+	skyboxMat = mat;
+	GGLSPtr->AddMaterialToPipeline("Skybox", mat);
 }
 
 void Cubemaps::GetShaderFromPath(const char* vsPath, const char* fsPath)
 {
-	skyboxShader = new Shader(vsPath, fsPath);
+	if (!skyboxMat)
+		skyboxMat = new Material();
+	skyboxMat->SetShader(new Shader(vsPath, fsPath));
+
 }
 
 bool Cubemaps::operator==(const Graphic& other)

@@ -2,6 +2,8 @@
 #include "GLSetup.h"
 #include <cassert>
 #include "GameLoop.h"
+#include "Material.h"
+#include "Mesh.h"
 
 
 
@@ -10,15 +12,8 @@ extern GameLoop* GGLPtr;
 
 GLSetup::GLSetup()
 {
-	/*bool result = glfwInit();
-	if (!result)
-	{
-		perror("Unable to initialize GLFW!");
-		assert(result);
-		throw std::runtime_error("Rendering framework could not be initialized!");
-	}*/
-
-	StartSDLWindow();	
+	
+	
 }
 
 GLSetup::~GLSetup()
@@ -38,10 +33,14 @@ GLSetup::~GLSetup()
 
 void GLSetup::Init()
 {
+	// Initialize the rendering pipeline
+	pipeline = new BRenderingPipeline();
+	// Create the main window
+	StartSDLWindow();
 	// Create main menu bar for app
-	mainMenu = new MainMenu();
+	mainMenu = new WMainMenu();
 	// Create viewport for application
-	viewport = new MViewport();
+	viewport = new WViewport();
 }
 
 ImGuiContext* GLSetup::GetCurrentContext()
@@ -131,30 +130,33 @@ void GLSetup::StartSDLWindow()
 	
 
 	// Setup an initial Framebuffer
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	// Create an attachment texture
-	glGenTextures(1, &screenTextureID);		
-	glBindTexture(GL_TEXTURE_2D, screenTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// Attach it to Framebuffer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTextureID, 0);
-	// Create a Renderbuffer Object
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	// Attach it to Framebuffer
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+	if(pipeline)
+		pipeline->GenerateDefaultFramebuffer();
 
-	// Remove bindings
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	//glGenFramebuffers(1, &fbo);
+	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	//// Create an attachment texture
+	//glGenTextures(1, &screenTextureID);		
+	//glBindTexture(GL_TEXTURE_2D, screenTextureID);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//// Attach it to Framebuffer
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTextureID, 0);
+	//// Create a Renderbuffer Object
+	//glGenRenderbuffers(1, &rbo);
+	//glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	//// Attach it to Framebuffer
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	//// Remove bindings
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 
 	// Setup main camera
-	mainCamera = new Camera(vector3(0, 1, 0));
+	mainCamera = new Camera(DVector3(0, 1, 0));
 	// Set up mouse capture callback for rotating the camera
 	GGLPtr->AddMouseCapCallback(std::bind(&Camera::RotateCamera, mainCamera, std::placeholders::_1, std::placeholders::_2));
 	GGLPtr->GetMainInputHandle()->leftMouseButton->Subscribe(std::bind(&Camera::OnMouseButtonDown, mainCamera), MOX_RELEASED);
@@ -207,10 +209,10 @@ void GLSetup::Render()
 	if (sdlWindow)
 	{		
 		
-			
+		pipeline->LoadCurrentFramebuffer();
 
 		// Use the initial framebuffer to record all render data for this frame
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
 		// What color to use when clearing the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -219,18 +221,26 @@ void GLSetup::Render()
 			// Keep a reference of the 4x4 view and projection matrices each frame
 		// in order to pass into the drawing of meshes
 		view = mainCamera->GetViewMatrix();
+		pipeline->UpdateViewMatrix(view);
 
-		projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
-
-
+		// get projecttion matrix
+		//projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
+		pipeline->UpdateProjectionMatrix(fov, (float)width, (float)height, nearClippingPlane, farClippingPlane);
 		
-		// Send projection and view matrices to objects
-		// being rendered
-		for (int i = 0; i < renderObjs.size(); i++)
-			renderObjs[i]->Draw(projection, view);
+		// Draw Cubemap
+		pipeline->DrawCubeMap();
+
+		//// Draw all primitives to the screen
+		//pipeline->RenderPrimitives();
+		
+		//// Send projection and view matrices to objects
+		//// being rendered
+		//for (int i = 0; i < renderObjs.size(); i++)
+		//	renderObjs[i]->Draw(projection, view);
 
 		// Stop capturing render data for initial framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		pipeline->UnloadFramebuffer();
 		// Start a new frame for the GUI to render
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -246,7 +256,7 @@ void GLSetup::Render()
 		
 		for (GLuint i = 0; i < uiCount; i++)
 		{
-			ImGui::SetNextWindowBgAlpha(0.0f);
+			ImGui::SetNextWindowBgAlpha(1.0f);
 			uiElements[i]->Paint();
 		}
 
@@ -295,10 +305,30 @@ void GLSetup::GetWindowDimensions(int& w, int& h)
 	h = height;
 }
 
+float GLSetup::GetFarClippingPlane()
+{
+	return farClippingPlane;
+}
+
+float GLSetup::GetNearClippingPlane()
+{
+	return nearClippingPlane;
+}
+
+void GLSetup::SetFarClippingPlane(float val)
+{
+	farClippingPlane = val;
+}
+
+void GLSetup::SetNearClippingPlane(float val)
+{
+	nearClippingPlane = val;
+}
+
 void GLSetup::GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID)
 {
-	textureID = screenTextureID;
-	renderbufferObjectID = rbo;
+	textureID = pipeline->defaultFrameBufferTextureID;
+	renderbufferObjectID = pipeline->renderbuffer;
 }
 
 void GLSetup::GetViewportDimensions(int& _width, int& _height)
@@ -311,12 +341,59 @@ void GLSetup::GetViewportDimensions(int& _width, int& _height)
 	}
 }
 
-mat4 GLSetup::GetCameraView()
+void GLSetup::AddMaterialToPipeline(std::string primitiveName, Material* mat)
+{
+	if (pipeline)
+	{
+		pipeline->UpdateShaderCache(mat);
+		pipeline->LoadShader(primitiveName, mat->Get());
+	}
+
+}
+
+void GLSetup::AddCubemapMaterial(Material* cubeMapMat)
+{
+	
+}
+
+void GLSetup::SubmitCubeMapData(std::vector<TextureData*> cubemapData)
+{
+	if (pipeline)
+		pipeline->GenerateCubemap(cubemapData);
+}
+
+void GLSetup::ImportMesh(Mesh* mesh)
+{
+	if (pipeline)
+	{
+		pipeline->Import(mesh);
+		// pass in render data to the renderer in the pipeline
+		pipeline->RequestForMeshVertexData(mesh->GetMeshData()->name);
+	}
+	
+}
+
+void GLSetup::ImportMesh(std::string primitiveName, std::vector<DVertex> vertices, std::vector<uint16_t> indices)
+{
+	if (pipeline)
+	{
+		pipeline->Import(primitiveName, vertices, indices);
+		// pass in render data to the renderer in the pipeline
+		pipeline->RequestForMeshVertexData(primitiveName);
+	}
+}
+
+BRenderingPipeline* GLSetup::GetPipeline()
+{
+	return pipeline? pipeline : nullptr;
+}
+
+DMat4x4 GLSetup::GetCameraView()
 {
 	return view;
 }
 
-mat4 GLSetup::GetProjection()
+DMat4x4 GLSetup::GetProjection()
 {
 	return projection;
 }

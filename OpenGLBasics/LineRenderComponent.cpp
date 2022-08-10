@@ -3,10 +3,10 @@
 
 LineRenderComponent::LineRenderComponent()
 {
-	name = "LineRenderComponent" + std::to_string(id);
+	name = "LineRenderComponent" + std::to_string(component_id);
 
 	Init();
-	id++;
+	component_id++;
 
 	renderer = new LineRenderer();
 }
@@ -23,7 +23,7 @@ void LineRenderComponent::SetLineWidth(float width)
 	renderer->SetLineWidth(width);
 }
 
-int LineRenderComponent::GetPoints(std::vector<vector3>& points)
+int LineRenderComponent::GetPoints(std::vector<DVector3>& points)
 {
 	points = renderer->linePoints;
 

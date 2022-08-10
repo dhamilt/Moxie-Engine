@@ -1,0 +1,414 @@
+#include "glPCH.h"
+#include "RenderingPipeline.h"
+#include "GLSetup.h"
+#include "Material.h"
+#include "Mesh.h"
+#include "Cubemaps.h"
+
+extern GLSetup* GGLSPtr;
+BRenderingPipeline::BRenderingPipeline()
+{
+}
+
+BRenderingPipeline::~BRenderingPipeline()
+{
+	// Free primitive data 
+	for (auto it = primitives.begin(); it != primitives.end(); it++)
+		delete it->second;
+
+	primitives.clear();
+}
+
+void BRenderingPipeline::Init()
+{
+	GenerateDefaultFramebuffer();
+}
+
+void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> _vertices, std::vector<uint16_t> _indices)
+{
+	// if the primitive already exists in the pipeline
+	if (primitives.find(primitiveName) != primitives.end())
+	{
+		// update the mesh data in the render data struct
+		RenderBufferData* data = primitives[primitiveName];
+		data->vertices	= _vertices;
+		data->indices = _indices;
+	}
+	else
+	{
+		// Create container that holds mesh data
+		RenderBufferData* renderData = new RenderBufferData();
+		renderData->indices = _indices;
+		renderData->vertices = _vertices;
+
+		// Cache container under identifier
+		primitives.insert({ primitiveName, renderData });
+	}
+}
+
+void BRenderingPipeline::Import(Mesh* mesh)
+{
+	MeshDataParams* meshData = mesh->GetMeshData();
+	Import(meshData->name, meshData->vertices, meshData->indices);
+}
+
+void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)
+{
+	// ensure that all sides of the cubemap have texture data
+	assert((int)cubemapTextureData.size() == 6);
+	// create cubemap
+	if (!cubemapParams)
+		cubemapParams = &defaultSkyBox;
+	glGenTextures(1, &cubemapParams->cubemapID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapParams->cubemapID);
+	int i = 0;
+	for (auto it = cubemapTextureData.begin(); it != cubemapTextureData.end(); it++)
+	{
+		// pass in correlating texture for each face of cubemap
+		TextureData* cubemapTexture = *it;
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, cubemapTexture->width, cubemapTexture->height,
+					0, GL_RGB, GL_UNSIGNED_BYTE, cubemapTexture->data);
+		i++;
+	}
+
+	// Cubemap texture params
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	// create the default cubemap shader
+	cubemapShader = new Shader("CubeMap.vertex", "CubeMap.fragment");
+
+	// Create vertex buffers and pass in data
+	RequestForDefaultSkyboxVerts();
+}
+
+void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
+{
+	// if primitive has not yet been imported
+	if(primitives.find(primitiveName) == primitives.end())
+		std::runtime_error("Error! Primitive named " + primitiveName + " has not yet been imported!");
+
+	RenderBufferData* renderData = primitives[primitiveName];
+	// create buffers for the vertex array object, vertex buffer object,
+	// and element buffer object
+	glGenVertexArrays(1, &renderData->vao);
+	glGenBuffers(1, &renderData->vbo);
+	glGenBuffers(1, &renderData->ebo);
+
+	// Bind the buffers and pass in the appropriate data for the following:
+	// the vertex array object
+	glBindVertexArray(renderData->vao);
+	// the vertex buffer object
+	glBindBuffer(GL_ARRAY_BUFFER, renderData->vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(DVertex) * renderData->vertices.size(), &renderData->vertices[0], GL_STATIC_DRAW);
+	// the index buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData->ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * renderData->indices.size(), &renderData->indices[0], GL_STATIC_DRAW);
+
+	// Add vertex positions for model
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(
+		0, // start index
+		3, // number of dimensions
+		GL_FLOAT, // vertex buffer type
+		GL_FALSE, // normalized?
+		sizeof(DVertex), // stride
+		(void*)offsetof(DVertex, DVertex::pos) // buffer offset
+	);
+
+	// Add vertex texture coordinates for model	
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(DVertex),
+		(void*)offsetof(DVertex, DVertex::texCoord)
+	);
+
+	// Add vertex normals for model	
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(
+		2, // layout index
+		3, // number of dimensions
+		GL_FLOAT, // value type for dimensions
+		GL_FALSE, // normalized?
+		sizeof(DVertex), // stride
+		(void*)offsetof(DVertex, DVertex::normal)// buffer offset
+	);
+
+	// Add vertex colors for model
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(
+		3, // layout index
+		3, // number of dimensions
+		GL_FLOAT, // value type for dimensions
+		GL_FALSE, // normalized
+		sizeof(DVertex), // stride
+		(void*)offsetof(DVertex, DVertex::color) // buffer offset
+	);
+}
+
+void BRenderingPipeline::RequestForDefaultSkyboxVerts()
+{
+	// Generate skybox vert buffer from default verts
+	CubemapData* defaultSkyBoxPtr = &defaultSkyBox;
+	GLuint* vao, * vbo, * ebo;
+	vao = &defaultSkyBoxPtr->vao;
+	vbo = &defaultSkyBoxPtr->vbo;
+	ebo = &defaultSkyBoxPtr->ebo;
+
+	if(!*vao)
+		glGenVertexArrays(1, vao);
+	if(!*vbo)
+		glGenBuffers(1, vbo);
+	if(!*ebo)
+		glGenBuffers(1, ebo);
+
+	// Feed vert data to renderer
+	glBindVertexArray(*vao);
+	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(DVector3) * defaultSkyBoxPtr->vertPositions.size(),
+				&defaultSkyBoxPtr->vertPositions[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * defaultSkyBoxPtr->indices.size(), &defaultSkyBoxPtr->indices[0], GL_STATIC_DRAW);
+	
+	// Pass vertex data to GPU for shaders
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(
+		0,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(DVector3),
+		(void*)0
+	);
+	Moxie::GLErrorReporting();
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void BRenderingPipeline::SetOrthoView(bool isOrtho)
+{
+	perspectiveView = !isOrtho;
+}
+
+void BRenderingPipeline::UpdateModelMatrix(DMat4x4 _transform, std::string primitiveName)
+{
+	if (primitives.find(primitiveName) == primitives.end())
+		return;
+	primitives[primitiveName]->transform = _transform;
+}
+
+void BRenderingPipeline::UpdateProjectionMatrix(float fieldOfView, float width, float height, float nearClippingPlane, float farClippingPlane)
+{
+	if (perspectiveView)
+		projectionMatrix = glm::perspective(glm::radians(fieldOfView), width / height, nearClippingPlane, farClippingPlane);
+	else
+		projectionMatrix = glm::ortho(0.0f, width, height, 0.0f, nearClippingPlane, farClippingPlane);
+}
+
+void BRenderingPipeline::UpdateViewMatrix(DMat4x4 _view)
+{
+	viewMatrix = _view;
+}
+
+void BRenderingPipeline::LoadShader(std::string primitiveName, Shader* shader)
+{
+	// does the primitive exist
+	auto searchPName = primitives.begin();
+	while (searchPName != primitives.end())
+	{
+		if (searchPName->first == primitiveName)
+			break;
+		searchPName++;
+	}
+	assert(searchPName != primitives.end());
+
+	// is shader in cache
+	auto searchShader = shaderCache.begin();
+	
+	while (searchShader != shaderCache.end())
+	{
+		Shader* cachedShader = *searchShader->get();
+		if (*shader == *cachedShader)
+			break;
+		searchShader++;
+	}
+	assert(searchShader != shaderCache.end());
+
+	primitives[primitiveName]->shader = *searchShader;
+}
+
+void BRenderingPipeline::LoadDefaultCubemapShader()
+{
+	if (cubemapShader)
+		cubemapShader->Use();
+}
+
+void BRenderingPipeline::UpdateShaderCache(Shader* shaderToAdd)
+{
+	auto searchPtr = shaderCache.begin();
+	// if shader already exists in cache
+	// exit function
+	while (searchPtr != shaderCache.end())
+	{
+		Shader* current = *searchPtr->get();
+		if (*current == *shaderToAdd)
+			return;
+		searchPtr++;
+	}
+	// add shader to cache
+	shaderCache.push_back(std::make_shared<Shader*>(shaderToAdd));
+}
+
+void BRenderingPipeline::UpdateShaderCache(Material* shaderToAdd)
+{
+	UpdateShaderCache(shaderToAdd->Get());
+}
+
+void BRenderingPipeline::UpdateDefaultCubemapShader()
+{
+	if (cubemapShader)
+	{
+		// Converting view matrix from DMat4x4 to mat3 then back to DMat4x4
+		// again in order to remove the translation
+		cubemapShader->SetMat4("view", DMat4x4(mat3(viewMatrix)));
+		cubemapShader->SetMat4("projection", projectionMatrix);
+	}
+}
+
+void BRenderingPipeline::GenerateDefaultFramebuffer()
+{	
+	// create framebuffer
+	glGenFramebuffers(1, &defaultFramebuffer);
+	// Attach texture to framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
+	// create texture to attach
+	glGenTextures(1, &defaultFrameBufferTextureID);
+	// Texture params
+	glBindTexture(GL_TEXTURE_2D, defaultFrameBufferTextureID);
+	if (GGLSPtr)
+		GGLSPtr->GetWindowDimensions(screenWidth, screenHeight);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, defaultFrameBufferTextureID, 0);
+	// create renderbuffer
+	glGenRenderbuffers(1, &renderbuffer);
+	// As well as the renderbuffer
+	glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+	Moxie::FrameBufferErrorCheck();
+	Moxie::GLErrorReporting();
+
+	// Remove bindings
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Load the default framebuffer
+	currentFramebuffer = defaultFramebuffer;
+
+}
+
+void BRenderingPipeline::LoadFramebuffer(GLuint fbID)
+{
+	
+	// if the framebuffer doesn't exist
+	auto fbIdPtr = framebuffers.begin();
+	while (fbIdPtr != framebuffers.end())
+	{
+		if (*fbIdPtr == fbID)
+		{
+			currentFramebuffer = fbID;
+			return;
+		}
+		fbIdPtr++;
+	}
+	// throw an exception if the framebuffer does not exist
+	throw std::runtime_error("Error! Framebuffer does not exist!");
+}
+
+void BRenderingPipeline::LoadCurrentFramebuffer()
+{
+	assert(currentFramebuffer != 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, currentFramebuffer);
+}
+
+void BRenderingPipeline::UnloadFramebuffer()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void BRenderingPipeline::RenderPrimitives()
+{
+	for (auto it = primitives.begin(); it != primitives.end(); it++)
+	{
+		RenderBufferData* primitive = it->second;
+		DrawMesh(primitive);
+	}
+}
+
+void BRenderingPipeline::DrawMesh(RenderBufferData* renderData)
+{
+	
+	// Load the shader from the cache
+	Shader* shader = *renderData->shader.get();
+	assert(shader);
+	shader->Use();
+	// Load texture(s)
+	// TODO
+	// Use vertex data for current primitive
+	GLuint vao = renderData->vao;
+	uint32_t indexSize = (uint32_t)renderData->indices.size();
+	glBindVertexArray(vao);
+	glDrawElements(GL_TRIANGLES, indexSize, GL_UNSIGNED_SHORT, &renderData->indices);
+	glBindVertexArray(0);
+
+}
+
+void BRenderingPipeline::DrawCubeMap()
+{	
+	glDepthMask(GL_FALSE);
+	if (cubemapShader)
+	{
+		UpdateDefaultCubemapShader();
+
+		cubemapShader->Use();
+	}
+	glBindVertexArray(cubemapParams->vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubemapParams->ebo);
+	glBindBuffer(GL_ARRAY_BUFFER, cubemapParams->vbo);
+	
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapParams->cubemapID);
+	glDrawElements(GL_TRIANGLES, (int)cubemapParams->indices.size(), GL_UNSIGNED_SHORT, 0);
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	glDepthMask(GL_TRUE);
+
+}
+
+RenderBufferData::~RenderBufferData()
+{
+	// remove ownership to Shader
+	if(shader)
+		shader.reset();
+
+	// remove glsl hooks
+	glDisableVertexAttribArray(0 | 1 | 2 | 3);
+
+	// free allocation to all buffer objects
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ebo);
+}

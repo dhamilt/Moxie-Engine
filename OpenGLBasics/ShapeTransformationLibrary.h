@@ -11,7 +11,7 @@ public:
 	/// <param name="radius">The radius of of the sphere</param>
 	/// <param name="origin">The origin point of the sphere</param>
 	/// <param name="points">The collection of sphere points being returned</param>
-	static void GetSpherePoints(int longitude, int lattitude, float radius, vector3 origin, std::vector<vector3>& points);
+	static void GetSpherePoints(int longitude, int lattitude, float radius, DVector3 origin, std::vector<DVector3>& points);
 	/// <summary>
 	/// Draws a Maurer rose based on the number of legs and petals
 	/// Keep in mind, if the number of petals is even the rose will
@@ -23,11 +23,11 @@ public:
 	/// <param name="height">The height of the rose</param>
 	/// <param name="origin">The origin point of the rose</param>
 	/// <param name="points">The points of the rose</param>
-	static void GetMaurerRosePoints(unsigned int numOfPetals, float degreesBetweeen, float width, float height, vector3 origin, std::vector<vector3>& points);
+	static void GetMaurerRosePoints(unsigned int numOfPetals, float degreesBetweeen, float width, float height, DVector3 origin, std::vector<DVector3>& points);
 
 };
 
-inline void ShapeTransformationLibrary::GetSpherePoints(int longitude, int lattitude, float radius, vector3 origin, std::vector<vector3>& points)
+inline void ShapeTransformationLibrary::GetSpherePoints(int longitude, int lattitude, float radius, DVector3 origin, std::vector<DVector3>& points)
 {
 	if (!points.empty())
 		points.clear();
@@ -44,7 +44,7 @@ inline void ShapeTransformationLibrary::GetSpherePoints(int longitude, int latti
 			y = glm::sin((float)i / (float)lattitude * twoPI) * glm::sin((float)j / (float)longitude * twoPI) * radius;
 			z = glm::sin((float)j / (float)longitude * twoPI) * radius;
 
-			vector3 point = vector3(x, y, z);
+			DVector3 point = DVector3(x, y, z);
 			point += origin;
 
 			points.push_back(point);
@@ -52,7 +52,7 @@ inline void ShapeTransformationLibrary::GetSpherePoints(int longitude, int latti
 	}
 }
 
-inline void ShapeTransformationLibrary::GetMaurerRosePoints(unsigned int numOfPetals, float degreesBetween, float width, float height, vector3 origin, std::vector<vector3>& points)
+inline void ShapeTransformationLibrary::GetMaurerRosePoints(unsigned int numOfPetals, float degreesBetween, float width, float height, DVector3 origin, std::vector<DVector3>& points)
 {
 	// clear vector points collection
 	if (points.size() > 0)
@@ -69,7 +69,7 @@ inline void ShapeTransformationLibrary::GetMaurerRosePoints(unsigned int numOfPe
 		float y = r * glm::sin(k) * height;
 		
 
-		vector3 result = vector3(x, y, 0);
+		DVector3 result = DVector3(x, y, 0);
 		result += origin;
 		points.push_back(result);
 	}

@@ -4,7 +4,7 @@
 
 
 extern GLSetup* GGLSPtr;
-MViewport::MViewport()
+WViewport::WViewport()
 {
 	name = typeid(*this).name();
 
@@ -14,7 +14,7 @@ MViewport::MViewport()
 	GGLSPtr->GetViewportDimensions(width, height);	
 }
 
-MViewport::~MViewport()
+WViewport::~WViewport()
 {
 	if (fbo > 0)
 		glDeleteFramebuffers(1, &fbo);
@@ -27,7 +27,7 @@ MViewport::~MViewport()
 	
 }
 
-void MViewport::Paint()
+void WViewport::Paint()
 {	
 	// Bind the texture
 	glBindTexture(GL_TEXTURE_2D, textureID);	
@@ -76,12 +76,12 @@ void MViewport::Paint()
 	
 }
 
-bool MViewport::operator==( GUI_Base& other)
+bool WViewport::operator==( GUI_Base& other)
 {
 	return GetName() == other.GetName();
 }
 
-bool MViewport::FrameBufferErrorCheck(GLuint status)
+bool WViewport::FrameBufferErrorCheck(GLuint status)
 {
 	bool result = false;
 

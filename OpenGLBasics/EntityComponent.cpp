@@ -1,9 +1,10 @@
 #include "glPCH.h"
 #include "EntityComponent.h"
-
+#include "GLSetup.h"
+extern GLSetup* GGLSPtr;
 EntityComponent::EntityComponent()
 {
-    id++;
+    component_id++;
     
 }
 
@@ -20,19 +21,19 @@ void EntityComponent::Init()
     MLOG_MESSAGE(message.c_str());
 }
 
-mat4 EntityComponent::GetLocalToWorldMatrix()
+DMat4x4 EntityComponent::GetLocalToWorldMatrix()
 {
     return transform.GetTransform() * parent->GetTransform();
 }
 
-vector3 EntityComponent::GetWorldPosition()
+DVector3 EntityComponent::GetWorldPosition()
 {
     // Convert the local model matrix (transform) of the component to world space coordinates
-    mat4 localToWorldMatrix = transform.GetTransform() * parent->GetTransform();
-    return vector3(localToWorldMatrix[0][3], localToWorldMatrix[1][3], localToWorldMatrix[2][3]);
+    DMat4x4 localToWorldMatrix = transform.GetTransform() * parent->GetTransform();
+    return DVector3(localToWorldMatrix[0][3], localToWorldMatrix[1][3], localToWorldMatrix[2][3]);
 }
 
-vector3 EntityComponent::GetRelativePosition()
+DVector3 EntityComponent::GetRelativePosition()
 {
     return transform.GetPosition();
 }
@@ -41,16 +42,16 @@ vector3 EntityComponent::GetRelativePosition()
 quaternion EntityComponent::GetWorldRotation()
 {
     // Convert the local model matrix (transform) of the component to world space coordinates
-    mat4 localToWorldMatrix = transform.GetTransform() * parent->GetTransform();
+    DMat4x4 localToWorldMatrix = transform.GetTransform() * parent->GetTransform();
     // Get the world scale of the transform
-    vector3 worldScale = vector3();    
-    worldScale.x = glm::length(vector3(localToWorldMatrix[0][0], localToWorldMatrix[1][0], localToWorldMatrix[2][0]));
-    worldScale.y = glm::length(vector3(localToWorldMatrix[0][1], localToWorldMatrix[1][1], localToWorldMatrix[2][1]));
-    worldScale.z = glm::length(vector3(localToWorldMatrix[0][2], localToWorldMatrix[1][2], localToWorldMatrix[2][2]));
+    DVector3 worldScale = DVector3();    
+    worldScale.x = glm::length(DVector3(localToWorldMatrix[0][0], localToWorldMatrix[1][0], localToWorldMatrix[2][0]));
+    worldScale.y = glm::length(DVector3(localToWorldMatrix[0][1], localToWorldMatrix[1][1], localToWorldMatrix[2][1]));
+    worldScale.z = glm::length(DVector3(localToWorldMatrix[0][2], localToWorldMatrix[1][2], localToWorldMatrix[2][2]));
 
     // Extract the rotation matrix from the local to world matrix
     // by dividing it by it's scale
-    mat4 _rotation = localToWorldMatrix;
+    DMat4x4 _rotation = localToWorldMatrix;
 
     _rotation[0][0] /= worldScale.x;
     _rotation[1][0] /= worldScale.x;
@@ -74,9 +75,30 @@ quaternion EntityComponent::GetWorldRotation()
         qw);    
 }
 
+quaternion EntityComponent::GetRelativeRotation()
+{   
+    return transform.GetRotation();
+}
+
 std::string EntityComponent::GetName()
 {
     return name;
+}
+
+void EntityComponent::SetTickable(bool isTickable)
+{
+    hasTick = isTickable;
+}
+
+void EntityComponent::Update(double deltaTime)
+{
+    // if the component uses rendering
+    if (usesRenderData)
+    {
+        // send model matrix data (transform) to the rendering pipeline
+        if (GGLSPtr->GetPipeline())
+            GGLSPtr->GetPipeline()->UpdateModelMatrix(transform.GetTransform(), name);
+    }
 }
 
 bool EntityComponent::operator==(const EntityComponent& other)

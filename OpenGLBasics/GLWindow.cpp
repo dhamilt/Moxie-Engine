@@ -32,14 +32,14 @@ const float PI = 3.1415f;
 
 uint8_t GetShaderFromFile(const char* filepath, char** shader);
 GLuint LoadShaders(const char* v_filepath, const char* f_filepath);
-bool LoadModelFromFile(const char* path, std::vector<vertex>& vertices, std::vector<uint16_t>&indices);
+bool LoadModelFromFile(const char* path, std::vector<DVertex>& vertices, std::vector<uint16_t>&indices);
 //void ProcessNode(aiNode* node, const aiScene scene);
-void ProcessMesh(const aiScene*, std::vector<vertex>&vertices, std::vector<uint16_t>&indices);
+void ProcessMesh(const aiScene*, std::vector<DVertex>&vertices, std::vector<uint16_t>&indices);
 GLuint LoadBMP(const char* imgPath);
-bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<GLushort>& indices);
-bool LoadObj(const char* filePath, std::vector<vertex>& vertices, std::vector<unsigned short>& indices);
-mat4 GetProjectionMatrix(const float& _fov, const float& aspectRatio);
-mat4 GetViewMatrix(const vector3& pos, const vector3& dir, const vector3 up);
+bool LoadObjC(const char* filePath, std::vector<DVertex>& vertices, std::vector<GLushort>& indices);
+bool LoadObj(const char* filePath, std::vector<DVertex>& vertices, std::vector<unsigned short>& indices);
+DMat4x4 GetProjectionMatrix(const float& _fov, const float& aspectRatio);
+DMat4x4 GetViewMatrix(const DVector3& pos, const DVector3& dir, const DVector3 up);
 void GLErrorHandling(GLenum errorType)
 {
 	
@@ -50,31 +50,31 @@ void GLErrorHandling(GLenum errorType)
 		break;
 
 	case GL_INVALID_ENUM:
-		perror("Invalid enum!");
+		printf("Invalid enum!\n");
 		break;
 		
 	case GL_INVALID_VALUE:
-		perror("Invalid value!");
+		printf("Invalid value!\n");
 		break;
 
 	case GL_INVALID_OPERATION:
-		perror("Invalid operation!");
+		printf("Invalid operation!\n");
 		break;
 
 	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		perror("Invalid framebuffer operation!");
+		printf("Invalid framebuffer operation!\n");
 		break;
 
 	case GL_OUT_OF_MEMORY:
-		perror("Out of memory!");
+		printf("Out of memory!\n");
 		break;
 
 	case GL_STACK_UNDERFLOW:
-		perror("Stack Underflow!");
+		printf("Stack Underflow!\n");
 		break;
 
 	case GL_STACK_OVERFLOW:
-		perror("Stack Overflow!");
+		printf("Stack Overflow!\n");
 		break;
 
 	default:
@@ -87,7 +87,7 @@ extern GLSetup* GGLSPtr;
 extern GameLoop* GGLPtr;
 
 int main(int argc, char* argv[])
-{	
+{		
 	// Delayed initialization("Lazy" init)	
 	GGLSPtr->Init();
 	GGLPtr->Init();
@@ -108,15 +108,14 @@ int main(int argc, char* argv[])
 											"../cubemaps/Yokohama3/negz.jpg" };
 
 	Cubemaps* skybox = new Cubemaps(faceFilePaths);
+	Moxie::GLErrorReporting();
 
-	GLErrorHandling(glGetError());
 
-
-	if (skybox->IsValid())
-		skybox->GetShaderFromPath("CubeMap.vertex", "CubeMap.fragment");
+	/*if (skybox->IsValid())
+		skybox->GetShaderFromPath("CubeMap.vertex", "CubeMap.fragment");*/
 
 	// Load a OBJ file to use as a 3d model
-	std::vector<vertex> vertices;
+	std::vector<DVertex> vertices;
 	std::vector<uint16_t> indices;
 	
 	bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
@@ -130,23 +129,30 @@ int main(int argc, char* argv[])
 	Texture* texture = new Texture("MemeJoe.bmp");
 
 	// Make a monkey mesh 
+	Shader* defaultMeshShader = new Shader("Lighting.vertex", "Lighting.fragment");
+	Material* defaultMeshMat = new Material();
+	defaultMeshMat->SetShader(defaultMeshShader);
+	Mesh* monkeyMesh = new Mesh();
+	monkeyMesh->Import(vertices, indices, "Suzzanne");
 	MeshComponent* monkeyMeshComponent = new MeshComponent();
-	monkeyMeshComponent->mesh = new Mesh(vertices, indices, "Lighting.vertex", "Lighting.fragment");
-	monkeyMeshComponent->mesh->ApplyTexture(texture);
-	monkeyMeshComponent->transform.Translate(vector3(0, 1, 7));
-	monkeyMeshComponent->transform.SetRotation(quaternion(0.0f, vector3(0.0f, 1.0f, 0.0f)));
+	monkeyMeshComponent->AddMesh(monkeyMesh);
+	monkeyMeshComponent->SetMaterial(defaultMeshMat);
+	//monkeyMeshComponent->mesh = new Mesh(vertices, indices, );
+	//monkeyMeshComponent->mesh->ApplyTexture(texture);
+	monkeyMeshComponent->transform.Translate(DVector3(0, 1, 7));
+	monkeyMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
 	actor->AddComponent(monkeyMeshComponent);
 
 	// Make a light 
 	MyLightComponent* lightComponent = new MyLightComponent();		
-	lightComponent->transform.Rotate(vector3(0.0f, 1.0f, 0.0f), 90);
-	lightComponent->transform.Translate(vector3(3, 1, 7));
+	lightComponent->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), 90);
+	lightComponent->transform.Translate(DVector3(3, 1, 7));
 	lightComponent->intensity = 2.0f;
 	actor->AddComponent(lightComponent);
 
 	MyLightComponent* secondLight = new MyLightComponent();
-	secondLight->transform.Rotate(vector3(0.0f, 1.0f, 0.0f), -90);
-	secondLight->transform.Translate(vector3(-3, 1, 7));
+	secondLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
+	secondLight->transform.Translate(DVector3(-3, 1, 7));
 	secondLight->intensity = 2.0f;
 	actor->AddComponent(secondLight);
 
@@ -159,14 +165,14 @@ int main(int argc, char* argv[])
 	rotLight->lightType = LightComponent::LightTypes::Spot;
 	// increase its radius
 	rotLight->radius = 5.0f;
-	rotLight->transform.Rotate(vector3(0.0f, 1.0f, 0.0f), -90);
-	rotLight->transform.Translate(vector3(-3, 1, 7));
+	rotLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
+	rotLight->transform.Translate(DVector3(-3, 1, 7));
 	rotLight->intensity = 60.0f;
 	actor->AddComponent(rotLight);
 
 	
 	// Create an Audio Equalizer LineRendering component
-	AudioEQComponent* lineEQ = new AudioEQComponent(vector3(-5.0f, 2.5f, 6.0f), vector3(5.0f, 2.5f, 6.0f));
+	AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
 	// Add an audio source to the component
 	lineEQ->AddSource(source);
 	// Change the EQ's max height variance
@@ -186,7 +192,7 @@ int main(int argc, char* argv[])
 	actor->AddComponent(lineEQ);
 	
 	
-	actor->transform.SetPosition(vector3(0, -2, 0));
+	actor->transform.SetPosition(DVector3(0, -2, 0));
 	GGLPtr->Loop();
 	
 	
@@ -305,7 +311,7 @@ GLuint LoadShaders(const char* v_filepath, const char* f_filepath)
 	return program;
 }
 
-bool LoadModelFromFile(const char* path, std::vector<vertex>& vertices, std::vector<uint16_t>& indices)
+bool LoadModelFromFile(const char* path, std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
 {
 	Assimp::Importer import;
 	const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -332,7 +338,7 @@ bool LoadModelFromFile(const char* path, std::vector<vertex>& vertices, std::vec
 //	
 //}
 
-void ProcessMesh(const aiScene* scene, std::vector<vertex>& vertices, std::vector<uint16_t>& indices)
+void ProcessMesh(const aiScene* scene, std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
 {
 	if (scene)
 	{
@@ -341,11 +347,11 @@ void ProcessMesh(const aiScene* scene, std::vector<vertex>& vertices, std::vecto
 		// retrieve the vertex attributes
 		for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 		{
-			vertex tempVert;
+			DVertex tempVert;
 			if (mesh->HasTextureCoords(i))
-				tempVert = vertex(mesh->mVertices[i], *mesh->mTextureCoords[i], mesh->mNormals[i]);
+				tempVert = DVertex(mesh->mVertices[i], *mesh->mTextureCoords[i], mesh->mNormals[i]);
 			else
-				tempVert = vertex(mesh->mVertices[i], mesh->mNormals[i]);
+				tempVert = DVertex(mesh->mVertices[i], mesh->mNormals[i]);
 
 			vertices.push_back(tempVert);
 		}
@@ -436,15 +442,15 @@ GLuint LoadBMP(const char* imgPath)
 	return GL_FALSE;
 }
 
-bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<GLushort>& indices)
+bool LoadObjC(const char* filePath, std::vector<DVertex>& vertices, std::vector<GLushort>& indices)
 {
 	FILE* file = fopen(filePath, "rb");
 	if (file)
 	{
 		std::vector<uint32_t> vertexIndices, uvIndices, normalIndices;
-		std::vector<vector3> temp_vertices;
-		std::vector<vector2> temp_uvs;
-		std::vector<vector3> temp_normals;
+		std::vector<DVector3> temp_vertices;
+		std::vector<DVector2> temp_uvs;
+		std::vector<DVector3> temp_normals;
 		std::vector<std::string> uniqueVertStrings;
 		std::map<std::string, int> vertexToIndex;		
 		
@@ -472,7 +478,7 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 				// if line has vertex info
 				if (strcmp(token,"v") == 0)
 				{
-					vector3 vertPos;
+					DVector3 vertPos;
 					if(sscanf(lineHeader+2, "%f %f %f\n", &vertPos.x, &vertPos.y, &vertPos.z) ==3)
 						temp_vertices.push_back(vertPos);
 				}
@@ -482,7 +488,7 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 				{
 					if (!textureCoordsUsed)
 						textureCoordsUsed = 1;
-					vector2 uv;
+					DVector2 uv;
 					if(sscanf(lineHeader+3, "%f %f\n", &uv.x, &uv.y) == 3)
 					temp_uvs.push_back(uv);
 				}
@@ -490,7 +496,7 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 				// if line has normal info
 				else if (strcmp(token, "vn") == 0)
 				{
-					vector3 normal;
+					DVector3 normal;
 					if (sscanf(lineHeader+3, "%f %f %f\n", &normal.x, &normal.y, &normal.z) == 3)
 						temp_normals.push_back(normal);					
 				}
@@ -527,7 +533,7 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 					// Parse faceIndices for vertex, uv, normal
 					for (std::vector<std::string>::iterator it = faceStrings.begin(); it != faceStrings.end(); it++)
 					{
-						vertex tempVert;
+						DVertex tempVert;
 						// if the face is a quad
 						if (isQuad)
 						{
@@ -614,12 +620,12 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 		for (std::vector<std::string>::iterator it = uniqueVertStrings.begin(); it != uniqueVertStrings.end(); it++)
 		{			
 			int buf[3] = { 0 };
-			vertex tempVert;
+			DVertex tempVert;
 			if (textureCoordsUsed)
 			{				
 				if (sscanf(it->c_str(), "%d/%d/%d", &buf[0], &buf[1], &buf[2]) == 3)
 				{
-					tempVert = vertex(
+					tempVert = DVertex(
 						temp_vertices[buf[0] - 1],
 						temp_uvs[buf[1] - 1],
 						temp_normals[buf[2] - 1]);					
@@ -630,7 +636,7 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 			{
 				if (sscanf(it->c_str(), "%d//%d", &buf[0], &buf[1]) == 2)
 				{
-					tempVert = vertex(
+					tempVert = DVertex(
 						temp_vertices[buf[0] - 1],
 						temp_normals[buf[1] - 1]);					
 				}
@@ -651,11 +657,11 @@ bool LoadObjC(const char* filePath, std::vector<vertex>& vertices, std::vector<G
 	perror("Unable to read obj file!");
 	return false;
 }
-bool LoadObj(const char* filePath, std::vector<vertex>& vertices, std::vector<unsigned short>& indices)
+bool LoadObj(const char* filePath, std::vector<DVertex>& vertices, std::vector<unsigned short>& indices)
 {
-	std::vector<vector3>temp_verts;
-	std::vector<vector2>temp_uvs;
-	std::vector<vector3>temp_normals;
+	std::vector<DVector3>temp_verts;
+	std::vector<DVector2>temp_uvs;
+	std::vector<DVector3>temp_normals;
 
 	std::ifstream file(filePath);
 	if (file)
@@ -670,17 +676,17 @@ bool LoadObj(const char* filePath, std::vector<vertex>& vertices, std::vector<un
 			// if reading positions
 			if (strcmp(line.substr(0,2).c_str(), "v ") == 0)
 				if (sscanf(line.c_str() + 2, "%f %f %f", &x, &y, &z) == 3)
-					temp_verts.push_back(vector3(x, y, z));
+					temp_verts.push_back(DVector3(x, y, z));
 
 			// if reading texCoords
 			if (strcmp(line.substr(0, 2).c_str(), "vt") == 0)
 				if (sscanf(line.c_str() + 3, "%f %f", &x, &y) == 2)
-					temp_uvs.push_back(vector2(x, y));
+					temp_uvs.push_back(DVector2(x, y));
 
 			// if reading normals
 			if (strcmp(line.substr(0, 2).c_str(), "vn") == 0)
 				if (sscanf(line.c_str() + 3, "%f %f %f", &x, &y, &z) == 3)
-					temp_normals.push_back(vector3(x, y, z));
+					temp_normals.push_back(DVector3(x, y, z));
 
 			// if reading faces
 			if (*line.c_str() == 'f')
@@ -693,17 +699,17 @@ bool LoadObj(const char* filePath, std::vector<vertex>& vertices, std::vector<un
 				while (getline(tokenLine, token, ' '))
 				{
 					int tempIndexBuf[3];
-					vertex tempVertex;
+					DVertex tempVertex;
 					if (sscanf(token.c_str(), "%d/%d/%d", &tempIndexBuf[0], &tempIndexBuf[1], &tempIndexBuf[2]) == 3)
 					{
-						tempVertex = vertex(temp_verts[tempIndexBuf[0] - 1],
+						tempVertex = DVertex(temp_verts[tempIndexBuf[0] - 1],
 											temp_uvs[tempIndexBuf[1] - 1],
 											temp_normals[tempIndexBuf[2] -1]);
 						vertices.push_back(tempVertex);
 					}
 					else if (sscanf(token.c_str(), "%d//%d", &tempIndexBuf[0], &tempIndexBuf[1]) == 2)
 					{
-						tempVertex = vertex(temp_verts[tempIndexBuf[0] - 1],							
+						tempVertex = DVertex(temp_verts[tempIndexBuf[0] - 1],							
 											temp_normals[tempIndexBuf[1] - 1]);
 
 						vertices.push_back(tempVertex);
@@ -747,13 +753,13 @@ bool LoadObj(const char* filePath, std::vector<vertex>& vertices, std::vector<un
 }
 // Calculates and returns the projection matrix from the field of view
 // proved
-mat4 GetProjectionMatrix(const float& _fov, const float& aspectRatio)
+DMat4x4 GetProjectionMatrix(const float& _fov, const float& aspectRatio)
 {
 	return glm::perspective(glm::radians(_fov), aspectRatio, 0.1f, 100.0f);
 }
 
 // Calculates and returns the view matrix from the parameters provided
-mat4 GetViewMatrix(const vector3& pos, const vector3& dir, const vector3 up)
+DMat4x4 GetViewMatrix(const DVector3& pos, const DVector3& dir, const DVector3 up)
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

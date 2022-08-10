@@ -14,7 +14,7 @@ LineRenderer::~LineRenderer()
 	glDisable(GL_LINE_SMOOTH);
 }
 
-void LineRenderer::Draw(mat4 projection, mat4 view)
+void LineRenderer::Draw(DMat4x4 projection, DMat4x4 view)
 {
 	assert(shader);	
 	shader->Use();
@@ -44,27 +44,27 @@ void LineRenderer::LerpColors(Color _start, Color _end)
 	endColor = _end;
 }
 
-void LineRenderer::AddPoint(vector3 point)
+void LineRenderer::AddPoint(DVector3 point)
 {
 	linePoints.push_back(point);
 	UpdateLines();
 }
 
-void LineRenderer::AddNewPoint(vector3 point)
+void LineRenderer::AddNewPoint(DVector3 point)
 {
 	linePoints.clear();
 	linePoints.push_back(point);
 	UpdateLines();
 }
 
-void LineRenderer::AddPoints(std::vector<vector3> points)
+void LineRenderer::AddPoints(std::vector<DVector3> points)
 {
-	std::vector<vector3>::iterator it = linePoints.end();
+	std::vector<DVector3>::iterator it = linePoints.end();
 	linePoints.insert(it, points.begin(), points.end());
 	UpdateLines();
 }
 
-void LineRenderer::AddPoints(vector3* points, const int& linePointCount)
+void LineRenderer::AddPoints(DVector3* points, const int& linePointCount)
 {
 	int i = 0;
 	while (i < linePointCount)
@@ -75,15 +75,15 @@ void LineRenderer::AddPoints(vector3* points, const int& linePointCount)
 	UpdateLines();
 }
 
-void LineRenderer::AddNewPoints(std::vector<vector3> points)
+void LineRenderer::AddNewPoints(std::vector<DVector3> points)
 {
 	linePoints.clear();
-	std::vector<vector3>::iterator it = linePoints.begin();
+	std::vector<DVector3>::iterator it = linePoints.begin();
 	linePoints.insert(it, points.begin(), points.end());
 	UpdateLines();
 }
 
-void LineRenderer::AddNewPoints(vector3* points, const int& linePointCount)
+void LineRenderer::AddNewPoints(DVector3* points, const int& linePointCount)
 {
 	linePoints.clear();
 	int i = 0;
@@ -140,7 +140,7 @@ void LineRenderer::UpdateLines()
 	// if there are 2 or more line points
 	if (linePoints.size() > 1)
 	{
-		for (std::vector<vector3>::iterator it = linePoints.begin(); it != linePoints.end(); it++)
+		for (std::vector<DVector3>::iterator it = linePoints.begin(); it != linePoints.end(); it++)
 		{
 			// if iterator is past the first index of the collection
 			if (it != linePoints.begin())
@@ -172,7 +172,7 @@ void LineRenderer::UpdateLineBuffer()
 		glGenBuffers(1, &vbo);
 
 	// Convert all line points to array
-	std::vector<vector3>_lines = ToVectorArray();
+	std::vector<DVector3>_lines = ToVectorArray();
 	// Bind the data below to the vertex array object
 	glBindVertexArray(vao);
 	// pass in the vertex buffer
@@ -205,14 +205,14 @@ void LineRenderer::UpdateLineBuffer()
 	
 }
 
-void LineRenderer::UpdateTransform(const mat4& _transform)
+void LineRenderer::UpdateTransform(const DMat4x4& _transform)
 {
 	cachedTransform = _transform;
 }
 
-std::vector<vector3> LineRenderer::ToVectorArray()
+std::vector<DVector3> LineRenderer::ToVectorArray()
 {
-	std::vector<vector3> result;
+	std::vector<DVector3> result;
 
 	for (int i = 0; i < lines.size(); i++)
 	{

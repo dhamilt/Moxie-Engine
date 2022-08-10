@@ -20,7 +20,7 @@ void MouseCapture::TrackMouseCursor()
 	if (prevCursorPosX != -FLT_MAX && prevCursorPosY != -FLT_MAX)	
 	{
 		double _x = 0.0f, _y = 0.0f;
-		vector2 mouseDelta = vector2(io.MousePos.x -prevCursorPosX, io.MousePos.y - prevCursorPosY);
+		DVector2 mouseDelta = DVector2(io.MousePos.x -prevCursorPosX, io.MousePos.y - prevCursorPosY);
 		// Get the mouse movement delta from ImGui
 		_x = mouseDelta.x;
 		_y = mouseDelta.y;

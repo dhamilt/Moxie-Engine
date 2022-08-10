@@ -3,7 +3,7 @@
 #include "TransformationLibrary.h"
 
 
-AudioEQComponent::AudioEQComponent(vector3 _start, vector3 _end)
+AudioEQComponent::AudioEQComponent(DVector3 _start, DVector3 _end)
 {
 	startPoint = _start;
 	endPoint = _end;
@@ -28,13 +28,13 @@ void AudioEQComponent::Update(double deltaTime)
 				if (numOfInterpolatedPointsPerSample > 0)
 				{
 					// add the starting point for the interpolation
-					vector3 startingLerpPoint = wavePoints[i];
-					vector3 endingLerpPoint = wavePoints[i + 1];
+					DVector3 startingLerpPoint = wavePoints[i];
+					DVector3 endingLerpPoint = wavePoints[i + 1];
 					smoothWavePoints.push_back(startingLerpPoint);
 					for (int j = 0; j < numOfInterpolatedPointsPerSample; j++)
 					{
 						// Created a interpolated point and add it to the collection
-						vector3 lerpedPoint = TransformationLibrary::Lerp(startingLerpPoint, endingLerpPoint, (float)(j + 1) / (numOfInterpolatedPointsPerSample + 1));
+						DVector3 lerpedPoint = TransformationLibrary::Lerp(startingLerpPoint, endingLerpPoint, (float)(j + 1) / (numOfInterpolatedPointsPerSample + 1));
 						smoothWavePoints.push_back(lerpedPoint);
 					}
 					// add the ending point for the interpolation
@@ -100,7 +100,7 @@ void AudioEQComponent::ChangeSampleCount(int newSampleCount)
 
 		for (int i = 0; i < numOfSamples; i++)
 		{						
-			vector3 temp = TransformationLibrary::Lerp(startPoint, endPoint, (float)(i+1) / (numOfSamples + 2));
+			DVector3 temp = TransformationLibrary::Lerp(startPoint, endPoint, (float)(i+1) / (numOfSamples + 2));
 			linePoints.push_back(temp);			
 		}
 
@@ -113,13 +113,13 @@ void AudioEQComponent::ChangeMaxHeightVariance(float newHeight)
 	height = newHeight;
 }
 
-void AudioEQComponent::ChangeStartPoint(vector3 _start)
+void AudioEQComponent::ChangeStartPoint(DVector3 _start)
 {
 	startPoint = _start;
 	linePoints[0] = startPoint;
 }
 
-void AudioEQComponent::ChangeEndPoint(vector3 _end)
+void AudioEQComponent::ChangeEndPoint(DVector3 _end)
 {
 	endPoint = _end;
 	int size = numOfSamples - 1;
@@ -132,7 +132,7 @@ void AudioEQComponent::AddInterpolatePoints(int numOfPointsToLerp)
 
 	/*for (int i = 1; i < numOfSamples; i++)
 	{
-		std::vector<vector3> temp;
+		std::vector<DVector3> temp;
 		for (int j = 0; j < numOfInterpolatedPointsPerSample; j++)
 			temp.push_back(TransformationLibrary::Lerp(linePoints[i-1], linePoints[i], (float)(j + 1) / (numOfInterpolatedPointsPerSample + 2)));
 

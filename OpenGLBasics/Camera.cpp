@@ -4,23 +4,23 @@
 
 extern GLSetup* GGLSPtr;
 
-vector3 Camera::GetRightVector()
+DVector3 Camera::GetRightVector()
 {
     return glm::normalize(glm::cross(up, transform.GetForwardVector()));
     
 }
 
 
-mat4 Camera::GetViewMatrix()
+DMat4x4 Camera::GetViewMatrix()
 {
     return glm::lookAt(transform.GetPosition(), transform.GetPosition() + transform.GetForwardVector(), up);
 }
 
 void Camera::MoveCamera(MOX_Events movementOptions)
 {
-    vector3 dir = transform.GetForwardVector();
+    DVector3 dir = transform.GetForwardVector();
     const float cameraSpeed =0.2f; // TODO: find a way change this at runtime through input
-    vector3 translationVector = vector3(0.0f);
+    DVector3 translationVector = DVector3(0.0f);
    
     // if moving diagonal left and forward
     if( movementOptions == (MOX_FORWARD | MOX_LEFT))
@@ -81,8 +81,8 @@ void Camera::RotateCamera(double xPos, double yPos)
         pitch += yOffset;
 
 
-        transform.Rotate(vector3(1.0f, 0.0f, 0.0f), glm::radians(yOffset));
-        transform.Rotate(vector3(0.0f, 1.0f, 0.0f), glm::radians(-xOffset));
+        transform.Rotate(DVector3(1.0f, 0.0f, 0.0f), glm::radians(yOffset));
+        transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), glm::radians(-xOffset));
     }
 }
 

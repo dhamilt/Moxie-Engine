@@ -20,8 +20,8 @@ struct Color
 	{
 		ClampValues();
 	}
-	vector3 rgb() { return vector3(r, g, b); };
-	vector4 rgba() { return vector4(r, g, b, a); };
+	DVector3 rgb() { return DVector3(r, g, b); };
+	DVector4 rgba() { return DVector4(r, g, b, a); };
 
 	void ClampValues();
 	float r, g, b, a;
