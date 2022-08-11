@@ -89,10 +89,6 @@ void GLSetup::StartSDLWindow()
 		throw std::runtime_error("Context window could not be created!");
 	}
 	
-	
-
-	
-
 	// Initialize GLEW
 	glewExperimental = GL_TRUE;
 	bool glewResult = glewInit();
@@ -133,28 +129,7 @@ void GLSetup::StartSDLWindow()
 	if(pipeline)
 		pipeline->GenerateDefaultFramebuffer();
 
-	//glGenFramebuffers(1, &fbo);
-	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	//// Create an attachment texture
-	//glGenTextures(1, &screenTextureID);		
-	//glBindTexture(GL_TEXTURE_2D, screenTextureID);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//// Attach it to Framebuffer
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTextureID, 0);
-	//// Create a Renderbuffer Object
-	//glGenRenderbuffers(1, &rbo);
-	//glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	//// Attach it to Framebuffer
-	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-	//// Remove bindings
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-
+	
 	// Setup main camera
 	mainCamera = new Camera(DVector3(0, 1, 0));
 	// Set up mouse capture callback for rotating the camera

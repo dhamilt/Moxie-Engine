@@ -116,6 +116,8 @@ void Mesh::Draw(DMat4x4 projection, DMat4x4 view)
 	}
 	if (shader)
 	{
+		mat3 normalMatrix = mat3(view);
+		normalMatrix = glm::transpose(glm::inverse(normalMatrix));
 		shader->Use();
 		shader->SetMat4("view", view);
 		shader->SetMat4("projection", projection);
