@@ -27,6 +27,8 @@
     <None Include="Line.vertex" />
     <None Include="Line.fragment" />
     <None Include="Lighting.vertex" />
+    <None Include="DefaultMatVS.shader" />
+    <None Include="DefaultMatFS.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLWindow.cpp">
@@ -180,6 +182,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GLErrorReporting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\implot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\implot_demo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\implot_items.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -407,6 +418,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GLErrorReporting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\implot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\implot_internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

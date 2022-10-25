@@ -4,7 +4,6 @@
 extern GLSetup* GGLSPtr;
 EntityComponent::EntityComponent()
 {
-    component_id++;
     
 }
 
@@ -16,7 +15,9 @@ EntityComponent::~EntityComponent()
 
 void EntityComponent::Init()
 {
+   
     std::string message = name;
+   
     message += " was created.";
     MLOG_MESSAGE(message.c_str());
 }

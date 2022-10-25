@@ -7,6 +7,7 @@
 
 
 
+
 extern GLSetup* GGLSPtr = new GLSetup();
 extern GameLoop* GGLPtr;
 
@@ -21,8 +22,8 @@ GLSetup::~GLSetup()
 	// Shutdown and clean GUI
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
-
+	ImPlot::DestroyContext();
+	ImGui::DestroyContext();	
 	// if window exists destroy it
 	if (sdlWindow)
 		SDL_DestroyWindow(sdlWindow);
@@ -100,9 +101,13 @@ void GLSetup::StartSDLWindow()
 		throw std::runtime_error("GLEW could not be initialized!");		
 	}
 	
+	// Create default mesh shader
+	pipeline->CreateDefaultShader();
+
 	// Setup GUI
 	IMGUI_CHECKVERSION();
 	mainWindowGUIContext = ImGui::CreateContext();	
+	mainImPlotContext = ImPlot::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	/*io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
@@ -205,8 +210,8 @@ void GLSetup::Render()
 		// Draw Cubemap
 		pipeline->DrawCubeMap();
 
-		//// Draw all primitives to the screen
-		//pipeline->RenderPrimitives();
+		// Draw all primitives to the screen
+		pipeline->RenderPrimitives();
 		
 		//// Send projection and view matrices to objects
 		//// being rendered
@@ -321,7 +326,7 @@ void GLSetup::AddMaterialToPipeline(std::string primitiveName, Material* mat)
 	if (pipeline)
 	{
 		pipeline->UpdateShaderCache(mat);
-		pipeline->LoadShader(primitiveName, mat->Get());
+		pipeline->LoadShader(primitiveName, mat);
 	}
 
 }
@@ -331,19 +336,25 @@ void GLSetup::AddCubemapMaterial(Material* cubeMapMat)
 	
 }
 
+void GLSetup::GetDefaultMeshShader(Shader* defaultShader)
+{
+	if (pipeline)
+		pipeline->GetDefaultShader(defaultShader);
+}
+
 void GLSetup::SubmitCubeMapData(std::vector<TextureData*> cubemapData)
 {
 	if (pipeline)
 		pipeline->GenerateCubemap(cubemapData);
 }
 
-void GLSetup::ImportMesh(Mesh* mesh)
+void GLSetup::ImportMesh(std::string name, Mesh* mesh)
 {
 	if (pipeline)
 	{
-		pipeline->Import(mesh);
+		pipeline->Import(name, mesh);
 		// pass in render data to the renderer in the pipeline
-		pipeline->RequestForMeshVertexData(mesh->GetMeshData()->name);
+		pipeline->RequestForMeshVertexData(name);
 	}
 	
 }

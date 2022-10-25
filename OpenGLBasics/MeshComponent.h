@@ -7,7 +7,12 @@ class MeshComponent :
 {
 public:
     MeshComponent();
-    ~MeshComponent() { if (mesh) delete mesh; }
+    ~MeshComponent() 
+    { 
+        // TODO: Have users of mesh data request the memory allocation for data be freed
+        // on the rendering pipeline instead of doing so in the destructor
+        if (mesh) delete mesh;
+    }
     void AddMesh(Mesh* _mesh);
     void SetMaterial(Material* mat);
     void InitializeMesh(std::vector<DVertex> _vertices, std::vector<uint16_t> indices);

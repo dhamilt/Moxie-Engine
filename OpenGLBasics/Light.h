@@ -4,8 +4,15 @@
 struct Light
 {
 	int type;
+	bool active = true;
+	bool isLocal = false;
+	bool isSpot = false;
 	DVector3 position;
-	DVector3 direction;
+	DVector3 direction = DVector3(0.0f, 0.0f, 1.0f);
+	DVector3 halfVector = DVector3(1.0f, 0.0f, 0.0f);
+	
+	float spotCosineCutoff = .5f;
+	float spotExponent = 3;
 	float radius = 5;
 
 	float constant = 1.0f;

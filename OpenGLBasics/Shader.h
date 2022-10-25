@@ -6,7 +6,8 @@
 class Shader
 {
 public:
-	
+	// Hide the default constructor
+	Shader() {}
 	// new default constructor that accepts the vertex and fragment shader files
 	Shader(const char* vertexPath, const char* fragmentPath);
 	// Activate the shader
@@ -15,6 +16,7 @@ public:
 	void SetBool(const char* attributeName, const bool& val);
 	void SetFloat(const char* attributeName, const float& val);
 	void SetInt(const char* attributeName, const int& val);
+	void SetMat3(const char* attributeName, const DMat3x3& val);
 	void SetMat4(const char* attributeName, const DMat4x4& val);
 	void SetFloat4(const char* attributeName, const DVector4& val);
 	void SetFloat4(const char* attributeName, const float& x, const float& y, const float& z, const float& w);
@@ -25,14 +27,14 @@ public:
 	int GetShaderID();
 	bool operator==(Shader other) { return GetShaderID() == other.GetShaderID(); }
 private:
-	// Hide the default constructor
-	Shader(){}
+	
 	std::string vsPath;
 	std::string fsPath;
 	// id of the shader program
 	unsigned int id;
 	// shader parameter collections
-	std::map<std::string, DMat4x4>	matrixParamsCollection;
+	std::map<std::string, DMat3x3>	matrix3x3ParamsCollection;
+	std::map<std::string, DMat4x4>	matrix4x4ParamsCollection;
 	std::map<std::string, bool>		booleanParamsCollection;
 	std::map<std::string, float>	floatParamsCollection;
 	std::map<std::string, int>		integerParamsCollection;
@@ -129,7 +131,7 @@ inline void Shader::Use()
 	glUseProgram(id);	
 	
 	// load all matrix data
-	for (auto it = matrixParamsCollection.begin(); it != matrixParamsCollection.end(); it++)
+	for (auto it = matrix4x4ParamsCollection.begin(); it != matrix4x4ParamsCollection.end(); it++)
 	{
 		const char* name = it->first.c_str();
 		DMat4x4 val = it->second;
@@ -200,9 +202,14 @@ inline void Shader::SetInt(const char* attributeName, const int& val)
 	integerParamsCollection.insert_or_assign( attributeName, val );
 }
 
+inline void Shader::SetMat3(const char* attributeName, const DMat3x3& val)
+{
+	matrix3x3ParamsCollection.insert_or_assign(attributeName, val);
+}
+
 inline void Shader::SetMat4(const char* attributeName, const DMat4x4& val)
 {
-	matrixParamsCollection.insert_or_assign( attributeName, val );
+	matrix4x4ParamsCollection.insert_or_assign( attributeName, val );
 }
 
 inline void Shader::SetFloat4(const char* attributeName, const DVector4& val)

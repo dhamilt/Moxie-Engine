@@ -4,9 +4,17 @@
 extern GLSetup* GGLSPtr;
 MeshComponent::MeshComponent()
 {	
-	name = "MeshComponent" + std::to_string(component_id);
+	name = "MeshComponent";
+	if (component_id > 1)
+		name += std::to_string(component_id);
+	Init();
 	component_id++;
 	usesRenderData = true;
+	Shader defaultShader;
+	
+	GGLSPtr->GetDefaultMeshShader(&defaultShader);
+	if (&defaultShader)
+		material = new Material(&defaultShader);
 }
 
 void MeshComponent::AddMesh(Mesh* _mesh)
@@ -14,14 +22,14 @@ void MeshComponent::AddMesh(Mesh* _mesh)
 	mesh = _mesh;
 	// update the rendering pipeline with the changes
 	if (GGLSPtr)
-		GGLSPtr->ImportMesh(_mesh);
+		GGLSPtr->ImportMesh(name, _mesh);
 }
 
 void MeshComponent::SetMaterial(Material* mat)
 {
 	material = mat;
 	if (GGLSPtr)
-		GGLSPtr->AddMaterialToPipeline(mesh->GetMeshData()->name, mat);
+		GGLSPtr->AddMaterialToPipeline(name, mat);
 }
 
 void MeshComponent::InitializeMesh(std::vector<DVertex> _vertices, std::vector<uint16_t> indices)

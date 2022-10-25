@@ -79,10 +79,13 @@ bool GameLoop::Loop()
 		_deltaTime = timeSpan.count();
 
 		// Call all subscribers' Update functions with the current deltaTime		
-			for (int i = 0; i < objsInLoop.size(); i++)
-				if(objsInLoop[i])
-					if(objsInLoop[i]->hasTick)
-						objsInLoop[i]->Update(_deltaTime);
+		for (int i = 0; i < objsInLoop.size(); i++)
+		{
+			assert(objsInLoop[i]);
+			if (objsInLoop[i])
+				if (objsInLoop[i]->hasTick)
+					objsInLoop[i]->Update(_deltaTime);
+		}
 
 		// Set the current frame time as the last frame
 		lastFrame = currentFrame;

@@ -72,16 +72,16 @@ void Mesh::AddDataToGLBuffer()
 		(void*)offsetof(DVertex, DVertex::normal)// buffer offset
 	);
 
-	// Add vertex colors for model
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(
-		3, // layout index
-		3, // number of dimensions
-		GL_FLOAT, // value type for dimensions
-		GL_FALSE, // normalized
-		sizeof(DVertex), // stride
-		(void*)offsetof(DVertex, DVertex::color) // buffer offset
-	);
+	//// Add vertex colors for model
+	//glEnableVertexAttribArray(3);
+	//glVertexAttribPointer(
+	//	3, // layout index
+	//	3, // number of dimensions
+	//	GL_FLOAT, // value type for dimensions
+	//	GL_FALSE, // normalized
+	//	sizeof(DVertex), // stride
+	//	(void*)offsetof(DVertex, DVertex::color) // buffer offset
+	//);
 }
 
 void Mesh::Import(std::vector<DVertex> _vertices, std::vector<uint16_t> indices, std::string meshName)
@@ -116,8 +116,7 @@ void Mesh::Draw(DMat4x4 projection, DMat4x4 view)
 	}
 	if (shader)
 	{
-		mat3 normalMatrix = mat3(view);
-		normalMatrix = glm::transpose(glm::inverse(normalMatrix));
+		
 		shader->Use();
 		shader->SetMat4("view", view);
 		shader->SetMat4("projection", projection);

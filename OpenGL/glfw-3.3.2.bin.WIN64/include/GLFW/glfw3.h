@@ -126,6 +126,7 @@ extern "C" {
  #endif
  #define GLFW_APIENTRY_DEFINED
 #endif /* APIENTRY */
+#undef APIENTRY
 
 /* Some Windows OpenGL headers need this.
  */

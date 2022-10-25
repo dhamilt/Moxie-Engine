@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
+#include "implot.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <SDL.h>
@@ -38,8 +39,9 @@ class GLSetup
 		void GetViewportDimensions(int& _width, int& _height);
 		void AddMaterialToPipeline(std::string primitiveName, Material* mat);
 		void AddCubemapMaterial(Material* cubeMapMat);
+		void GetDefaultMeshShader(Shader* defaultShader);
 		void SubmitCubeMapData(std::vector<TextureData*> cubemapData);
-		void ImportMesh(Mesh* mesh);
+		void ImportMesh(std::string primitiveName, Mesh* mesh);
 		void ImportMesh(std::string primitiveName, std::vector<DVertex> vertices, std::vector<uint16_t> indices);
 		BRenderingPipeline* GetPipeline();
 		DMat4x4 GetCameraView();
@@ -87,6 +89,7 @@ private:
 	std::unordered_map<std::string, Light> lightMap;
 	float white4[4]{White.r, White.g, White.b, White.a};
 	ImGuiContext* mainWindowGUIContext;
+	ImPlotContext* mainImPlotContext;
 	ImGuiWindow* windowInFocus;
 	bool viewportInFocus;
 	WMainMenu* mainMenu;

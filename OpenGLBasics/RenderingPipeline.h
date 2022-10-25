@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "Shader.h"
 #include "TextureData.h"
+#include "Light.h"
 
 class EntityComponent;
 class Camera;
@@ -15,11 +16,12 @@ struct RenderBufferData
 {
 	~RenderBufferData();
 	bool hasTexCoords = false;
+	Color color;
 	GLuint vao, vbo, ebo;
 	std::vector<DVertex> vertices;
 	std::vector<uint16_t> indices;
 	DMat4x4 transform;
-	std::shared_ptr<Shader*> shader;
+	std::shared_ptr<Shader> shader;
 };
 
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
@@ -32,7 +34,7 @@ class BRenderingPipeline final
 	/** Vertex specification Functions*/
 	// Imports mesh data for pipeline to render 
 	void Import(std::string primitiveName, std::vector<DVertex>_vertices, std::vector<uint16_t>_indices);
-	void Import(Mesh* mesh);
+	void Import(std::string primitiveName, Mesh* mesh);
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
 	// Feeds mesh data to rendering platform
 	void RequestForMeshVertexData(std::string primitiveName);
@@ -47,14 +49,22 @@ class BRenderingPipeline final
 	void UpdateProjectionMatrix(float fieldOfView, float width, float height, float nearClippingPlane, float farClippingPlane);
 	void UpdateViewMatrix(DMat4x4 _view);
 	/** Vertex Shading Functions */
+	// Create default mesh shader
+	void CreateDefaultShader();
 	// Adds or updates shader to be used by primitive
-	void LoadShader(std::string primitiveName, Shader* shader);
+	void LoadShader(std::string primitiveName, Material* mat);
+	// Getter function for default shader
+	void GetDefaultShader(Shader* defaultShader);
 	// Adds shader to cubemap
 	void LoadDefaultCubemapShader();
 	// Adds shader to the cache
 	void UpdateShaderCache(Shader* shaderToAdd);
 	void UpdateShaderCache(Material* shaderToAdd);
 	void UpdateDefaultCubemapShader();
+	// Request to add a light to the scene
+	bool RequestForLight(Light& light);
+	// Passes in light data for shader
+	void UpdateLightDataForShader(RenderBufferData* renderData);
 	/** Vertex Post Processing Functions */
 
 	/** Drawing Functions */
@@ -73,6 +83,9 @@ class BRenderingPipeline final
 	void DrawMesh(RenderBufferData* renderData);
 	// Draw function for rendering cubemaps
 	void DrawCubeMap();
+
+public:
+	static const int MAX_LIGHT_COUNT;
 private:
 	// TODO: Create a class/struct that instructs the pipeline 
 	// what the intended usage of the framebuffer is
@@ -83,9 +96,10 @@ private:
 	int screenWidth, screenHeight;
 	std::vector<GLuint> framebuffers;
 	std::unordered_map<std::string, RenderBufferData*>primitives;
+	std::vector<Light*> lightCache;
 	DMat4x4 projectionMatrix, viewMatrix;
 	bool perspectiveView = true;
-	std::vector<std::shared_ptr<Shader*>> shaderCache;
+	std::vector<std::shared_ptr<Shader>> shaderCache;
 	friend class EntityComponent;
 	friend class Camera;
 	friend class GLSetup;

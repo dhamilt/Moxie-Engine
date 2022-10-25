@@ -6,8 +6,10 @@
 #include "Cubemaps.h"
 
 extern GLSetup* GGLSPtr;
+const int BRenderingPipeline::MAX_LIGHT_COUNT = 10;
 BRenderingPipeline::BRenderingPipeline()
 {
+	
 }
 
 BRenderingPipeline::~BRenderingPipeline()
@@ -46,10 +48,10 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 	}
 }
 
-void BRenderingPipeline::Import(Mesh* mesh)
+void BRenderingPipeline::Import(std::string primitiveName, Mesh* mesh)
 {
 	MeshDataParams* meshData = mesh->GetMeshData();
-	Import(meshData->name, meshData->vertices, meshData->indices);
+	Import(primitiveName, meshData->vertices, meshData->indices);
 }
 
 void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)
@@ -94,9 +96,12 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 	RenderBufferData* renderData = primitives[primitiveName];
 	// create buffers for the vertex array object, vertex buffer object,
 	// and element buffer object
-	glGenVertexArrays(1, &renderData->vao);
-	glGenBuffers(1, &renderData->vbo);
-	glGenBuffers(1, &renderData->ebo);
+	if(renderData->vao == 0)
+		glGenVertexArrays(1, &renderData->vao);
+	if(renderData->vbo == 0)
+		glGenBuffers(1, &renderData->vbo);
+	if(renderData->ebo == 0)
+		glGenBuffers(1, &renderData->ebo);
 
 	// Bind the buffers and pass in the appropriate data for the following:
 	// the vertex array object
@@ -142,40 +147,35 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 	);
 
 	// Add vertex colors for model
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(
-		3, // layout index
-		3, // number of dimensions
-		GL_FLOAT, // value type for dimensions
-		GL_FALSE, // normalized
-		sizeof(DVertex), // stride
-		(void*)offsetof(DVertex, DVertex::color) // buffer offset
-	);
+	//glEnableVertexAttribArray(3);
+	//glVertexAttribPointer(
+	//	3, // layout index
+	//	4, // number of dimensions
+	//	GL_FLOAT, // value type for dimensions
+	//	GL_FALSE, // normalized
+	//	sizeof(DVertex), // stride
+	//	(void*)offsetof(DVertex, DVertex::color) // buffer offset
+	//);
 }
 
 void BRenderingPipeline::RequestForDefaultSkyboxVerts()
 {
-	// Generate skybox vert buffer from default verts
-	CubemapData* defaultSkyBoxPtr = &defaultSkyBox;
-	GLuint* vao, * vbo, * ebo;
-	vao = &defaultSkyBoxPtr->vao;
-	vbo = &defaultSkyBoxPtr->vbo;
-	ebo = &defaultSkyBoxPtr->ebo;
-
-	if(!*vao)
-		glGenVertexArrays(1, vao);
-	if(!*vbo)
-		glGenBuffers(1, vbo);
-	if(!*ebo)
-		glGenBuffers(1, ebo);
+	assert(cubemapParams);
+	// Generate skybox vert buffer from default verts	
+	if(cubemapParams->vao == 0)
+		glGenVertexArrays(1, &cubemapParams->vao);
+	if(cubemapParams->vbo == 0)
+		glGenBuffers(1, &cubemapParams->vbo);
+	if(cubemapParams->ebo == 0)
+		glGenBuffers(1, &cubemapParams->ebo);
 
 	// Feed vert data to renderer
-	glBindVertexArray(*vao);
-	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(DVector3) * defaultSkyBoxPtr->vertPositions.size(),
-				&defaultSkyBoxPtr->vertPositions[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * defaultSkyBoxPtr->indices.size(), &defaultSkyBoxPtr->indices[0], GL_STATIC_DRAW);
+	glBindVertexArray(cubemapParams->vao);
+	glBindBuffer(GL_ARRAY_BUFFER, cubemapParams->vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(DVector3) * cubemapParams->vertPositions.size(),
+				&cubemapParams->vertPositions[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubemapParams->ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * cubemapParams->indices.size(), &cubemapParams->indices[0], GL_STATIC_DRAW);
 	
 	// Pass vertex data to GPU for shaders
 	glEnableVertexAttribArray(0);
@@ -218,8 +218,16 @@ void BRenderingPipeline::UpdateViewMatrix(DMat4x4 _view)
 	viewMatrix = _view;
 }
 
-void BRenderingPipeline::LoadShader(std::string primitiveName, Shader* shader)
+void BRenderingPipeline::CreateDefaultShader()
 {
+	// create default mesh shader for cache
+	std::shared_ptr<Shader> cachedShader(new Shader("DefaultMatVS.shader", "DefaultMatFS.shader"));
+	shaderCache.push_back(cachedShader);
+}
+
+void BRenderingPipeline::LoadShader(std::string primitiveName, Material* mat)
+{
+	RenderBufferData* renderData;
 	// does the primitive exist
 	auto searchPName = primitives.begin();
 	while (searchPName != primitives.end())
@@ -228,21 +236,36 @@ void BRenderingPipeline::LoadShader(std::string primitiveName, Shader* shader)
 			break;
 		searchPName++;
 	}
-	assert(searchPName != primitives.end());
+	// if the primitive hasn't been added to the pipeline
+	if (searchPName == primitives.end())
+		renderData = new RenderBufferData();
+	else
+		renderData = primitives[primitiveName];
 
 	// is shader in cache
-	auto searchShader = shaderCache.begin();
+	Shader shader = *mat->Get();
+	auto searchShader = shaderCache.begin();	
 	
 	while (searchShader != shaderCache.end())
 	{
-		Shader* cachedShader = *searchShader->get();
-		if (*shader == *cachedShader)
+		std::weak_ptr<Shader>weakShader(*searchShader);		
+		Shader* cachedShader = weakShader.lock().get();
+		if (shader == *cachedShader)
 			break;
-		searchShader++;
+		searchShader++;		
 	}
-	assert(searchShader != shaderCache.end());
+	//assert(searchShader != shaderCache.end());
+	if (searchShader == shaderCache.end())
+		shaderCache.push_back(std::make_shared<Shader>(shader));
+	
+	renderData->shader = *searchShader;
+	renderData->color = mat->color;
+}
 
-	primitives[primitiveName]->shader = *searchShader;
+void BRenderingPipeline::GetDefaultShader(Shader* defaultShader)
+{
+	*defaultShader = *shaderCache[0].get();
+	
 }
 
 void BRenderingPipeline::LoadDefaultCubemapShader()
@@ -253,18 +276,21 @@ void BRenderingPipeline::LoadDefaultCubemapShader()
 
 void BRenderingPipeline::UpdateShaderCache(Shader* shaderToAdd)
 {
+	Shader temp = *shaderToAdd;
 	auto searchPtr = shaderCache.begin();
 	// if shader already exists in cache
 	// exit function
 	while (searchPtr != shaderCache.end())
 	{
-		Shader* current = *searchPtr->get();
+		std::weak_ptr<Shader> weakShader(*searchPtr);
+		Shader* current = weakShader.lock().get();
 		if (*current == *shaderToAdd)
 			return;
 		searchPtr++;
 	}
 	// add shader to cache
-	shaderCache.push_back(std::make_shared<Shader*>(shaderToAdd));
+	if(searchPtr == shaderCache.end())
+		shaderCache.push_back(std::make_shared<Shader>(*shaderToAdd));
 }
 
 void BRenderingPipeline::UpdateShaderCache(Material* shaderToAdd)
@@ -278,8 +304,93 @@ void BRenderingPipeline::UpdateDefaultCubemapShader()
 	{
 		// Converting view matrix from DMat4x4 to mat3 then back to DMat4x4
 		// again in order to remove the translation
-		cubemapShader->SetMat4("view", DMat4x4(mat3(viewMatrix)));
+		cubemapShader->SetMat4("view", DMat4x4(DMat3x3(viewMatrix)));
 		cubemapShader->SetMat4("projection", projectionMatrix);
+	}
+}
+
+bool BRenderingPipeline::RequestForLight(Light& light)
+{
+	if ((int)lightCache.size() < MAX_LIGHT_COUNT)
+	{
+		return false;
+	}
+
+	Light* lightPtr = new Light();
+	lightCache.push_back(lightPtr);
+	light = *lightPtr;
+	return true;
+}
+
+void BRenderingPipeline::UpdateLightDataForShader(RenderBufferData* renderData)
+{
+
+	if (renderData)
+	{
+		Shader* shader;
+		if (!renderData->shader)
+			renderData->shader = shaderCache[0];
+		
+		shader = renderData->shader.get();
+		DMat4x4 model = renderData->transform;
+		/*DMat4x4 mvp = projectionMatrix * viewMatrix * model;
+		DMat4x4 mv = viewMatrix * model;*/
+		DMat3x3 normalMatrix = DMat3x3(glm::transpose(glm::inverse(model)));
+		DVector3 eyeDir = GGLSPtr->mainCamera->transform.GetForwardVector();
+		shader->SetMat4("model", model);
+		shader->SetMat4("view", viewMatrix);
+		shader->SetMat4("projection", projectionMatrix);
+		shader->SetFloat4("objectColor", renderData->color.rgba());
+		shader->SetMat3("normalMatrix", normalMatrix);
+		shader->SetInt("lightCount", (int)lightCache.size());
+		for (int i = 0; i < (int)lightCache.size(); i++)
+		{
+			Light* light = lightCache[i];
+			std::string attributeName;
+			std::string index = "[" + std::to_string(i) + "]";
+
+			attributeName = "Lights" + index + ".isEnabled";
+			shader->SetBool(attributeName.c_str(), light->active);
+
+			attributeName = "Lights" + index + ".isLocal";
+			shader->SetBool(attributeName.c_str(), light->isLocal);
+
+			attributeName = "Lights" + index + ".isSpot";
+			shader->SetBool(attributeName.c_str(), light->isSpot);
+
+			attributeName = "Lights" + index + ".ambient";
+			shader->SetFloat3(attributeName.c_str(), light->ambient);
+
+			attributeName = "Lights" + index + ".color";
+			shader->SetFloat3(attributeName.c_str(), light->lightColor.rgb());
+
+			attributeName = "Lights" + index + ".position";
+			shader->SetFloat3(attributeName.c_str(), light->position);
+
+			attributeName = "Lights" + index + ".halfVector";
+			shader->SetFloat3(attributeName.c_str(), light->halfVector);
+
+			attributeName = "Lights" + index + ".coneDir";
+			shader->SetFloat3(attributeName.c_str(), light->direction);
+
+			attributeName = "Lights" + index + ".strength";
+			shader->SetFloat(attributeName.c_str(), light->lightIntensity);
+
+			attributeName = "Lights" + index + ".spotCosineCutoff";
+			shader->SetFloat(attributeName.c_str(), light->spotCosineCutoff);
+
+			attributeName = "Lights" + index + ".spotExponent";
+			shader->SetFloat(attributeName.c_str(), light->spotExponent);
+
+			attributeName = "Lights" + index + ".constantAttenuation";
+			shader->SetFloat(attributeName.c_str(), light->constant);
+
+			attributeName = "Lights" + index + ".linearAttenuation";
+			shader->SetFloat(attributeName.c_str(), light->linear);
+
+			attributeName = "Lights" + index + ".quadraticAttenuation";
+			shader->SetFloat(attributeName.c_str(), light->quadratic);
+		}
 	}
 }
 
@@ -353,26 +464,29 @@ void BRenderingPipeline::RenderPrimitives()
 	for (auto it = primitives.begin(); it != primitives.end(); it++)
 	{
 		RenderBufferData* primitive = it->second;
+		UpdateLightDataForShader(primitive);
 		DrawMesh(primitive);
 	}
 }
 
 void BRenderingPipeline::DrawMesh(RenderBufferData* renderData)
-{
-	
+{	
 	// Load the shader from the cache
-	Shader* shader = *renderData->shader.get();
+	Shader* shader = renderData->shader.get();
 	assert(shader);
 	shader->Use();
 	// Load texture(s)
 	// TODO
 	// Use vertex data for current primitive
-	GLuint vao = renderData->vao;
 	uint32_t indexSize = (uint32_t)renderData->indices.size();
-	glBindVertexArray(vao);
+	
+	glBindVertexArray(renderData->vao);
+	glBindBuffer(GL_ARRAY_BUFFER, renderData->vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData->ebo);
 	glDrawElements(GL_TRIANGLES, indexSize, GL_UNSIGNED_SHORT, &renderData->indices);
 	glBindVertexArray(0);
-
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void BRenderingPipeline::DrawCubeMap()
@@ -390,10 +504,10 @@ void BRenderingPipeline::DrawCubeMap()
 	
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapParams->cubemapID);
 	glDrawElements(GL_TRIANGLES, (int)cubemapParams->indices.size(), GL_UNSIGNED_SHORT, 0);
-	glBindVertexArray(0);
+	/*glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);*/
 	glDepthMask(GL_TRUE);
 
 }

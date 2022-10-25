@@ -23,10 +23,9 @@
 #include "SpriteRenderer.h"
 #include "LineShaperComponent.h"
 #include "ShapeTransformationLibrary.h"
-#include "PxPhysicsAPI.h"
 #include "AudioEQComponent.h"
 
-#define  MAXCHAR 1024
+#define  MAXCHARLIMIT 1024
 
 const float PI = 3.1415f;
 
@@ -87,7 +86,7 @@ extern GLSetup* GGLSPtr;
 extern GameLoop* GGLPtr;
 
 int main(int argc, char* argv[])
-{		
+{
 	// Delayed initialization("Lazy" init)	
 	GGLSPtr->Init();
 	GGLPtr->Init();
@@ -129,14 +128,14 @@ int main(int argc, char* argv[])
 	Texture* texture = new Texture("MemeJoe.bmp");
 
 	// Make a monkey mesh 
-	Shader* defaultMeshShader = new Shader("Lighting.vertex", "Lighting.fragment");
+	/*Shader* defaultMeshShader = new Shader("Lighting.vertex", "Lighting.fragment");
 	Material* defaultMeshMat = new Material();
-	defaultMeshMat->SetShader(defaultMeshShader);
+	defaultMeshMat->SetShader(defaultMeshShader);*/
 	Mesh* monkeyMesh = new Mesh();
 	monkeyMesh->Import(vertices, indices, "Suzzanne");
 	MeshComponent* monkeyMeshComponent = new MeshComponent();
 	monkeyMeshComponent->AddMesh(monkeyMesh);
-	monkeyMeshComponent->SetMaterial(defaultMeshMat);
+	//monkeyMeshComponent->SetMaterial(defaultMeshMat);
 	//monkeyMeshComponent->mesh = new Mesh(vertices, indices, );
 	//monkeyMeshComponent->mesh->ApplyTexture(texture);
 	monkeyMeshComponent->transform.Translate(DVector3(0, 1, 7));
@@ -196,7 +195,6 @@ int main(int argc, char* argv[])
 	GGLPtr->Loop();
 	
 	
-
 	return 0;
 }
 

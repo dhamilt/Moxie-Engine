@@ -1,6 +1,6 @@
 #pragma once
 #include "3DTypeDefs.h"
-
+#include "Color.h"
 
 
 class DVertex
@@ -15,7 +15,6 @@ public:
 	DVector3 pos;
 	DVector2 texCoord;
 	DVector3 normal;
-	DVector3 color = DVector3();
 
 	inline bool operator==(const DVertex& other)
 	{

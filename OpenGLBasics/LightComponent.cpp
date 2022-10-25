@@ -5,14 +5,16 @@
 extern GLSetup* GGLSPtr;
 LightComponent::LightComponent()
 {
-	name = "LightComponent" + std::to_string(component_id);
+	name = "LightComponent";
+	if (component_id > 1)
+		name += std::to_string(component_id);
 	Init();
 	component_id++;
 }
 
 LightComponent::LightComponent(LightTypes _lightType) : lightType(_lightType)
 {
-	name = "LightComponent" + std::to_string(component_id);
+	name = "LightComponent";
 	printf("%s was spawned!\n", name.c_str());
 }
 
