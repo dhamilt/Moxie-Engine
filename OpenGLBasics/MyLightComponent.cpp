@@ -3,7 +3,7 @@
 
 MyLightComponent::MyLightComponent()
 {
-	lightColor = Blue;
+	lightColor = Color::Blue;
 }
 
 void MyLightComponent::Update(double deltaTime)

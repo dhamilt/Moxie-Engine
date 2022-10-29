@@ -1,5 +1,5 @@
 #pragma once
-#include "glPCH.h"
+//#include "glPCH.h"
 
 typedef glm::vec4 DVector4;
 typedef glm::vec3 DVector3;

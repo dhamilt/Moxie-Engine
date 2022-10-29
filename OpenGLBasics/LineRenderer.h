@@ -89,7 +89,7 @@ private:
     std::vector<DVector3> ToVectorArray();
     // Private members
 private:
-    Color lineColor = White;
+    Color lineColor = Color::White;
     Color startColor, endColor;
     bool lerpColor = false;
     std::vector<DVector3> linePoints;

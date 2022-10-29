@@ -14,7 +14,7 @@ public:
     float radius = 5.0f;
     float linearLighting = 1.0f;
 
-    Color lightColor = Red;
+    Color lightColor = Color::Red;
     virtual void Update(double deltaTime) override;
     // Converts the current light info on this component 
     // into a Light struct in order to be sent to the "rendering thread"

@@ -26,7 +26,7 @@ uniform float strength;
 uniform vec3 eyeDir;
 uniform vec4 objectColor;
 
-in vec2 texCoord;
+//in vec2 texCoord;
 in vec3 normal;
 in vec4 position;
 

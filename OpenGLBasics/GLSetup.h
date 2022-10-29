@@ -87,7 +87,7 @@ private:
 	// Array cache of all light info in the level
 	std::vector<Light> lightsCache;
 	std::unordered_map<std::string, Light> lightMap;
-	float white4[4]{White.r, White.g, White.b, White.a};
+	float white4[4]{1.0f, 1.0f, 1.0f, 1.0f};
 	ImGuiContext* mainWindowGUIContext;
 	ImPlotContext* mainImPlotContext;
 	ImGuiWindow* windowInFocus;

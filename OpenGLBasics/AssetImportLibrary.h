@@ -1,5 +1,4 @@
 #pragma once
-#include "glPCH.h"
 class AssetImportLibrary
 {
 public:

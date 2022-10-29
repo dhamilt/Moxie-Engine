@@ -96,22 +96,29 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 	RenderBufferData* renderData = primitives[primitiveName];
 	// create buffers for the vertex array object, vertex buffer object,
 	// and element buffer object
-	if(renderData->vao == 0)
-		glGenVertexArrays(1, &renderData->vao);
-	if(renderData->vbo == 0)
-		glGenBuffers(1, &renderData->vbo);
-	if(renderData->ebo == 0)
-		glGenBuffers(1, &renderData->ebo);
-
+	
+	
+	
+	assert(*std::max_element(renderData->indices.begin(), renderData->indices.end()) < renderData->vertices.size());
 	// Bind the buffers and pass in the appropriate data for the following:
+	
 	// the vertex array object
+	if (renderData->vao == 0)
+		glGenVertexArrays(1, &renderData->vao);
 	glBindVertexArray(renderData->vao);
-	// the vertex buffer object
-	glBindBuffer(GL_ARRAY_BUFFER, renderData->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(DVertex) * renderData->vertices.size(), &renderData->vertices[0], GL_STATIC_DRAW);
+	
 	// the index buffer
+	if (renderData->ebo == 0)
+		glGenBuffers(1, &renderData->ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * renderData->indices.size(), &renderData->indices[0], GL_STATIC_DRAW);
+
+	// the vertex buffer object
+	if (renderData->vbo == 0)
+		glGenBuffers(1, &renderData->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, renderData->vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(DVertex) * renderData->vertices.size(), &renderData->vertices[0], GL_STATIC_DRAW);
+	
 
 	// Add vertex positions for model
 	glEnableVertexAttribArray(0);
@@ -121,7 +128,7 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 		GL_FLOAT, // vertex buffer type
 		GL_FALSE, // normalized?
 		sizeof(DVertex), // stride
-		(void*)offsetof(DVertex, DVertex::pos) // buffer offset
+		(void*)offsetof(DVertex, pos) // buffer offset
 	);
 
 	// Add vertex texture coordinates for model	
@@ -132,7 +139,7 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 		GL_FLOAT,
 		GL_FALSE,
 		sizeof(DVertex),
-		(void*)offsetof(DVertex, DVertex::texCoord)
+		(void*)offsetof(DVertex, texCoord)
 	);
 
 	// Add vertex normals for model	
@@ -143,19 +150,13 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 		GL_FLOAT, // value type for dimensions
 		GL_FALSE, // normalized?
 		sizeof(DVertex), // stride
-		(void*)offsetof(DVertex, DVertex::normal)// buffer offset
+		(void*)offsetof(DVertex, normal)// buffer offset
 	);
-
-	// Add vertex colors for model
-	//glEnableVertexAttribArray(3);
-	//glVertexAttribPointer(
-	//	3, // layout index
-	//	4, // number of dimensions
-	//	GL_FLOAT, // value type for dimensions
-	//	GL_FALSE, // normalized
-	//	sizeof(DVertex), // stride
-	//	(void*)offsetof(DVertex, DVertex::color) // buffer offset
-	//);
+	
+		
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void BRenderingPipeline::RequestForDefaultSkyboxVerts()
@@ -187,7 +188,7 @@ void BRenderingPipeline::RequestForDefaultSkyboxVerts()
 		sizeof(DVector3),
 		(void*)0
 	);
-	Moxie::GLErrorReporting();
+	
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -335,6 +336,7 @@ void BRenderingPipeline::UpdateLightDataForShader(RenderBufferData* renderData)
 		DMat4x4 model = renderData->transform;
 		/*DMat4x4 mvp = projectionMatrix * viewMatrix * model;
 		DMat4x4 mv = viewMatrix * model;*/
+		renderData->color = Color::Blue;
 		DMat3x3 normalMatrix = DMat3x3(glm::transpose(glm::inverse(model)));
 		DVector3 eyeDir = GGLSPtr->mainCamera->transform.GetForwardVector();
 		shader->SetMat4("model", model);
@@ -417,7 +419,7 @@ void BRenderingPipeline::GenerateDefaultFramebuffer()
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
 	Moxie::FrameBufferErrorCheck();
-	Moxie::GLErrorReporting();
+	
 
 	// Remove bindings
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -478,15 +480,13 @@ void BRenderingPipeline::DrawMesh(RenderBufferData* renderData)
 	// Load texture(s)
 	// TODO
 	// Use vertex data for current primitive
-	uint32_t indexSize = (uint32_t)renderData->indices.size();
 	
-	glBindVertexArray(renderData->vao);
-	glBindBuffer(GL_ARRAY_BUFFER, renderData->vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData->ebo);
-	glDrawElements(GL_TRIANGLES, indexSize, GL_UNSIGNED_SHORT, &renderData->indices);
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(renderData->vao);	
+	
+	glDrawElements(GL_TRIANGLES, (uint32_t)renderData->indices.size(), GL_UNSIGNED_SHORT, &renderData->indices);
+	
+	glBindVertexArray(0);	
+	
 }
 
 void BRenderingPipeline::DrawCubeMap()
@@ -519,7 +519,7 @@ RenderBufferData::~RenderBufferData()
 		shader.reset();
 
 	// remove glsl hooks
-	glDisableVertexAttribArray(0 | 1 | 2 | 3);
+	glDisableVertexAttribArray(0 | 1 | 2);
 
 	// free allocation to all buffer objects
 	glDeleteVertexArrays(1, &vao);

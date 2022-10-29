@@ -1,5 +1,4 @@
 #pragma once
-#include "glPCH.h"
 
 struct Color
 {
@@ -25,8 +24,13 @@ struct Color
 
 	void ClampValues();
 	float r, g, b, a;
-	
-	
+	static const Color Blue;
+	static const Color Green;
+	static const Color Red;
+	static const Color Yellow;
+	static const Color Purple;
+	static const Color Cyan;
+	static const Color White;
 };
 
 
@@ -38,10 +42,10 @@ inline void Color::ClampValues()
 	this->a = glm::clamp(this->a, 0.0f, 1.0f);
 }
 
-static const Color Blue = Color(0.0f, 0.0f, 1.0f, 1.0f);
-static const Color Green = Color(0.0f, 1.0f, 0.0f, 1.0f);
-static const Color Red = Color(1.0f, 0.0f, 0.0f, 1.0f);
-static const Color Purple = Color(1.0f, 0.0f, 1.0f, 1.0f);
-static const Color Yellow = Color(1.0f, 1.0f, 0.0f, 1.0f);
-static const Color Cyan = Color(0.0f, 1.0f, 1.0f, 1.0f);
-static const Color White = Color(1.0f, 1.0f, 1.0f, 1.0f);
+const inline Color Color::Blue = Color(0.0f, 0.0f, 1.0f, 1.0f);
+const inline Color Color::Green = Color(0.0f, 1.0f, 0.0f, 1.0f);
+const inline Color Color::Red = Color(1.0f, 0.0f, 0.0f, 1.0f);
+const inline Color Color::Purple = Color(1.0f, 0.0f, 1.0f, 1.0f);
+const inline Color Color::Yellow = Color(1.0f, 1.0f, 0.0f, 1.0f);
+const inline Color Color::Cyan = Color(0.0f, 1.0f, 1.0f, 1.0f);
+const inline Color Color::White = Color(1.0f, 1.0f, 1.0f, 1.0f);

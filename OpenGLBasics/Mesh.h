@@ -156,7 +156,7 @@ public:
 
 	private:
 		MeshDataParams* meshData;
-		Color materialColor = Yellow;
+		Color materialColor = Color::Yellow;
 		DMat4x4  model = DMat4x4(1.0f);
 		uint8_t textureApplied = false;
 		GLuint textureID;

@@ -71,17 +71,7 @@ void Mesh::AddDataToGLBuffer()
 		sizeof(DVertex), // stride
 		(void*)offsetof(DVertex, DVertex::normal)// buffer offset
 	);
-
-	//// Add vertex colors for model
-	//glEnableVertexAttribArray(3);
-	//glVertexAttribPointer(
-	//	3, // layout index
-	//	3, // number of dimensions
-	//	GL_FLOAT, // value type for dimensions
-	//	GL_FALSE, // normalized
-	//	sizeof(DVertex), // stride
-	//	(void*)offsetof(DVertex, DVertex::color) // buffer offset
-	//);
+	
 }
 
 void Mesh::Import(std::vector<DVertex> _vertices, std::vector<uint16_t> indices, std::string meshName)

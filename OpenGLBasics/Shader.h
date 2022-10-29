@@ -130,12 +130,20 @@ inline void Shader::Use()
 {
 	glUseProgram(id);	
 	
-	// load all matrix data
+	// load all matrix4x4 data
 	for (auto it = matrix4x4ParamsCollection.begin(); it != matrix4x4ParamsCollection.end(); it++)
 	{
 		const char* name = it->first.c_str();
 		DMat4x4 val = it->second;
 		glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, glm::value_ptr(val));
+	}
+
+	// load all matrix3x3 data
+	for (auto it = matrix3x3ParamsCollection.begin(); it != matrix3x3ParamsCollection.end(); it++)
+	{
+		const char* name = it->first.c_str();
+		DMat3x3 val = it->second;
+		glUniformMatrix3fv(glGetUniformLocation(id, name), 1, GL_FALSE, glm::value_ptr(val));
 	}
 
 	// load all boolean data

@@ -5,7 +5,7 @@ layout(location = 1) in vec2 vertexTexCoord;
 layout(location = 2) in vec3 vertexNormal;
 
 
-out vec2 texCoord;
+//out vec2 texCoord;
 out vec3 normal;
 out vec4 position;
 

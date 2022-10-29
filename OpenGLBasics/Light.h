@@ -24,6 +24,6 @@ struct Light
 	DVector3 specular = DVector3(1.0f, 0.5f, 0.0f);
 
 	float lightIntensity = 1.0f;
-	Color lightColor = White;
+	Color lightColor = Color::White;
 };
 

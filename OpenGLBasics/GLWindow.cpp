@@ -127,18 +127,12 @@ int main(int argc, char* argv[])
 	// Create a texture
 	Texture* texture = new Texture("MemeJoe.bmp");
 
-	// Make a monkey mesh 
-	/*Shader* defaultMeshShader = new Shader("Lighting.vertex", "Lighting.fragment");
-	Material* defaultMeshMat = new Material();
-	defaultMeshMat->SetShader(defaultMeshShader);*/
+	// Make a monkey mesh 	
 	Mesh* monkeyMesh = new Mesh();
 	monkeyMesh->Import(vertices, indices, "Suzzanne");
 	MeshComponent* monkeyMeshComponent = new MeshComponent();
 	monkeyMeshComponent->AddMesh(monkeyMesh);
-	//monkeyMeshComponent->SetMaterial(defaultMeshMat);
-	//monkeyMeshComponent->mesh = new Mesh(vertices, indices, );
-	//monkeyMeshComponent->mesh->ApplyTexture(texture);
-	monkeyMeshComponent->transform.Translate(DVector3(0, 1, 7));
+	monkeyMeshComponent->transform.Translate(DVector3(0, -2, 7));
 	monkeyMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
 	actor->AddComponent(monkeyMeshComponent);
 
@@ -158,16 +152,16 @@ int main(int argc, char* argv[])
 	
 
 	// Make a rotating light
-	RotatingLightComponent* rotLight = new RotatingLightComponent();
-	rotLight->SetTarget(&monkeyMeshComponent->transform);
-	// set it to a spot light
-	rotLight->lightType = LightComponent::LightTypes::Spot;
-	// increase its radius
-	rotLight->radius = 5.0f;
-	rotLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
-	rotLight->transform.Translate(DVector3(-3, 1, 7));
-	rotLight->intensity = 60.0f;
-	actor->AddComponent(rotLight);
+	//RotatingLightComponent* rotLight = new RotatingLightComponent();
+	//rotLight->SetTarget(&monkeyMeshComponent->transform);
+	//// set it to a spot light
+	//rotLight->lightType = LightComponent::LightTypes::Spot;
+	//// increase its radius
+	//rotLight->radius = 5.0f;
+	//rotLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
+	//rotLight->transform.Translate(DVector3(-3, 1, 7));
+	//rotLight->intensity = 60.0f;
+	//actor->AddComponent(rotLight);
 
 	
 	// Create an Audio Equalizer LineRendering component
@@ -183,7 +177,7 @@ int main(int argc, char* argv[])
 	// Change the volume of the component
 	lineEQ->GetSource()->SetVolume(.05f);
 	// Change the color of the component
-	lineEQ->AddLerpColors(Cyan, Green);
+	lineEQ->AddLerpColors(Color::Cyan, Color::Green);
 	lineEQ->renderer->SetLineWidth(1.5f);
 	// then play the audio source
 	lineEQ->PlaySource(true);

@@ -211,6 +211,7 @@ void GLSetup::Render()
 		pipeline->DrawCubeMap();
 
 		// Draw all primitives to the screen
+
 		pipeline->RenderPrimitives();
 		
 		//// Send projection and view matrices to objects
