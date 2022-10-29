@@ -23,6 +23,7 @@
 #include "SpriteRenderer.h"
 #include "LineShaperComponent.h"
 #include "ShapeTransformationLibrary.h"
+#include "MeshDefaultsLibrary.h"
 #include "AudioEQComponent.h"
 
 #define  MAXCHARLIMIT 1024
@@ -106,20 +107,15 @@ int main(int argc, char* argv[])
 											"../cubemaps/Yokohama3/posz.jpg",
 											"../cubemaps/Yokohama3/negz.jpg" };
 
-	Cubemaps* skybox = new Cubemaps(faceFilePaths);
-	Moxie::GLErrorReporting();
-
-
-	/*if (skybox->IsValid())
-		skybox->GetShaderFromPath("CubeMap.vertex", "CubeMap.fragment");*/
+	Cubemaps* skybox = new Cubemaps(faceFilePaths);	
 
 	// Load a OBJ file to use as a 3d model
 	std::vector<DVertex> vertices;
 	std::vector<uint16_t> indices;
-	
-	bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
+	MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
+	/*bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
 	if (!modelLoaded)
-		return 0;
+		return 0;*/
 
 	// Create an actor to exist in the scene
 	MActor* actor = new MActor();
@@ -129,7 +125,7 @@ int main(int argc, char* argv[])
 
 	// Make a monkey mesh 	
 	Mesh* monkeyMesh = new Mesh();
-	monkeyMesh->Import(vertices, indices, "Suzzanne");
+	monkeyMesh->Import(vertices, indices, "cube");
 	MeshComponent* monkeyMeshComponent = new MeshComponent();
 	monkeyMeshComponent->AddMesh(monkeyMesh);
 	monkeyMeshComponent->transform.Translate(DVector3(0, -2, 7));
@@ -165,24 +161,25 @@ int main(int argc, char* argv[])
 
 	
 	// Create an Audio Equalizer LineRendering component
-	AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
-	// Add an audio source to the component
-	lineEQ->AddSource(source);
-	// Change the EQ's max height variance
-	lineEQ->ChangeMaxHeightVariance(1.25f);
-	// Add a few interpolation points between samples
-	//lineEQ->AddInterpolatePoints(2);
-	// Change the number of samples it's capturing
-	lineEQ->ChangeSampleCount(1024);
-	// Change the volume of the component
-	lineEQ->GetSource()->SetVolume(.05f);
-	// Change the color of the component
-	lineEQ->AddLerpColors(Color::Cyan, Color::Green);
-	lineEQ->renderer->SetLineWidth(1.5f);
-	// then play the audio source
-	lineEQ->PlaySource(true);
-	// Add the component to an actor
-	actor->AddComponent(lineEQ);
+	//AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
+	//// Add the component to an actor
+	//actor->AddComponent(lineEQ);
+	//// Add an audio source to the component
+	//lineEQ->AddSource(source);
+	//// Change the EQ's max height variance
+	//lineEQ->ChangeMaxHeightVariance(1.25f);
+	//// Add a few interpolation points between samples
+	////lineEQ->AddInterpolatePoints(2);
+	//// Change the number of samples it's capturing
+	//lineEQ->ChangeSampleCount(1024);
+	//// Change the volume of the component
+	//lineEQ->GetSource()->SetVolume(.05f);
+	//// Change the color of the component
+	//lineEQ->AddLerpColors(Color::Cyan, Color::Green);
+	//lineEQ->renderer->SetLineWidth(1.5f);
+	//// then play the audio source
+	//lineEQ->PlaySource(true);
+	
 	
 	
 	actor->transform.SetPosition(DVector3(0, -2, 0));

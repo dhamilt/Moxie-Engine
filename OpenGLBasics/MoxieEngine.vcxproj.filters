@@ -426,5 +426,8 @@
     <ClInclude Include="imgui\implot_internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MeshDefaultsLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

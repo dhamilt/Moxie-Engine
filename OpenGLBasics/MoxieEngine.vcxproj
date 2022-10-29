@@ -390,6 +390,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="MeshData.h" />
+    <ClInclude Include="MeshDefaultsLibrary.h" />
     <ClInclude Include="MouseCapture.h" />
     <ClInclude Include="MoxieEvents.h" />
     <ClInclude Include="MViewport.h" />
