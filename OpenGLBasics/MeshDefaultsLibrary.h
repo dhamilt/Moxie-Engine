@@ -4,6 +4,7 @@ class MeshDefaultsLibrary
 {
 public:
 	static void GetCubePrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices);
+	static void GetIcosahedronPrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices);
 	static void GetSpherePrimitive(int subDivideCount, std::vector<DVector3>& vertices, std::vector <uint16_t>& indices);
 };
 
@@ -82,6 +83,104 @@ inline void  MeshDefaultsLibrary::GetCubePrimitive(std::vector<DVertex>& vertice
 		}
 	}
 }
+
+inline void MeshDefaultsLibrary::GetIcosahedronPrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
+{
+	const float X	= 0.525731112119133606f;
+	const float Z	= 0.850650808352039932f;
+	const float Not = 0.0f;
+	std::vector<DVector3> vertPositions =
+	{
+		DVector3(-X, Not,  Z),
+		DVector3( X, Not,  Z),
+		DVector3(-X, Not, -Z),
+		DVector3( X, Not, -Z),
+		
+		DVector3(Not,  Z,  X),
+		DVector3(Not,  Z, -X),
+		DVector3(Not, -Z,  X),
+		DVector3(Not, -Z, -X),
+
+		DVector3( Z,  X,  Not),
+		DVector3(-Z,  X,  Not),
+		DVector3( Z, -X,  Not),
+		DVector3(-Z, -X,  Not)
+	};
+
+	uint16_t triIndices[] =
+	{
+		0,4,1,
+		0,9,4,
+		9,5,4,
+		4,5,8,
+		4,8,1,
+
+		8,10,1,
+		8,3,10,
+		5,3,8,
+		5,2,3,
+		2,7,3,
+
+		7,10,3,
+		7,6,10,
+		7,11,6,
+		11,0,6,
+		0,1,6,
+
+		6,1,10,
+		9,0,11,
+		9,11,2,
+		9,2,5,
+		7,2,11
+	};
+
+	uint16_t triCount = sizeof(triIndices) / sizeof(uint16_t) / 3;
+	vertices.clear();
+	indices.clear();
+	for (int i = 0; i < triCount; i++)
+	{
+		uint16_t firstIndex  = triIndices[i * 3];
+		uint16_t secondIndex = triIndices[i * 3 + 1];
+		uint16_t thirdIndex  = triIndices[i * 3 + 2];
+
+		DVector3 firstPos	= vertPositions[firstIndex];
+		DVector3 secondPos	= vertPositions[secondIndex];
+		DVector3 thirdPos	= vertPositions[thirdIndex];
+		// Calculate the normal
+		DVector3 edge1 = secondPos - firstPos;
+		DVector3 edge2 = thirdPos  - firstPos;
+		DVector3 normal = glm::normalize(glm::cross(edge1, edge2));
+		// Make sure the normal is facing outward
+		if (glm::dot(normal, firstPos) < 0.0f ||
+			glm::dot(normal, secondPos) < 0.0f ||
+			glm::dot(normal, thirdPos) < 0.0f)
+			normal *= -1;
+		for (int j = 0; j < 3; j++)
+		{
+			DVertex tempVertex;
+			uint16_t index;
+			if (j == 0)
+				tempVertex = DVertex(firstPos, normal);
+			else if (j == 1)
+				tempVertex = DVertex(secondPos, normal);
+			else
+				tempVertex = DVertex(thirdPos, normal);
+			
+			auto search = std::find(vertices.begin(), vertices.end(), tempVertex);
+			if (search == vertices.end())
+			{
+				index = (uint16_t)vertices.size();
+				vertices.push_back(tempVertex);
+			}
+			else
+				index = (uint16_t)std::distance(vertices.begin(), search);
+			indices.push_back((uint16_t)index);
+		}
+		
+	}	
+}
+
+
 
 inline void MeshDefaultsLibrary::GetSpherePrimitive(int subDivideCount, std::vector<DVector3>& vertices, std::vector<uint16_t>& indices)
 {

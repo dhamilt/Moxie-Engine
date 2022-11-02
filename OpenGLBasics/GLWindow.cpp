@@ -113,7 +113,9 @@ int main(int argc, char* argv[])
 	// Load a OBJ file to use as a 3d model
 	std::vector<DVertex> vertices;
 	std::vector<uint16_t> indices;
-	MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
+	//MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
+	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+
 	/*bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
 	if (!modelLoaded)
 		return 0;*/
