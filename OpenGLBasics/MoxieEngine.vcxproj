@@ -411,6 +411,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="TextureData.h" />
     <ClInclude Include="TransformationLibrary.h" />
     <ClInclude Include="vector3D.h" />
+    <ClInclude Include="VectorLibrary.h" />
     <ClInclude Include="vertex.h" />
     <ClInclude Include="WavReader.h" />
   </ItemGroup>

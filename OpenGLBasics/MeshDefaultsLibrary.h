@@ -1,11 +1,16 @@
 #pragma once
 #include "glPCH.h"
+#include <unordered_map>
 class MeshDefaultsLibrary
 {
 public:
 	static void GetCubePrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices);
 	static void GetIcosahedronPrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices);
-	static void GetSpherePrimitive(int subDivideCount, std::vector<DVector3>& vertices, std::vector <uint16_t>& indices);
+	static void GetSpherePrimitive(int subDivideCount, std::vector<DVertex>& vertices, std::vector <uint16_t>& indices);
+	
+	
+private:
+	static void GetSpherePrimitive(int subDivideCount, int currentSubdivide, std::vector<DVertex>& vertices, std::vector <uint16_t>& indices);
 };
 
 inline void  MeshDefaultsLibrary::GetCubePrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
@@ -182,8 +187,88 @@ inline void MeshDefaultsLibrary::GetIcosahedronPrimitive(std::vector<DVertex>& v
 
 
 
-inline void MeshDefaultsLibrary::GetSpherePrimitive(int subDivideCount, std::vector<DVector3>& vertices, std::vector<uint16_t>& indices)
+inline void MeshDefaultsLibrary::GetSpherePrimitive(int subDivideCount, std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
 {
-	// Create Icosahedron
+	// Create Icosahedron	
+	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+
 	// Start subdivisions
+	GetSpherePrimitive(subDivideCount, 0, vertices, indices);
+}
+
+inline void MeshDefaultsLibrary::GetSpherePrimitive(int subDivideCount, int currentSubdivide, std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
+{
+	if (currentSubdivide >= subDivideCount)
+		return;
+	std::unordered_map<DVertex, uint16_t,  DVertexHash> icoVertsCache;
+	std::vector<DVertex> icoVerts;
+	std::vector<uint16_t> icoIndices;
+	uint32_t triCount = uint32_t(indices.size() / 3);
+	uint32_t index = 0;
+	// for each triangle
+	for (uint32_t i = 0; i < triCount; i++)
+	{
+		DVertex A = vertices[indices[i * 3]];
+		DVertex B = vertices[indices[i * 3 + 1]];
+		DVertex C = vertices[indices[i * 3 + 2]];
+
+		// get midpoint for each edge of triangle
+		DVector3 midAB = DVectorLibrary::GetMidPoint(A.pos, B.pos);
+		DVector3 midBC = DVectorLibrary::GetMidPoint(B.pos, C.pos);
+		DVector3 midCA = DVectorLibrary::GetMidPoint(C.pos, A.pos);
+		
+		// make four triangles using each midpoint		
+		// 0, midAB, midCA
+		// midAB, 1, midBC
+		// midCA, midBC, 2
+		// midCA, midAB, midBC
+		std::vector < std::vector < DVector3 >>triangles= 
+		{
+			{A.pos, midAB, midCA},
+			{midAB, B.pos, midBC},
+			{midCA, midBC, C.pos},
+			{midBC, midCA, midAB}
+		};
+		for (uint32_t j = 0; j < 4; j++)
+		{
+			// Calculate normals for newly subdivided triangles
+			DVector3 vA = triangles[j][0];
+			DVector3 vB = triangles[j][1];
+			DVector3 vC = triangles[j][2];
+
+			DVector3 edge_vAB = vB - vA;
+			DVector3 edge_vAC = vC - vA;
+
+			DVector3 normal = glm::normalize(glm::cross(edge_vAB, edge_vAC));
+			// orientation check
+			if (glm::dot(normal, vA) < 0.0f ||
+				glm::dot(normal, vB) < 0.0f ||
+				glm::dot(normal, vC) < 0.0f)
+				normal *= 1;
+
+			// Create new vertices with the created positions and normals
+			for (uint32_t k = 0; k < 3; k++)
+			{
+				DVertex temp;
+				if (k == 0)
+					temp = DVertex(vA, normal);
+				else if (k == 1)
+					temp = DVertex(vB, normal);
+				else
+					temp = DVertex(vC, normal);
+				if (icoVertsCache.find(temp) == icoVertsCache.end())
+				{
+					icoVerts.push_back(temp);
+					icoVertsCache.insert({ temp, index });
+					index++;
+				}
+				icoIndices.push_back(icoVertsCache[temp]);
+			}
+		}
+	}
+	
+	
+	MeshDefaultsLibrary::GetSpherePrimitive(subDivideCount, currentSubdivide + 1, icoVerts, icoIndices);
+	vertices = icoVerts;
+	indices = icoIndices;
 }

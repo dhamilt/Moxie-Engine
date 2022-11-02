@@ -16,7 +16,7 @@ public:
 	DVector2 texCoord;
 	DVector3 normal;
 
-	inline bool operator==(const DVertex& other)
+	inline bool operator==(const DVertex& other) const
 	{
 		return pos == other.pos &&
 			texCoord == other.texCoord &&
@@ -32,7 +32,7 @@ public:
 
 };
 
-struct vertex_hash
+struct DVertexHash
 {
 public:
 

@@ -114,7 +114,8 @@ int main(int argc, char* argv[])
 	std::vector<DVertex> vertices;
 	std::vector<uint16_t> indices;
 	//MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
-	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+	//MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+	MeshDefaultsLibrary::GetSpherePrimitive(3, vertices, indices);
 
 	/*bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
 	if (!modelLoaded)

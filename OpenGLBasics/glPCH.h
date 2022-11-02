@@ -25,3 +25,5 @@
 #include "SDL.h"
 #include "LogMacros.h"
 #include "GLErrorReporting.h"
+#include "VectorLibrary.h"
+#include "MeshDefaultsLibrary.h"

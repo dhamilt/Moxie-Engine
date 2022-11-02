@@ -1,5 +1,49 @@
-﻿  GLWindow.cpp
-  MoxieEngine.vcxproj -> D:\MoxieEngine\Moxie-Engine\x64\Debug\Moxie.exe
+﻿  AssetImportLibrary.cpp
+  AudioClass.cpp
+  AudioCommand.cpp
+  AudioEQComponent.cpp
+  AudioSource.cpp
+  AxisCommand.cpp
+  BaseObject.cpp
+  ButtonCommand.cpp
+  Camera.cpp
+  Command.cpp
+  Cubemaps.cpp
+  Entity.cpp
+  EntityComponent.cpp
+  EventHandler.cpp
+  GLErrorReporting.cpp
+  GLSetup.cpp
+  GLWindow.cpp
+  GUI_Base.cpp
+  GameLoop.cpp
+  Graphic.cpp
+  InputHandler.cpp
+  Light.cpp
+  LightComponent.cpp
+  LineRenderComponent.cpp
+  LineRenderer.cpp
+  LineShaperComponent.cpp
+  Log.cpp
+  MActor.cpp
+  MViewport.cpp
+C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\MViewport.cpp(69,38): warning C4312: 'type cast': conversion from 'GLuint' to 'ImTextureID' of greater size
+  MainMenu.cpp
+  Material.cpp
+  Mesh.cpp
+  MeshComponent.cpp
+  MouseCapture.cpp
+  MoxieEvents.cpp
+  MyLightComponent.cpp
+  RenderingPipeline.cpp
+  RotatingLightComponent.cpp
+  ShapeTransformationLibrary.cpp
+  SoundEngine.cpp
+  StandaloneWindow.cpp
+  Texture.cpp
+  WavReader.cpp
+  imgui_impl_sdlrenderer.cpp
+  MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
   0 File(s) copied
   0 File(s) copied
   0 File(s) copied

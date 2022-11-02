@@ -429,5 +429,8 @@
     <ClInclude Include="MeshDefaultsLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VectorLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

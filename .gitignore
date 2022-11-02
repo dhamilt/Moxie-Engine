@@ -13,3 +13,15 @@
 *.bin
 /.vs/MoxieEngine/v17/ipch
 /.vs/MoxieEngine/config
+
+*.tlog
+
+*.pch
+
+*.lastbuildstate
+
+x64/Debug/Moxie.exe
+
+*.vsidx
+
+*.recipe
