@@ -99,29 +99,29 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 	
 	
 	
-	assert(*std::max_element(renderData->indices.begin(), renderData->indices.end()) < renderData->vertices.size());
 	// Bind the buffers and pass in the appropriate data for the following:
 	
 	// the vertex array object
 	if (renderData->vao == 0)
 		glGenVertexArrays(1, &renderData->vao);
-	glBindVertexArray(renderData->vao);
-	
-	// the index buffer
-	if (renderData->ebo == 0)
-		glGenBuffers(1, &renderData->ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * renderData->indices.size(), &renderData->indices[0], GL_STATIC_DRAW);
 
 	// the vertex buffer object
 	if (renderData->vbo == 0)
 		glGenBuffers(1, &renderData->vbo);
+
+	// the index buffer
+	if (renderData->ebo == 0)
+		glGenBuffers(1, &renderData->ebo);
+	glBindVertexArray(renderData->vao);
+	
+	
 	glBindBuffer(GL_ARRAY_BUFFER, renderData->vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(DVertex) * renderData->vertices.size(), &renderData->vertices[0], GL_STATIC_DRAW);
 	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderData->ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * renderData->indices.size(), &renderData->indices[0], GL_STATIC_DRAW);
 
-	// Add vertex positions for model
-	glEnableVertexAttribArray(0);
+	// Add vertex positions for model	
 	glVertexAttribPointer(
 		0, // start index
 		3, // number of dimensions
@@ -130,9 +130,9 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 		sizeof(DVertex), // stride
 		(void*)offsetof(DVertex, pos) // buffer offset
 	);
+	glEnableVertexAttribArray(0);
 
-	// Add vertex texture coordinates for model	
-	glEnableVertexAttribArray(1);
+	// Add vertex texture coordinates for model		
 	glVertexAttribPointer(
 		1,
 		2,
@@ -141,9 +141,9 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 		sizeof(DVertex),
 		(void*)offsetof(DVertex, texCoord)
 	);
+	glEnableVertexAttribArray(1);
 
-	// Add vertex normals for model	
-	glEnableVertexAttribArray(2);
+	// Add vertex normals for model		
 	glVertexAttribPointer(
 		2, // layout index
 		3, // number of dimensions
@@ -152,11 +152,11 @@ void BRenderingPipeline::RequestForMeshVertexData(std::string primitiveName)
 		sizeof(DVertex), // stride
 		(void*)offsetof(DVertex, normal)// buffer offset
 	);
-	
+	glEnableVertexAttribArray(2);
 		
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void BRenderingPipeline::RequestForDefaultSkyboxVerts()
@@ -178,8 +178,7 @@ void BRenderingPipeline::RequestForDefaultSkyboxVerts()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubemapParams->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * cubemapParams->indices.size(), &cubemapParams->indices[0], GL_STATIC_DRAW);
 	
-	// Pass vertex data to GPU for shaders
-	glEnableVertexAttribArray(0);
+	// Pass vertex data to GPU for shaders	
 	glVertexAttribPointer(
 		0,
 		3,
@@ -188,7 +187,7 @@ void BRenderingPipeline::RequestForDefaultSkyboxVerts()
 		sizeof(DVector3),
 		(void*)0
 	);
-	
+	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -480,13 +479,14 @@ void BRenderingPipeline::DrawMesh(RenderBufferData* renderData)
 	// Load texture(s)
 	// TODO
 	// Use vertex data for current primitive
-	
+	// Draw wireframe
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(renderData->vao);	
 	
-	glDrawElements(GL_TRIANGLES, (uint32_t)renderData->indices.size(), GL_UNSIGNED_SHORT, &renderData->indices);
+	glDrawElements(GL_TRIANGLES, (uint16_t)renderData->indices.size(), GL_UNSIGNED_SHORT, 0);
 	
 	glBindVertexArray(0);	
-	
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void BRenderingPipeline::DrawCubeMap()

@@ -90,6 +90,7 @@ int main(int argc, char* argv[])
 {
 	// Delayed initialization("Lazy" init)	
 	GGLSPtr->Init();
+
 	GGLPtr->Init();
 	MSoundDataAsset* sound2 = new MSoundDataAsset("../Aritus - Summer With You.wav");
 	MSoundDataAsset* sound = new MSoundDataAsset("../Large Professor - Frantic Barz (NIKK BLVKK Remix).wav");
@@ -651,7 +652,7 @@ bool LoadObj(const char* filePath, std::vector<DVertex>& vertices, std::vector<u
 	std::vector<DVector3>temp_verts;
 	std::vector<DVector2>temp_uvs;
 	std::vector<DVector3>temp_normals;
-
+	std::vector<DVertex>uniqueVertices;
 	std::ifstream file(filePath);
 	if (file)
 	{
@@ -685,6 +686,7 @@ bool LoadObj(const char* filePath, std::vector<DVertex>& vertices, std::vector<u
 				int vertsPerFace = (int)std::count(dataLine.begin(), dataLine.end(), ' ') + 1;
 				std::stringstream tokenLine(dataLine);
 				std::string token;
+				std::vector<DVertex> quadVerts;
 				while (getline(tokenLine, token, ' '))
 				{
 					int tempIndexBuf[3];
@@ -703,35 +705,41 @@ bool LoadObj(const char* filePath, std::vector<DVertex>& vertices, std::vector<u
 
 						vertices.push_back(tempVertex);
 					}
+
+					if (vertsPerFace < 4)
+						vertices.push_back(tempVertex);
+					else
+						quadVerts.push_back(tempVertex);
+					if (std::find(uniqueVertices.begin(), uniqueVertices.end(), tempVertex) == uniqueVertices.end())
+						uniqueVertices.push_back(tempVertex);
 				}
 
 				// if the face is a quad
 				if (vertsPerFace == 4)
 				{
 					// Triangulate the quad
-					int triIndices[] = { 0, 1, 2, 2, 3, 0 };
-
-					for (int i = 0; i < 6; i++)
-					{
+					std::vector<uint16_t> triIndices = { 0, 1, 2, 1, 2, 3 };
+					std::vector<DVertex> triangulatedQuadVerts;
+					for (auto it = triIndices.begin(); it != triIndices.end(); it++)
 						// TEMPORARY SOLUTION
-						// Will not work if there are duplicate vertices
-						indices.push_back(index + triIndices[i]);
-					}
+						// Will not work if there are duplicate vertices						
+						triangulatedQuadVerts.push_back(quadVerts[*it]);
+
+					vertices.insert(vertices.end(), triangulatedQuadVerts.begin(), triangulatedQuadVerts.end());
 					index += 4;
 				}
-				// otherwise store the data normal because it is a tri
 				else
-				{
-					for (int i = 0; i < 3; i++)
-					{
-						indices.push_back(index);
-						index++;
-					}
-				}
+					index += 3;				
 
 			}
 		}
-
+		for (auto it = vertices.begin(); it != vertices.end(); it++)
+		{
+			auto search = std::find(uniqueVertices.begin(), uniqueVertices.end(), *it);			
+			assert(search != uniqueVertices.end());
+			indices.push_back((uint16_t)std::distance(uniqueVertices.begin(), search));
+		}
+		vertices = uniqueVertices;
 		return true;
 	}
 	else
