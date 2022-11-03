@@ -165,24 +165,24 @@ int main(int argc, char* argv[])
 
 	
 	// Create an Audio Equalizer LineRendering component
-	//AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
-	//// Add the component to an actor
-	//actor->AddComponent(lineEQ);
-	//// Add an audio source to the component
-	//lineEQ->AddSource(source);
-	//// Change the EQ's max height variance
-	//lineEQ->ChangeMaxHeightVariance(1.25f);
-	//// Add a few interpolation points between samples
-	////lineEQ->AddInterpolatePoints(2);
-	//// Change the number of samples it's capturing
-	//lineEQ->ChangeSampleCount(1024);
-	//// Change the volume of the component
-	//lineEQ->GetSource()->SetVolume(.05f);
-	//// Change the color of the component
-	//lineEQ->AddLerpColors(Color::Cyan, Color::Green);
-	//lineEQ->renderer->SetLineWidth(1.5f);
-	//// then play the audio source
-	//lineEQ->PlaySource(true);
+	AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
+	// Add the component to an actor
+	actor->AddComponent(lineEQ);
+	// Add an audio source to the component
+	lineEQ->AddSource(source);
+	// Change the EQ's max height variance
+	lineEQ->ChangeMaxHeightVariance(1.25f);
+	// Add a few interpolation points between samples
+	//lineEQ->AddInterpolatePoints(2);
+	// Change the number of samples it's capturing
+	lineEQ->ChangeSampleCount(1024);
+	// Change the volume of the component
+	lineEQ->GetSource()->SetVolume(.05f);
+	// Change the color of the component
+	lineEQ->AddLerpColors(Color::Cyan, Color::Green);
+	lineEQ->renderer->SetLineWidth(1.5f);
+	// then play the audio source
+	lineEQ->PlaySource(true);
 	
 	
 	
@@ -650,6 +650,7 @@ bool LoadObjC(const char* filePath, std::vector<DVertex>& vertices, std::vector<
 	perror("Unable to read obj file!");
 	return false;
 }
+
 bool LoadObj(const char* filePath, std::vector<DVertex>& vertices, std::vector<unsigned short>& indices)
 {
 	std::vector<DVector3>temp_verts;

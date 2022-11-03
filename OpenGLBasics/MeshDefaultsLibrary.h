@@ -91,8 +91,8 @@ inline void  MeshDefaultsLibrary::GetCubePrimitive(std::vector<DVertex>& vertice
 
 inline void MeshDefaultsLibrary::GetIcosahedronPrimitive(std::vector<DVertex>& vertices, std::vector<uint16_t>& indices)
 {
-	const float X	= 0.525731112119133606f;
-	const float Z	= 0.850650808352039932f;
+	const float X	= 1.0f;
+	const float Z	= (1.0f +std::sqrtf(5.0f))/2.0f;
 	const float Not = 0.0f;
 	std::vector<DVector3> vertPositions =
 	{
@@ -215,8 +215,8 @@ inline void MeshDefaultsLibrary::GetSpherePrimitive(int subDivideCount, int curr
 		// get midpoint for each edge of triangle
 		DVector3 midAB = DVectorLibrary::GetMidPoint(A.pos, B.pos);
 		DVector3 midBC = DVectorLibrary::GetMidPoint(B.pos, C.pos);
-		DVector3 midCA = DVectorLibrary::GetMidPoint(C.pos, A.pos);
-		
+		DVector3 midCA = DVectorLibrary::GetMidPoint(C.pos, A.pos);		
+
 		// make four triangles using each midpoint		
 		// 0, midAB, midCA
 		// midAB, 1, midBC
@@ -232,9 +232,9 @@ inline void MeshDefaultsLibrary::GetSpherePrimitive(int subDivideCount, int curr
 		for (uint32_t j = 0; j < 4; j++)
 		{
 			// Calculate normals for newly subdivided triangles
-			DVector3 vA = triangles[j][0];
-			DVector3 vB = triangles[j][1];
-			DVector3 vC = triangles[j][2];
+			DVector3 vA = glm::normalize(triangles[j][0]);
+			DVector3 vB = glm::normalize(triangles[j][1]);
+			DVector3 vC = glm::normalize(triangles[j][2]);
 
 			DVector3 edge_vAB = vB - vA;
 			DVector3 edge_vAC = vC - vA;

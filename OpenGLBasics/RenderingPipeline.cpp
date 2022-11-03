@@ -480,13 +480,13 @@ void BRenderingPipeline::DrawMesh(RenderBufferData* renderData)
 	// TODO
 	// Use vertex data for current primitive
 	// Draw wireframe
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(renderData->vao);	
 	
 	glDrawElements(GL_TRIANGLES, (uint16_t)renderData->indices.size(), GL_UNSIGNED_SHORT, 0);
 	
 	glBindVertexArray(0);	
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void BRenderingPipeline::DrawCubeMap()
