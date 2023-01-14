@@ -18,6 +18,13 @@
 class Material;
 
 
+// TODO: Have the default rendering language be determined by an ini file
+// for now, set the rendering language to be Vulkan
+
+#define USE_RENDERING_VULKAN 1
+
+#define USE_RENDERING_OPENGL 0
+
 // TODO: IMPLEMENT A LIGHT STRUCT AND HAVE EVERY INITIALIZATION CALL
 // FOR A LIGHT END UP ADDING TO A QUEUE OF LIGHTS TO BE DRAWN ON EVERY
 // MESH IN THE SCENE
@@ -94,7 +101,7 @@ private:
 	bool viewportInFocus;
 	WMainMenu* mainMenu;
 	BRenderingPipeline* pipeline;
-
+	
 };
 
 /// <summary>

@@ -7,12 +7,17 @@ extern GLSetup* GGLSPtr;
 extern SoundEngine* GSoundEngine;
 extern GameLoop* GGLPtr = new GameLoop();
 
+
+
+
+
 GameLoop::GameLoop()
 {
 	printf("There are a total of %d threads allotted on this machine.\n", MAX_NUM_OF_THREADS);
 
 	isLooping = true;
 	lastFrame = high_resolution_clock::now();	
+
 
 
 	// Initialize SDL

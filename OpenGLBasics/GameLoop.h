@@ -54,7 +54,6 @@ private:
 	MouseCapture* mouseCursor = nullptr;
 	std::thread audioThread;
 	bool audioInitialized = false;
-	
 };
 
 extern GameLoop* GGLPtr;

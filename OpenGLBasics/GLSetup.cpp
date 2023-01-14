@@ -4,7 +4,7 @@
 #include "GameLoop.h"
 #include "Material.h"
 #include "Mesh.h"
-
+#include "VulkanPlatformInit.h"
 
 
 
@@ -19,8 +19,16 @@ GLSetup::GLSetup()
 
 GLSetup::~GLSetup()
 {
+	
 	// Shutdown and clean GUI
+#ifdef USE_RENDERING_VULKAN
+	ImGui_ImplVulkan_Shutdown();
+	PVulkanPlatformInit::Get()->CleanupVulkan();
+#else
 	ImGui_ImplOpenGL3_Shutdown();
+#endif // USE_RENDERING_VULKAN
+
+	
 	ImGui_ImplSDL2_Shutdown();
 	ImPlot::DestroyContext();
 	ImGui::DestroyContext();	
@@ -62,7 +70,7 @@ void GLSetup::StartSDLWindow()
 		printf("Error: %s\n", SDL_GetError());
 		return;
 	}
-	
+#if USE_RENDERING_OPENGL
 	// Set the minimum OpenGL version this program run on
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -100,6 +108,39 @@ void GLSetup::StartSDLWindow()
 		assert(glewResult == GLEW_OK);
 		throw std::runtime_error("GLEW could not be initialized!");		
 	}
+#endif // USE_RENDERING_OPENGL
+
+#if USE_RENDERING_VULKAN
+	
+	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	// Create Vulkan Window
+	sdlWindow = SDL_CreateWindow("Moxie Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
+	if (!sdlWindow)
+	{
+		printf("Error! %s\n", SDL_GetError());
+		assert(sdlWindow);
+		throw std::runtime_error("Context window could not be created!");
+	}
+
+	auto platformInstance =PVulkanPlatformInit::Get();
+	// Make sure the vulkan instance was created correctly
+	assert(platformInstance->CreateInstance(sdlWindow));
+	// Make sure that imgui is setup correctly on the SDL2 Window
+	assert(platformInstance->ImGuiVkSetup(sdlWindow));
+
+	
+	auto platformInfo = platformInstance->GetInfo();
+	auto surface = &platformInfo->surface;
+	auto instance = &platformInfo->instance;
+	// Create Vulkan Surface for rendering
+	if (!SDL_Vulkan_CreateSurface(sdlWindow, *instance, surface))
+	{
+		printf("Error! %s\n", SDL_GetError());
+		throw std::runtime_error("Could not create Vulkan surface.");
+	}
+	 //assert(platformInstance->SetupVulkanWindow(platformInfo->surface, width, height));
+	//vulkanSurface = vk::SurfaceKHR(_vulkanSurface);
+#endif // USE_RENDERING_VULKAN
 	
 	// Create default mesh shader
 	pipeline->CreateDefaultShader();
@@ -123,13 +164,17 @@ void GLSetup::StartSDLWindow()
 
 	// Set the GUI style
 	ImGui::StyleColorsDark();
-
+#if USE_RENDERING_OPENGL
 	// Link the GUI to the correct context and rendering frameworks
 	ImGui_ImplSDL2_InitForOpenGL(sdlWindow, mainSDLContext);
 	ImGui_ImplOpenGL3_Init("#version 330");
-
+#elif USE_RENDERING_VULKAN
+	ImGui_ImplSDL2_InitForVulkan(sdlWindow);
+	ImGui_ImplVulkan_Init(&platformInfo->imGuiInitInfo, platformInfo->window.RenderPass);
+#endif
 	
 
+	
 	// Setup an initial Framebuffer
 	if(pipeline)
 		pipeline->GenerateDefaultFramebuffer();
@@ -143,6 +188,7 @@ void GLSetup::StartSDLWindow()
 
 	// Set up mouse scroll wheel callback for changing the fov
 	GGLPtr->GetMainInputHandle()->scrollWheel->Subscribe(std::bind(&GLSetup::ScrollWheelCallback, this, std::placeholders::_1));
+#if USE_RENDERING_OPENGL
 	// Enable Depth and Stencil test
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -154,7 +200,7 @@ void GLSetup::StartSDLWindow()
 
 	// Accept fragments that are closer to the camera
 	glDepthFunc(GL_LESS);
-
+#endif // USE_RENDERING_OPENGL
 }
 
 void GLSetup::UpdateLightingCollection(std::string lightComponentName, Light* lightInfo)

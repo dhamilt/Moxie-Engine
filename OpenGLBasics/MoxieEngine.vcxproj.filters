@@ -29,6 +29,7 @@
     <None Include="Lighting.vertex" />
     <None Include="DefaultMatVS.shader" />
     <None Include="DefaultMatFS.shader" />
+    <None Include="imgui\imgui_impl_osx.mm" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLWindow.cpp">
@@ -191,6 +192,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="imgui\implot_items.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformInit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanPlatformInit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanErrorReporting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_impl_vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -430,6 +443,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VectorLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformInit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformFlags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPlatformInit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanErrorReporting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_vulkan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_osx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
