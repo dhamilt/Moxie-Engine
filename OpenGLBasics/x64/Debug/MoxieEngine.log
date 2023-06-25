@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 ﻿  GLSetup.cpp
+  VulkanPlatformInit.cpp
   MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
-=======
-﻿  GLWindow.cpp
-  MoxieEngine.vcxproj -> D:\MoxieEngine\Moxie-Engine\x64\Debug\Moxie.exe
->>>>>>> Rendering
   0 File(s) copied
   0 File(s) copied
   0 File(s) copied

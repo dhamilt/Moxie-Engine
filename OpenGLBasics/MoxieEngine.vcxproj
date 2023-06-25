@@ -296,6 +296,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="SoundEngine.cpp" />
     <ClCompile Include="StandaloneWindow.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="VulkanRendering.cpp" />
     <ClCompile Include="WavReader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -426,6 +427,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="vector3D.h" />
     <ClInclude Include="VectorLibrary.h" />
     <ClInclude Include="vertex.h" />
+    <ClInclude Include="VulkanRendering.h" />
     <ClInclude Include="WavReader.h" />
   </ItemGroup>
   <ItemGroup>

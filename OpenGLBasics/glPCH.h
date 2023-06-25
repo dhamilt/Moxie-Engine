@@ -22,9 +22,11 @@
 #include <cmath>
 #include <al.h>
 #include <alc.h>
+#include <filesystem>
 #include "SDL.h"
 #include "LogMacros.h"
 #include "GLErrorReporting.h"
 #include "VulkanErrorReporting.h"
 #include "VectorLibrary.h"
 #include "MeshDefaultsLibrary.h"
+#include "MathLibrary.h"

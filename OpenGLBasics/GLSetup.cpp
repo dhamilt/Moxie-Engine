@@ -6,6 +6,8 @@
 #include "Mesh.h"
 #include "VulkanPlatformInit.h"
 
+#define USE_VULKAN 1
+#define USE_OPENGL 0
 
 
 extern GLSetup* GGLSPtr = new GLSetup();
@@ -21,12 +23,12 @@ GLSetup::~GLSetup()
 {
 	
 	// Shutdown and clean GUI
-#ifdef USE_RENDERING_VULKAN
+#if USE_VULKAN
 	ImGui_ImplVulkan_Shutdown();
 	PVulkanPlatformInit::Get()->CleanupVulkan();
 #else
 	ImGui_ImplOpenGL3_Shutdown();
-#endif // USE_RENDERING_VULKAN
+#endif // USE_VULKAN
 
 	
 	ImGui_ImplSDL2_Shutdown();
@@ -70,7 +72,7 @@ void GLSetup::StartSDLWindow()
 		printf("Error: %s\n", SDL_GetError());
 		return;
 	}
-#if USE_RENDERING_OPENGL
+#if USE_OPENGL
 	// Set the minimum OpenGL version this program run on
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -108,9 +110,9 @@ void GLSetup::StartSDLWindow()
 		assert(glewResult == GLEW_OK);
 		throw std::runtime_error("GLEW could not be initialized!");		
 	}
-#endif // USE_RENDERING_OPENGL
+#endif // USE_OPENGL
 
-#if USE_RENDERING_VULKAN
+#if USE_VULKAN
 	
 	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	// Create Vulkan Window
@@ -138,9 +140,11 @@ void GLSetup::StartSDLWindow()
 		printf("Error! %s\n", SDL_GetError());
 		throw std::runtime_error("Could not create Vulkan surface.");
 	}
+	// Ensure that the swap chain was created properly
+	assert(platformInstance->CreateSwapChain());
 	 //assert(platformInstance->SetupVulkanWindow(platformInfo->surface, width, height));
 	//vulkanSurface = vk::SurfaceKHR(_vulkanSurface);
-#endif // USE_RENDERING_VULKAN
+#endif // USE_VULKAN
 	
 	// Create default mesh shader
 	pipeline->CreateDefaultShader();
@@ -164,11 +168,11 @@ void GLSetup::StartSDLWindow()
 
 	// Set the GUI style
 	ImGui::StyleColorsDark();
-#if USE_RENDERING_OPENGL
+#if USE_OPENGL
 	// Link the GUI to the correct context and rendering frameworks
 	ImGui_ImplSDL2_InitForOpenGL(sdlWindow, mainSDLContext);
 	ImGui_ImplOpenGL3_Init("#version 330");
-#elif USE_RENDERING_VULKAN
+#elif USE_VULKAN
 	ImGui_ImplSDL2_InitForVulkan(sdlWindow);
 	ImGui_ImplVulkan_Init(&platformInfo->imGuiInitInfo, platformInfo->window.RenderPass);
 #endif
@@ -188,7 +192,7 @@ void GLSetup::StartSDLWindow()
 
 	// Set up mouse scroll wheel callback for changing the fov
 	GGLPtr->GetMainInputHandle()->scrollWheel->Subscribe(std::bind(&GLSetup::ScrollWheelCallback, this, std::placeholders::_1));
-#if USE_RENDERING_OPENGL
+#if USE_OPENGL
 	// Enable Depth and Stencil test
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -200,7 +204,7 @@ void GLSetup::StartSDLWindow()
 
 	// Accept fragments that are closer to the camera
 	glDepthFunc(GL_LESS);
-#endif // USE_RENDERING_OPENGL
+#endif // USE_OPENGL
 }
 
 void GLSetup::UpdateLightingCollection(std::string lightComponentName, Light* lightInfo)
@@ -278,13 +282,11 @@ void GLSetup::Render()
 		ImGui::DockSpaceOverViewport(mainViewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
 		// Call all Paint calls for UI elements 
-		// that exist on the GUI
-		GLuint uiCount = (GLuint)uiElements.size();
-		
-		for (GLuint i = 0; i < uiCount; i++)
+		// that exist on the GUI		
+		for(auto uiElement : uiElements)
 		{
 			ImGui::SetNextWindowBgAlpha(1.0f);
-			uiElements[i]->Paint();
+			uiElement->Paint();
 		}
 
 		// if quit button is selected

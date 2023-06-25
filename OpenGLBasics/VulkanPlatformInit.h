@@ -3,6 +3,15 @@
 #include <imgui_impl_vulkan.h>
 #include <SDL_vulkan.h>
 
+
+#define VK_NUM_OF_SAMPLES VK_SAMPLE_COUNT_1_BIT
+
+struct PVkImageBuffer
+{
+    VkImage image;
+    VkImageView imageView;
+};
+
 struct PVulkanPlatformInitInfo
 {    
     VkInstance instance = NULL;
@@ -21,12 +30,14 @@ struct PVulkanPlatformInitInfo
     VkDeviceCreateInfo deviceInfo;
     
     VkBool32 minImageCount = 0;
-    VkBool32 queueFamily = 0;
-    VkBool32 queueCount = 0;
+    std::vector<VkBool32> queueFamilies;
+    VkBool32 queueFamilyCount = 0;
     float queuePriority = 1.0f;
     VkQueue  queue;
     std::vector<VkQueueFamilyProperties> queueFamilyProperties;
    
+    VkCommandPool commandPool;
+    std::vector<VkCommandBuffer> commandBuffers;
 
     VkDebugReportCallbackEXT debugReportCallback;
     VkPipelineCache pipelineCache;
@@ -43,11 +54,21 @@ struct PVulkanPlatformInitInfo
     std::vector<VkColorSpaceKHR> surfaceColorSpaces;
 
     std::vector<VkPresentModeKHR> presentModes;
+    VkBool32 presentModeCount;
     bool limitFramerate = false;
+
+    VkSwapchainKHR swapchain;
+    std::vector<VkImage> swapchainImages;
+    PVkImageBuffer depthBuffer;
+    VkBool32 swapchainImageCount;
+    std::vector<PVkImageBuffer> imageBuffer;
 
     ImGui_ImplVulkanH_Window window;
     ImGui_ImplVulkan_InitInfo imGuiInitInfo;    
 };
+
+static VkBool32 const MAX_COMMAND_POOL_SIZE = 32;
+static VkBool32 const MAX_COMMAND_BUFFER_SIZE = 1024;
 
 static VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object,
     size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, const char* pUserData);
@@ -61,9 +82,11 @@ public:
     void GetDeviceLayers(VkBool32& layerCount, std::vector<VkLayerProperties>& properties);
     void GetInstanceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
     void GetDeviceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
+    bool CreateCommandPool();
+    bool CreateSwapChain();
     //bool SetupVulkanWindow(VkSurfaceKHR surface, int width, int height);
     void CleanupVulkan();
-    //void CleanupVulkanWindow();
+    VkFormat GetSupportedImageFormat(VkFormat desiredFormat);
     PVulkanPlatformInitInfo* GetInfo();
     static PVulkanPlatformInit* Get();
     void operator=(const PVulkanPlatformInit& other) = delete;
