@@ -6,8 +6,7 @@
 #include "Mesh.h"
 #include "VulkanPlatformInit.h"
 
-#define USE_VULKAN 1
-#define USE_OPENGL 0
+
 
 
 extern GLSetup* GGLSPtr = new GLSetup();

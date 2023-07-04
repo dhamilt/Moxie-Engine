@@ -169,7 +169,8 @@ xcopy /y /d "$(SolutionDir)PhysX\x64\Debug\PhysXDevice64.dll" "$(OutDir)"
 xcopy /y /d "$(SolutionDir)PhysX\x64\Debug\PhysXFoundation_64.dll" "$(OutDir)"
 xcopy /y /d "$(SolutionDir)PhysX\x64\Debug\PhysXGpu_64.dll" "$(OutDir)"
 xcopy /y /d "$(SolutionDir)PortAudio\x64\Debug\portaudio_x64.dll" "$(OutDir)"
-xcopy /y /d "$(SolutionDir)Profiling\NVIDIA\lib\x64\NvPerfUtil\nvperf_grfx_host.dll" "$(OutDir)"</Command>
+xcopy /y /d "$(SolutionDir)Profiling\NVIDIA\lib\x64\NvPerfUtil\nvperf_grfx_host.dll" "$(OutDir)"
+xcopy /y /d "C:\Windows\System32\vulkan-1.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -428,6 +429,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="VectorLibrary.h" />
     <ClInclude Include="vertex.h" />
     <ClInclude Include="VulkanRendering.h" />
+    <ClInclude Include="VulkanShaders.h" />
     <ClInclude Include="WavReader.h" />
   </ItemGroup>
   <ItemGroup>

@@ -18,6 +18,8 @@
 
 class Material;
 
+#define USE_VULKAN 1
+#define USE_OPENGL 0
 
 // TODO: Have the default rendering language be determined by an ini file
 // for now, set the rendering language to be Vulkan
@@ -100,6 +102,8 @@ private:
 	bool viewportInFocus;
 	WMainMenu* mainMenu;
 	BRenderingPipeline* pipeline;
+	VkCommandBuffer* cmdBuffer;
+	std::vector<VkFramebuffer> framebuffers;
 	
 };
 

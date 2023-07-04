@@ -1,0 +1,1 @@
+C:\VulkanSDK\1.3.250.0\Bin\glslc.exe C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\Lighting.frag -o C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\Lightingf.spv

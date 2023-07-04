@@ -22,6 +22,7 @@ struct RenderBufferData
 	std::vector<uint16_t> indices;
 	DMat4x4 transform;
 	std::shared_ptr<Shader> shader;
+	std::shared_ptr<VkShader> vkShader;
 };
 
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
@@ -94,7 +95,8 @@ private:
 	Shader* cubemapShader;
 	GLuint defaultFrameBufferTextureID;
 	int screenWidth, screenHeight;
-	std::vector<GLuint> framebuffers;
+	std::vector<GLuint> glFramebuffers;
+	std::vector<VkFramebuffer> vkFramebuffers;
 	std::unordered_map<std::string, RenderBufferData*>primitives;
 	std::vector<Light*> lightCache;
 	DMat4x4 projectionMatrix, viewMatrix;

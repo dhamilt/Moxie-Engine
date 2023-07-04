@@ -220,9 +220,13 @@ void BRenderingPipeline::UpdateViewMatrix(DMat4x4 _view)
 
 void BRenderingPipeline::CreateDefaultShader()
 {
+#if USE_OPENGL
 	// create default mesh shader for cache
 	std::shared_ptr<Shader> cachedShader(new Shader("DefaultMatVS.shader", "DefaultMatFS.shader"));
 	shaderCache.push_back(cachedShader);
+#elif USE_VULKAN
+
+#endif
 }
 
 void BRenderingPipeline::LoadShader(std::string primitiveName, Material* mat)
@@ -430,12 +434,36 @@ void BRenderingPipeline::GenerateDefaultFramebuffer()
 
 }
 
+void BRenderingPipeline::GenerateVkFrameBuffer(VkBool32 attachmentCount)
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	GGLSPtr->GetWindowDimensions(screenWidth, screenHeight);
+	VkFramebufferCreateInfo framebufferInfo = {};
+	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferInfo.width = screenWidth;
+	framebufferInfo.height = screenHeight;
+	framebufferInfo.attachmentCount = attachmentCount;
+	std::vector<VkImageView> attachments;
+	for (int i = 0; i < attachmentCount; i++)
+		attachments.push_back(vkSettings->imageBuffer[i].imageView);
+	framebufferInfo.pAttachments = &attachments[0];
+	framebufferInfo.pNext = VK_NULL_HANDLE;
+	// TODO: Make VkRenderPass accessible
+	/*framebufferInfo.renderPass = vkSettings->renderPass;*/
+	framebufferInfo.flags = 0;
+	uint32_t index = vkFramebuffers.size();
+	vkFramebuffers.resize( index + attachmentCount);
+	VkFramebuffer framebuffer;
+	auto result = vkCreateFramebuffer(vkSettings->device, &framebufferInfo, vkSettings->allocationCallback, &framebuffer);
+	assert(result == VK_SUCCESS);
+}
+
 void BRenderingPipeline::LoadFramebuffer(GLuint fbID)
 {
 	
 	// if the framebuffer doesn't exist
-	auto fbIdPtr = framebuffers.begin();
-	while (fbIdPtr != framebuffers.end())
+	auto fbIdPtr = glFramebuffers.begin();
+	while (fbIdPtr != glFramebuffers.end())
 	{
 		if (*fbIdPtr == fbID)
 		{

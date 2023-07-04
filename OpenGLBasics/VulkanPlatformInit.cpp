@@ -11,7 +11,6 @@ PVulkanPlatformInit* PVulkanPlatformInit::Get()
     {
         instance = new PVulkanPlatformInit();
         instance->currentVKSettings = PVulkanPlatformInitInfo();
-
     }
     return instance;
 }
@@ -545,7 +544,6 @@ bool PVulkanPlatformInit::CreateSwapChain()
         perror("Error! Unable to create depth buffer image view!");
         return false;
     }
-
     return true;
 }
 
@@ -555,6 +553,7 @@ void PVulkanPlatformInit::CleanupVulkan()
     auto device = currentVKSettings.device;
     vkDeviceWaitIdle(device);
     vkFreeCommandBuffers(device, currentVKSettings.commandPool, MAX_COMMAND_POOL_SIZE, &currentVKSettings.commandBuffers[0]);
+    vkDestroyRenderPass(device, currentVKSettings.renderPass, currentVKSettings.allocationCallback);
     vkDestroyCommandPool(device, currentVKSettings.commandPool, currentVKSettings.allocationCallback);
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
         vkDestroyImageView(device, currentVKSettings.imageBuffer[i].imageView, currentVKSettings.allocationCallback);

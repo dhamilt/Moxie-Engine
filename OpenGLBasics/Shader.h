@@ -6,8 +6,7 @@
 class Shader
 {
 public:
-	// Hide the default constructor
-	Shader() {}
+	
 	// new default constructor that accepts the vertex and fragment shader files
 	Shader(const char* vertexPath, const char* fragmentPath);
 	// Activate the shader
@@ -27,7 +26,8 @@ public:
 	int GetShaderID();
 	bool operator==(Shader other) { return GetShaderID() == other.GetShaderID(); }
 private:
-	
+	// Hide the default constructor
+	Shader() {}
 	std::string vsPath;
 	std::string fsPath;
 	// id of the shader program

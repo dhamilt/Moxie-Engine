@@ -1,5 +1,6 @@
 #pragma once
 #include "Shader.h"
+#include "VulkanShaders.h"
 #include "Color.h"
 class Material
 {

@@ -63,6 +63,8 @@ struct PVulkanPlatformInitInfo
     VkBool32 swapchainImageCount;
     std::vector<PVkImageBuffer> imageBuffer;
 
+    VkRenderPass renderPass;
+
     ImGui_ImplVulkanH_Window window;
     ImGui_ImplVulkan_InitInfo imGuiInitInfo;    
 };
@@ -84,6 +86,7 @@ public:
     void GetDeviceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
     bool CreateCommandPool();
     bool CreateSwapChain();
+    bool CreateRenderPass();
     //bool SetupVulkanWindow(VkSurfaceKHR surface, int width, int height);
     void CleanupVulkan();
     VkFormat GetSupportedImageFormat(VkFormat desiredFormat);
