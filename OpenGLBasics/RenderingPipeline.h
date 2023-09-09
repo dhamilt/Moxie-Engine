@@ -2,6 +2,7 @@
 #include "glPCH.h"
 #include <unordered_map>
 #include "Shader.h"
+#include "VulkanShaders.h"
 #include "TextureData.h"
 #include "Light.h"
 
@@ -22,14 +23,14 @@ struct RenderBufferData
 	std::vector<uint16_t> indices;
 	DMat4x4 transform;
 	std::shared_ptr<Shader> shader;
-	std::shared_ptr<VkShader> vkShader;
+	std::shared_ptr<VkShaderUtil> vkShader;
 };
 
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
 class BRenderingPipeline final
 {
 	BRenderingPipeline();
-	~BRenderingPipeline();
+	void CleanupRenderingPipeline();
 	// Initialization function for setting up default framebuffer and renderbuffer
 	void Init();
 	/** Vertex specification Functions*/
@@ -69,11 +70,15 @@ class BRenderingPipeline final
 	/** Vertex Post Processing Functions */
 
 	/** Drawing Functions */
-	// Generates framebuffer
+	// Generates the default framebuffer
 	void GenerateDefaultFramebuffer();
+	// Generates a Vulkan framebuffer
+	void GenerateVkFrameBuffers();
+	// Grabs the Vulkan framebuffer at the requested index
+	void GetVkFramebuffer(VkFramebuffer& framebuf, VkBool32 frameBufIndex);
 	// Loads in framebuffer
 	// set to 0 for default framebuffer
-	void LoadFramebuffer(GLuint fbID);
+	void LoadGLFramebuffer(GLuint fbID);
 	// Loads current framebuffer
 	void LoadCurrentFramebuffer();
 	//Unloads framebuffer

@@ -12,13 +12,20 @@ BRenderingPipeline::BRenderingPipeline()
 	
 }
 
-BRenderingPipeline::~BRenderingPipeline()
+void BRenderingPipeline::CleanupRenderingPipeline()
 {
 	// Free primitive data 
 	for (auto it = primitives.begin(); it != primitives.end(); it++)
 		delete it->second;
 
 	primitives.clear();
+#if USE_VULKAN
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	// free framebuffers
+	for (int i = 0; i < (int)vkFramebuffers.size(); i++)
+		vkDestroyFramebuffer(vkSettings->device, vkFramebuffers[i], vkSettings->allocationCallback);
+	vkFramebuffers.clear();
+#endif
 }
 
 void BRenderingPipeline::Init()
@@ -434,7 +441,7 @@ void BRenderingPipeline::GenerateDefaultFramebuffer()
 
 }
 
-void BRenderingPipeline::GenerateVkFrameBuffer(VkBool32 attachmentCount)
+void BRenderingPipeline::GenerateVkFrameBuffers()
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	GGLSPtr->GetWindowDimensions(screenWidth, screenHeight);
@@ -442,23 +449,32 @@ void BRenderingPipeline::GenerateVkFrameBuffer(VkBool32 attachmentCount)
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebufferInfo.width = screenWidth;
 	framebufferInfo.height = screenHeight;
-	framebufferInfo.attachmentCount = attachmentCount;
-	std::vector<VkImageView> attachments;
-	for (int i = 0; i < attachmentCount; i++)
-		attachments.push_back(vkSettings->imageBuffer[i].imageView);
-	framebufferInfo.pAttachments = &attachments[0];
-	framebufferInfo.pNext = VK_NULL_HANDLE;
-	// TODO: Make VkRenderPass accessible
-	/*framebufferInfo.renderPass = vkSettings->renderPass;*/
-	framebufferInfo.flags = 0;
-	uint32_t index = vkFramebuffers.size();
-	vkFramebuffers.resize( index + attachmentCount);
-	VkFramebuffer framebuffer;
-	auto result = vkCreateFramebuffer(vkSettings->device, &framebufferInfo, vkSettings->allocationCallback, &framebuffer);
-	assert(result == VK_SUCCESS);
+	// Set the attachment count to be same as the number of image buffers allocated for in the swapchain
+	framebufferInfo.attachmentCount = 2;
+	for (uint32_t i = 0; i < vkSettings->swapchainImageCount; i++)
+	{
+		std::vector<VkImageView> attachments;
+		attachments.push_back(vkSettings->imageBuffers[i].imageView);
+		attachments.push_back(vkSettings->depthBuffer.imageView);
+		framebufferInfo.pAttachments = &attachments[0];
+		framebufferInfo.pNext = VK_NULL_HANDLE;
+		framebufferInfo.renderPass = vkSettings->renderPass;
+		framebufferInfo.layers = 1;
+		framebufferInfo.flags = 0;
+		VkFramebuffer vkFramebuffer;
+		auto result = vkCreateFramebuffer(vkSettings->device, &framebufferInfo, vkSettings->allocationCallback, &vkFramebuffer);
+		assert(result == VK_SUCCESS);
+		vkFramebuffers.push_back(vkFramebuffer);
+	}
 }
 
-void BRenderingPipeline::LoadFramebuffer(GLuint fbID)
+void BRenderingPipeline::GetVkFramebuffer(VkFramebuffer& framebuf, VkBool32 frameBufIndex)
+{
+	assert(frameBufIndex < (VkBool32)vkFramebuffers.size());
+	framebuf = vkFramebuffers[frameBufIndex];
+}
+
+void BRenderingPipeline::LoadGLFramebuffer(GLuint fbID)
 {
 	
 	// if the framebuffer doesn't exist

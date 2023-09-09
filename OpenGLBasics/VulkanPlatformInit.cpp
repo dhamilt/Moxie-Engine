@@ -4,6 +4,43 @@
 PVulkanPlatformInit::PVulkanPlatformInit()
 {
 }
+
+// Create a descriptor pool for adding descriptors for buffers being passed into shaders
+bool PVulkanPlatformInit::CreateDescriptorPool()
+{
+    VkResult result;
+
+    // Create a Descriptor Pool
+    auto poolSizes = &currentVKSettings.poolSizes;
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 });
+    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 });
+
+    auto poolInfo = &currentVKSettings.poolInfo;
+    poolInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo->flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    poolInfo->maxSets = 1000 * (uint32_t)poolSizes->size();
+    poolInfo->poolSizeCount = (uint32_t)poolSizes->size();
+    poolInfo->pPoolSizes = poolSizes->data();
+
+    result = vkCreateDescriptorPool(currentVKSettings.device, poolInfo, currentVKSettings.allocationCallback, &currentVKSettings.descriptorPool);
+
+    if (result != VK_SUCCESS)
+    {
+        perror("Error! Unable to create the descriptor pool!");
+        return false;
+    }
+
+    return true;
+}
 PVulkanPlatformInit* PVulkanPlatformInit::Get()
 {
     // TODO: Create implementation that supports multiple threads accessing this
@@ -13,6 +50,25 @@ PVulkanPlatformInit* PVulkanPlatformInit::Get()
         instance->currentVKSettings = PVulkanPlatformInitInfo();
     }
     return instance;
+}
+
+bool PVulkanPlatformInit::CreateFence(VkFence** fencePtr)
+{
+    VkFenceCreateInfo fenceInfo = {};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    // Create the fence with the Create Signaled flag,
+    //so the fence can wait before using it on a GPU command (for the first frame)
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &currentVKSettings.fence);
+    *fencePtr = &currentVKSettings.fence;
+    return true;
+}
+
+void PVulkanPlatformInit::GetWindowExtent(VkExtent2D& windowExtent)
+{
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    assert(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex], currentVKSettings.surface, &surfaceCapabilities) == VK_SUCCESS);
+    windowExtent = surfaceCapabilities.currentExtent;
 }
 
 bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
@@ -94,43 +150,18 @@ bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
     return false;
 }
 
-bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
+// Retrieve the discrete gpu 
+bool PVulkanPlatformInit::GetPhysicalDevices()
 {
-    VkResult result;
-  
-#if _DEBUG
-   
-    // Get the function pointer for extensions
-    auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(currentVKSettings.instance, "vkCreateDebugReportCallbackEXT");
-    assert(vkCreateDebugReportCallbackEXT != NULL);
-
-    // Setup debug report callback
-    VkDebugReportCallbackCreateInfoEXT debugReportExt_cb = {};
-    debugReportExt_cb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    debugReportExt_cb.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-    debugReportExt_cb.pfnCallback = (PFN_vkDebugReportCallbackEXT)DebugReportCallback;
-    debugReportExt_cb.pUserData = NULL;
-    
-
-    result = vkCreateDebugReportCallbackEXT(currentVKSettings.instance, &debugReportExt_cb, currentVKSettings.allocationCallback, &currentVKSettings.debugReportCallback);
-
-    Moxie::VKErrorReporting(result);
-    if (result != VK_SUCCESS)
-    {
-        perror("Error! Unable to create Debug Report Callback!");
-        return false;
-    }
-#endif
-
     // Select which GPU to use
-    result = vkEnumeratePhysicalDevices(currentVKSettings.instance, &currentVKSettings.physicalDeviceCount, NULL);
+    VkResult result = vkEnumeratePhysicalDevices(currentVKSettings.instance, &currentVKSettings.physicalDeviceCount, NULL);
 
     if (result != VK_SUCCESS)
     {
         perror("Error! Unable to retrieve the number of GPUs on machine!");
         return false;
     }
-   
+
     currentVKSettings.physicalDevices = std::vector<VkPhysicalDevice>(currentVKSettings.physicalDeviceCount);
     result = vkEnumeratePhysicalDevices(currentVKSettings.instance, &currentVKSettings.physicalDeviceCount, currentVKSettings.physicalDevices.data());
 
@@ -155,7 +186,7 @@ bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
         index++;
     }
 
-    
+
     // Select graphics queue family
     auto device = currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex];
     vkGetPhysicalDeviceQueueFamilyProperties(device, &currentVKSettings.queueFamilyCount, NULL);
@@ -164,7 +195,7 @@ bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
     index = 0;
     for (auto it = currentVKSettings.queueFamilyProperties.begin(); it != currentVKSettings.queueFamilyProperties.end(); it++)
     {
-        if (it->queueFlags & VK_QUEUE_GRAPHICS_BIT)       
+        if (it->queueFlags & VK_QUEUE_GRAPHICS_BIT)
             currentVKSettings.queueFamilies.push_back(index);
         index++;
     }
@@ -175,68 +206,40 @@ bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
         return false;
     }
 
+    return true;
+}
 
-    // Create a Logical Device using 1 queue
-    // TODO: Decouple this process into it's
-    // own separate functionality
+bool PVulkanPlatformInit::SetupDebugCallbacks()
+{
+#if _DEBUG
+
+    // Get the function pointer for extensions
+    auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(currentVKSettings.instance, "vkCreateDebugReportCallbackEXT");
+    assert(vkCreateDebugReportCallbackEXT != NULL);
+
+    // Setup debug report callback
+    VkDebugReportCallbackCreateInfoEXT debugReportExt_cb = {};
+    debugReportExt_cb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    debugReportExt_cb.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+    debugReportExt_cb.pfnCallback = (PFN_vkDebugReportCallbackEXT)DebugReportCallback;
+    debugReportExt_cb.pUserData = NULL;
 
 
-    currentVKSettings.deviceExtensions.push_back("VK_KHR_swapchain");
-    auto queueInfo = &currentVKSettings.queueInfo;
-    auto deviceInfo = &currentVKSettings.deviceInfo;
+    VkResult result = vkCreateDebugReportCallbackEXT(currentVKSettings.instance, &debugReportExt_cb, currentVKSettings.allocationCallback, &currentVKSettings.debugReportCallback);
 
-    auto _queue = VkDeviceQueueCreateInfo();
-    _queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    _queue.queueFamilyIndex = currentVKSettings.queueFamilies[0];
-    _queue.queueCount = 1;
-    _queue.pQueuePriorities = &currentVKSettings.queuePriority;
-    queueInfo->push_back(_queue);
-
-    deviceInfo->sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceInfo->queueCreateInfoCount = (uint32_t)queueInfo->size();
-    deviceInfo->pQueueCreateInfos = queueInfo->data();
-    deviceInfo->enabledExtensionCount = (VkBool32)currentVKSettings.deviceExtensions.size();
-    deviceInfo->ppEnabledExtensionNames = currentVKSettings.deviceExtensions.data();
-
-    result = vkCreateDevice(device, deviceInfo, currentVKSettings.allocationCallback, &currentVKSettings.device);
-
+    Moxie::VKErrorReporting(result);
     if (result != VK_SUCCESS)
     {
-        perror("Error! Unable to create device!");
+        perror("Error! Unable to create Debug Report Callback!");
         return false;
     }
+#endif
 
-    vkGetDeviceQueue(currentVKSettings.device, currentVKSettings.queueFamilies[0], 0, &currentVKSettings.queue);
+    return true;
+}
 
-    // Create a Descriptor Pool
-    auto poolSizes = &currentVKSettings.poolSizes;
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 });
-    poolSizes->push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 });
-
-    auto poolInfo = &currentVKSettings.poolInfo;
-    poolInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo->flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    poolInfo->maxSets = 1000 * (uint32_t)poolSizes->size();
-    poolInfo->poolSizeCount = (uint32_t)poolSizes->size();
-    poolInfo->pPoolSizes = poolSizes->data();
-    
-    result = vkCreateDescriptorPool(currentVKSettings.device, poolInfo, currentVKSettings.allocationCallback, &currentVKSettings.descriptorPool);
-
-    if (result != VK_SUCCESS)
-    {
-        perror("Error! Unable to create the descriptor pool!");
-        return false;
-    }
-    
+bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
+{
 
     // Setup ImGui/Vulkan backends
     auto imInitInfo = &currentVKSettings.imGuiInitInfo;
@@ -247,6 +250,13 @@ bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
     imInitInfo->PhysicalDevice = currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex];
     imInitInfo->MinImageCount = currentVKSettings.minImageCount;
     imInitInfo->CheckVkResultFn = Moxie::VKErrorReporting;
+    imInitInfo->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    imInitInfo->Queue = currentVKSettings.queue;
+    imInitInfo->QueueFamily = currentVKSettings.queueFamilies[0];
+    imInitInfo->ImageCount = (VkBool32)currentVKSettings.imageBuffers.size();
+    imInitInfo->PipelineCache = currentVKSettings.pipelineCache;
+    imInitInfo->Subpass = 0;
+
 
     return true;
 }
@@ -259,6 +269,28 @@ bool PVulkanPlatformInit::IsSupported()
     return true;
 #endif
 
+}
+/// <summary>
+/// Creates two sync objects (semaphores) 
+/// One for syncing to the render loop
+/// the other for syncing to the image being presented from the previous frame
+/// </summary>
+/// <param name="presentSemaphorePtr"></param>
+/// <param name="renderSemaphore"></param>
+/// <returns></returns>
+bool PVulkanPlatformInit::CreateSemaphores(VkSemaphore** presentSemaphorePtr, VkSemaphore** renderSemaphorePtr)
+{
+    VkSemaphoreCreateInfo semaphoreInfo = {};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphoreInfo.flags = 0;
+    semaphoreInfo.pNext = VK_NULL_HANDLE;
+    VkResult result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.presentSemaphore);
+    assert(result == VK_SUCCESS);
+    result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderSemaphore);
+    assert(result == VK_SUCCESS);
+    *presentSemaphorePtr = &currentVKSettings.presentSemaphore;
+    *renderSemaphorePtr = &currentVKSettings.renderSemaphore;
+    return true;
 }
 
 bool PVulkanPlatformInit::InitializePlatform()
@@ -275,6 +307,39 @@ bool PVulkanPlatformInit::InitializePlatform()
 
         return true;
     }
+}
+
+// Create a Logical Device using 1 queue
+bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
+{
+    currentVKSettings.deviceExtensions.push_back("VK_KHR_swapchain");
+    currentVKSettings.deviceExtensions.push_back("VK_EXT_depth_range_unrestricted");
+    auto queueInfo = &currentVKSettings.queueInfo;
+    auto deviceInfo = &currentVKSettings.deviceInfo;
+
+    auto _queue = VkDeviceQueueCreateInfo();
+    _queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    _queue.queueFamilyIndex = currentVKSettings.queueFamilies[0];
+    _queue.queueCount = 1;
+    _queue.pQueuePriorities = &currentVKSettings.queuePriority;
+    queueInfo->push_back(_queue);
+
+    deviceInfo->sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceInfo->queueCreateInfoCount = (uint32_t)queueInfo->size();
+    deviceInfo->pQueueCreateInfos = queueInfo->data();
+    deviceInfo->enabledExtensionCount = (VkBool32)currentVKSettings.deviceExtensions.size();
+    deviceInfo->ppEnabledExtensionNames = currentVKSettings.deviceExtensions.data();
+    auto device = currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex];
+    VkResult result = vkCreateDevice(device, deviceInfo, currentVKSettings.allocationCallback, &currentVKSettings.device);
+
+    if (result != VK_SUCCESS)
+    {
+        perror("Error! Unable to create device!");
+        return false;
+    }
+
+    vkGetDeviceQueue(currentVKSettings.device, currentVKSettings.queueFamilies[0], 0, &currentVKSettings.queue);
+    return true;
 }
 
 // Returns all available layers that the Vulkan instance can use on this machine
@@ -322,14 +387,14 @@ void PVulkanPlatformInit::GetDeviceExtensions(VkBool32& extCount, std::vector<Vk
     }
 }
 
-bool PVulkanPlatformInit::CreateCommandPool()
+bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer** commandBuffer)
 {
  
     // Create a command pool for command buffer actions to be placed
     VkCommandPoolCreateInfo poolInfo = {};
     poolInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex   = currentVKSettings.queueFamilies[0];
-    poolInfo.flags              = 0;
+    poolInfo.flags              = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.pNext              = NULL;
 
     auto device = currentVKSettings.device;
@@ -355,13 +420,16 @@ bool PVulkanPlatformInit::CreateCommandPool()
         perror("Error! Unable to allocate for command buffer(s)!");
         return false;
     }
-
+    *commandBuffer = &currentVKSettings.commandBuffers[0];
     return true;
 
 }
 
 bool PVulkanPlatformInit::CreateSwapChain()
 {
+    VkBool32 surfaceFormatCount;
+    std::vector<VkSurfaceFormatKHR> surfaceFormats;
+    GetSupportedImageFormats(surfaceFormatCount, surfaceFormats);
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     auto physicalDevice = currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex];
     auto surfaceKHR = currentVKSettings.surface;
@@ -371,13 +439,18 @@ bool PVulkanPlatformInit::CreateSwapChain()
         perror("Error! Unable to pull surface capabilities from physical device!");
         return false;
     }
+    
+    result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surfaceKHR, &surfaceFormatCount, VK_NULL_HANDLE);
+    
+    result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surfaceKHR, &surfaceFormatCount, &surfaceFormats[0]);
+
 
     // Create swapchain for managing and switching between image buffers on vulkan surface
     VkSwapchainCreateInfoKHR swapchainInfo = {};
     swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     swapchainInfo.surface = currentVKSettings.surface;
     swapchainInfo.pNext = NULL;
-    swapchainInfo.imageFormat = VK_FORMAT_A8B8G8R8_UINT_PACK32;    
+    swapchainInfo.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surfaceKHR, &currentVKSettings.presentModeCount, NULL);
     currentVKSettings.presentModes = std::vector<VkPresentModeKHR>(currentVKSettings.presentModeCount);
@@ -389,6 +462,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     }
 
     swapchainInfo.minImageCount = surfaceCapabilities.minImageCount;
+    currentVKSettings.minImageCount = swapchainInfo.minImageCount;
     // Clamp swapchain image extent to surface extent threshold
     swapchainInfo.imageExtent.height = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageExtent.height,
         surfaceCapabilities.maxImageExtent.height, surfaceCapabilities.currentExtent.height);
@@ -421,14 +495,14 @@ bool PVulkanPlatformInit::CreateSwapChain()
     swapchainInfo.queueFamilyIndexCount = 1;
     swapchainInfo.pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
     swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
-    swapchainInfo.imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+    swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     swapchainInfo.clipped = true;
     swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     
     auto device = currentVKSettings.device;
     // Create the swapchain
     result = vkCreateSwapchainKHR(device, &swapchainInfo, currentVKSettings.allocationCallback, &currentVKSettings.swapchain);
-
+    
     if (result != VK_SUCCESS)
     {
         perror("Error! Unable to create swapchain!");
@@ -447,11 +521,11 @@ bool PVulkanPlatformInit::CreateSwapChain()
         return false;
     }
 
-    currentVKSettings.imageBuffer = std::vector<PVkImageBuffer>(currentVKSettings.swapchainImageCount);
+    //currentVKSettings.imageBuffers = std::vector<PVkImageBuffer>(currentVKSettings.swapchainImageCount);
     // Create image view(s) for the swapchain
-    int i = 0;
-    for (auto img : currentVKSettings.imageBuffer)
+    for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
     {
+        PVkImageBuffer img = {};
         img.image = currentVKSettings.swapchainImages[i];
         VkImageViewCreateInfo imgViewInfo = {};
         imgViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -472,6 +546,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
 
         result = vkCreateImageView(device, &imgViewInfo, currentVKSettings.allocationCallback, &img.imageView);
         assert(result == VK_SUCCESS);
+        currentVKSettings.imageBuffers.push_back(img);
     };
     currentVKSettings.swapchainImages.clear();
 
@@ -481,7 +556,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     imgCreateInfo.pNext = VK_NULL_HANDLE;
     imgCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imgCreateInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
-    imgCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    imgCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     imgCreateInfo.extent.width = swapchainInfo.imageExtent.width;
     imgCreateInfo.extent.height = swapchainInfo.imageExtent.height;
     imgCreateInfo.extent.depth = 1;
@@ -519,25 +594,24 @@ bool PVulkanPlatformInit::CreateSwapChain()
     // Bind memory buffer to depth buffer
     vkBindImageMemory(device, currentVKSettings.depthBuffer.image, depthBufMemory, 0);
 
+    auto depthViewInfo = &currentVKSettings.depthViewInfo;
+    depthViewInfo->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    depthViewInfo->pNext = VK_NULL_HANDLE;
+    depthViewInfo->flags = 0;
+    depthViewInfo->image = currentVKSettings.depthBuffer.image;
+    depthViewInfo->format = VK_FORMAT_D24_UNORM_S8_UINT;
+    depthViewInfo->components.r = VK_COMPONENT_SWIZZLE_R;
+    depthViewInfo->components.g = VK_COMPONENT_SWIZZLE_G;
+    depthViewInfo->components.b = VK_COMPONENT_SWIZZLE_B;
+    depthViewInfo->components.a = VK_COMPONENT_SWIZZLE_A;
+    depthViewInfo->subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    depthViewInfo->subresourceRange.baseMipLevel = 0;
+    depthViewInfo->subresourceRange.levelCount = 1;
+    depthViewInfo->subresourceRange.baseArrayLayer = 0;
+    depthViewInfo->subresourceRange.layerCount = 1;
+    depthViewInfo->viewType = VK_IMAGE_VIEW_TYPE_2D;
 
-    VkImageViewCreateInfo depthViewInfo = {};
-    depthViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    depthViewInfo.pNext = VK_NULL_HANDLE;
-    depthViewInfo.flags = 0;
-    depthViewInfo.image = currentVKSettings.depthBuffer.image;
-    depthViewInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
-    depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-    depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-    depthViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-    depthViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-    depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    depthViewInfo.subresourceRange.baseMipLevel = 0;
-    depthViewInfo.subresourceRange.levelCount = 1;
-    depthViewInfo.subresourceRange.baseArrayLayer = 0;
-    depthViewInfo.subresourceRange.layerCount = 1;
-    depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-
-    result = vkCreateImageView(device, &depthViewInfo, currentVKSettings.allocationCallback, &currentVKSettings.depthBuffer.imageView);
+    result = vkCreateImageView(device, depthViewInfo, currentVKSettings.allocationCallback, &currentVKSettings.depthBuffer.imageView);
 
     if (result != VK_SUCCESS)
     {
@@ -552,11 +626,14 @@ void PVulkanPlatformInit::CleanupVulkan()
     // Wait for device to be in idle state
     auto device = currentVKSettings.device;
     vkDeviceWaitIdle(device);
+    vkDestroyFence(device, currentVKSettings.fence, currentVKSettings.allocationCallback);
+    vkDestroySemaphore(device, currentVKSettings.presentSemaphore, currentVKSettings.allocationCallback);
+    vkDestroySemaphore(device, currentVKSettings.renderSemaphore, currentVKSettings.allocationCallback);
     vkFreeCommandBuffers(device, currentVKSettings.commandPool, MAX_COMMAND_POOL_SIZE, &currentVKSettings.commandBuffers[0]);
     vkDestroyRenderPass(device, currentVKSettings.renderPass, currentVKSettings.allocationCallback);
     vkDestroyCommandPool(device, currentVKSettings.commandPool, currentVKSettings.allocationCallback);
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
-        vkDestroyImageView(device, currentVKSettings.imageBuffer[i].imageView, currentVKSettings.allocationCallback);
+        vkDestroyImageView(device, currentVKSettings.imageBuffers[i].imageView, currentVKSettings.allocationCallback);
     vkDestroySwapchainKHR(device, currentVKSettings.swapchain, currentVKSettings.allocationCallback);
 
     vkDestroyDescriptorPool(device, currentVKSettings.descriptorPool, currentVKSettings.allocationCallback);
@@ -571,38 +648,87 @@ void PVulkanPlatformInit::CleanupVulkan()
 
 }
 
-// TODO: implement functionality to retrieve the highest level
-// of graphical fidelity supported on current gpu
-VkFormat PVulkanPlatformInit::GetSupportedImageFormat(VkFormat desiredFormat)
+void PVulkanPlatformInit::GetSupportedImageFormats(VkBool32& formatCount, std::vector<VkSurfaceFormatKHR>& supportedFormats)
 {
-
-    /*VkFormatProperties2 formatProperties2;
-    formatProperties2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
-    formatProperties2.pNext = NULL;
-    vkGetPhysicalDeviceFormatProperties2(physicalDevice, VK_FORMAT_A8B8G8R8_UINT_PACK32, &formatProperties2);
-
-     if image format is supported
-    if ((formatProperties2.formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) != 0)
-    {
-        stuff
-        printf("Image format supported!");
-    }
-    else
-    {
-         not supported
-    }*/
-    return VkFormat();
+    auto physicalDevice = currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex];
+    auto surface = currentVKSettings.surface;
+    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, VK_NULL_HANDLE);
+    assert(result == VK_SUCCESS);
+    supportedFormats = std::vector<VkSurfaceFormatKHR>(formatCount);
+    result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, &supportedFormats[0]);
+    assert(result == VK_SUCCESS);
 }
 
+// TODO: implement functionality to retrieve the highest level
+// of graphical fidelity supported on current gpu
 
-
-//void PVulkanPlatformInit::CleanupVulkanWindow()
-//{
-//    ImGui_ImplVulkanH_DestroyWindow(currentVKSettings.instance, currentVKSettings.device, &currentVKSettings.window, currentVKSettings.allocationCallback);
-//}
 
 PVulkanPlatformInitInfo* PVulkanPlatformInit::GetInfo()
 {
     return &currentVKSettings;
+}
+
+bool PVulkanPlatformInit::CreateRenderPass()
+{
+    // Create color attachment(s)
+    VkAttachmentDescription colorAttachmentInfo = {};
+    colorAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
+    colorAttachmentInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+    colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    // Create depth attachment
+    VkAttachmentDescription depthAttachmentInfo = {};
+    depthAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
+    depthAttachmentInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
+    depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    std::vector<VkAttachmentDescription> attachments(2);
+    attachments[0] = colorAttachmentInfo;
+    attachments[1] = depthAttachmentInfo;
+    
+
+    VkAttachmentReference colorRef = {};
+    colorRef.attachment = 0;
+    colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  
+
+    VkAttachmentReference depthRef = {};
+    depthRef.attachment = 1;
+    depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    // Create Subpass info
+    VkSubpassDescription subpassDescription = {};
+    subpassDescription.flags = 0;
+    subpassDescription.colorAttachmentCount = 1;
+    subpassDescription.pColorAttachments = &colorRef;
+    subpassDescription.pDepthStencilAttachment = &depthRef;
+    subpassDescription.inputAttachmentCount = 0;
+    subpassDescription.pPreserveAttachments = VK_NULL_HANDLE;
+    subpassDescription.preserveAttachmentCount = 0;
+    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+    subpassDescription.pResolveAttachments = VK_NULL_HANDLE;
+    subpassDescription.pInputAttachments = VK_NULL_HANDLE;
+
+    VkRenderPassCreateInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 2;
+    renderPassInfo.pNext = VK_NULL_HANDLE;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpassDescription;
+  
+    renderPassInfo.pAttachments = &attachments[0];
+    renderPassInfo.flags = NULL;
+    VkResult result = vkCreateRenderPass(currentVKSettings.device, &renderPassInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderPass);
+    assert(result == VK_SUCCESS);
+    return true;
 }
 

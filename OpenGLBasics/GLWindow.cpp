@@ -92,101 +92,101 @@ int main(int argc, char* argv[])
 	GGLSPtr->Init();
 
 	GGLPtr->Init();
-	MSoundDataAsset* sound2 = new MSoundDataAsset("../Aritus - Summer With You.wav");
-	MSoundDataAsset* sound = new MSoundDataAsset("../Large Professor - Frantic Barz (NIKK BLVKK Remix).wav");
-	AudioSource* source = new AudioSource(/*device, context,*/ sound);	
-	int i = 0;
-	int maxPlayTimeInSeconds = 120;
-	double time = 0.0f;
-		
+	//MSoundDataAsset* sound2 = new MSoundDataAsset("../Aritus - Summer With You.wav");
+	//MSoundDataAsset* sound = new MSoundDataAsset("../Large Professor - Frantic Barz (NIKK BLVKK Remix).wav");
+	//AudioSource* source = new AudioSource(/*device, context,*/ sound);	
+	//int i = 0;
+	//int maxPlayTimeInSeconds = 120;
+	//double time = 0.0f;
+	//	
 
-	// Add a skybox to the scene
-	std::vector<std::string> faceFilePaths = { "../cubemaps/Yokohama3/posx.jpg",
-											"../cubemaps/Yokohama3/negx.jpg",
-											"../cubemaps/Yokohama3/posy.jpg",  
-											"../cubemaps/Yokohama3/negy.jpg",
-											"../cubemaps/Yokohama3/posz.jpg",
-											"../cubemaps/Yokohama3/negz.jpg" };
+	//// Add a skybox to the scene
+	//std::vector<std::string> faceFilePaths = { "../cubemaps/Yokohama3/posx.jpg",
+	//										"../cubemaps/Yokohama3/negx.jpg",
+	//										"../cubemaps/Yokohama3/posy.jpg",  
+	//										"../cubemaps/Yokohama3/negy.jpg",
+	//										"../cubemaps/Yokohama3/posz.jpg",
+	//										"../cubemaps/Yokohama3/negz.jpg" };
 
-	Cubemaps* skybox = new Cubemaps(faceFilePaths);	
+	//Cubemaps* skybox = new Cubemaps(faceFilePaths);	
 
-	// Load a OBJ file to use as a 3d model
-	std::vector<DVertex> vertices;
-	std::vector<uint16_t> indices;
-	//MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
-	//MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
-	MeshDefaultsLibrary::GetSpherePrimitive(3, vertices, indices);
+	//// Load a OBJ file to use as a 3d model
+	//std::vector<DVertex> vertices;
+	//std::vector<uint16_t> indices;
+	////MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
+	////MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+	//MeshDefaultsLibrary::GetSpherePrimitive(3, vertices, indices);
 
-	/*bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
-	if (!modelLoaded)
-		return 0;*/
+	///*bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
+	//if (!modelLoaded)
+	//	return 0;*/
 
-	// Create an actor to exist in the scene
-	MActor* actor = new MActor();
+	//// Create an actor to exist in the scene
+	//MActor* actor = new MActor();
 
-	// Create a texture
-	Texture* texture = new Texture("MemeJoe.bmp");
+	//// Create a texture
+	//Texture* texture = new Texture("MemeJoe.bmp");
 
-	// Make a monkey mesh 	
-	Mesh* monkeyMesh = new Mesh();
-	monkeyMesh->Import(vertices, indices, "cube");
-	MeshComponent* monkeyMeshComponent = new MeshComponent();
-	monkeyMeshComponent->AddMesh(monkeyMesh);
-	monkeyMeshComponent->transform.Translate(DVector3(0, -2, 7));
-	monkeyMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
-	actor->AddComponent(monkeyMeshComponent);
+	//// Make a monkey mesh 	
+	//Mesh* monkeyMesh = new Mesh();
+	//monkeyMesh->Import(vertices, indices, "cube");
+	//MeshComponent* monkeyMeshComponent = new MeshComponent();
+	//monkeyMeshComponent->AddMesh(monkeyMesh);
+	//monkeyMeshComponent->transform.Translate(DVector3(0, -2, 7));
+	//monkeyMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
+	//actor->AddComponent(monkeyMeshComponent);
 
-	// Make a light 
-	MyLightComponent* lightComponent = new MyLightComponent();		
-	lightComponent->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), 90);
-	lightComponent->transform.Translate(DVector3(3, 1, 7));
-	lightComponent->intensity = 2.0f;
-	actor->AddComponent(lightComponent);
+	//// Make a light 
+	//MyLightComponent* lightComponent = new MyLightComponent();		
+	//lightComponent->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), 90);
+	//lightComponent->transform.Translate(DVector3(3, 1, 7));
+	//lightComponent->intensity = 2.0f;
+	//actor->AddComponent(lightComponent);
 
-	MyLightComponent* secondLight = new MyLightComponent();
-	secondLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
-	secondLight->transform.Translate(DVector3(-3, 1, 7));
-	secondLight->intensity = 2.0f;
-	actor->AddComponent(secondLight);
+	//MyLightComponent* secondLight = new MyLightComponent();
+	//secondLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
+	//secondLight->transform.Translate(DVector3(-3, 1, 7));
+	//secondLight->intensity = 2.0f;
+	//actor->AddComponent(secondLight);
 
-	
+	//
 
-	// Make a rotating light
-	//RotatingLightComponent* rotLight = new RotatingLightComponent();
-	//rotLight->SetTarget(&monkeyMeshComponent->transform);
-	//// set it to a spot light
-	//rotLight->lightType = LightComponent::LightTypes::Spot;
-	//// increase its radius
-	//rotLight->radius = 5.0f;
-	//rotLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
-	//rotLight->transform.Translate(DVector3(-3, 1, 7));
-	//rotLight->intensity = 60.0f;
-	//actor->AddComponent(rotLight);
+	//// Make a rotating light
+	////RotatingLightComponent* rotLight = new RotatingLightComponent();
+	////rotLight->SetTarget(&monkeyMeshComponent->transform);
+	////// set it to a spot light
+	////rotLight->lightType = LightComponent::LightTypes::Spot;
+	////// increase its radius
+	////rotLight->radius = 5.0f;
+	////rotLight->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), -90);
+	////rotLight->transform.Translate(DVector3(-3, 1, 7));
+	////rotLight->intensity = 60.0f;
+	////actor->AddComponent(rotLight);
 
-	
-	// Create an Audio Equalizer LineRendering component
-	AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
-	// Add the component to an actor
-	actor->AddComponent(lineEQ);
-	// Add an audio source to the component
-	lineEQ->AddSource(source);
-	// Change the EQ's max height variance
-	lineEQ->ChangeMaxHeightVariance(1.25f);
-	// Add a few interpolation points between samples
-	//lineEQ->AddInterpolatePoints(2);
-	// Change the number of samples it's capturing
-	lineEQ->ChangeSampleCount(1024);
-	// Change the volume of the component
-	lineEQ->GetSource()->SetVolume(.05f);
-	// Change the color of the component
-	lineEQ->AddLerpColors(Color::Cyan, Color::Green);
-	lineEQ->renderer->SetLineWidth(1.5f);
-	// then play the audio source
-	lineEQ->PlaySource(true);
-	
-	
-	
-	actor->transform.SetPosition(DVector3(0, -2, 0));
+	//
+	//// Create an Audio Equalizer LineRendering component
+	//AudioEQComponent* lineEQ = new AudioEQComponent(DVector3(-5.0f, 2.5f, 6.0f), DVector3(5.0f, 2.5f, 6.0f));
+	//// Add the component to an actor
+	//actor->AddComponent(lineEQ);
+	//// Add an audio source to the component
+	//lineEQ->AddSource(source);
+	//// Change the EQ's max height variance
+	//lineEQ->ChangeMaxHeightVariance(1.25f);
+	//// Add a few interpolation points between samples
+	////lineEQ->AddInterpolatePoints(2);
+	//// Change the number of samples it's capturing
+	//lineEQ->ChangeSampleCount(1024);
+	//// Change the volume of the component
+	//lineEQ->GetSource()->SetVolume(.05f);
+	//// Change the color of the component
+	//lineEQ->AddLerpColors(Color::Cyan, Color::Green);
+	//lineEQ->renderer->SetLineWidth(1.5f);
+	//// then play the audio source
+	//lineEQ->PlaySource(true);
+	//
+	//
+	//
+	//actor->transform.SetPosition(DVector3(0, -2, 0));
 	GGLPtr->Loop();
 	
 	

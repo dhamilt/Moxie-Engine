@@ -206,7 +206,10 @@
     <ClCompile Include="imgui\imgui_impl_vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanRendering.cpp">
+    <ClCompile Include="VulkanPipelineSetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanPipelineBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -466,10 +469,22 @@
     <ClInclude Include="imgui\imgui_impl_osx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRendering.h">
+    <ClInclude Include="VulkanRenderpassFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VulkanShaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPipelineSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPipelineBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRasterizationPresets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanMultisamplingPresets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

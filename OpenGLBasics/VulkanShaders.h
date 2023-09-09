@@ -4,8 +4,10 @@
 #include <vector>
 #include <string>
 #include "VulkanPlatformInit.h"
+#include <sstream>
+#include <fstream>
 
-const uint32_t MAX_DESCRIPTOR_POOL_SIZE = 512;
+const uint32_t MAX_DESCRIPTOR_POOL_SIZE = 1024;
 
 struct VkShaderParams
 {
@@ -21,28 +23,30 @@ struct VkShaderStageConfigs
 	VkShaderStageFlags shaderFlag;
 };
 
-class VkShader
+class VkShaderUtil
 {
+public:
 	void LoadShaderStage(const VkShaderStageConfigs& shaderConfig);
 	void LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs);
+	static bool LoadShaderModule(const VkShaderStageConfigs& shaderConfig, VkShaderModule& shaderModule);
 
-	VkShader() {};
-	VkShader(VkShaderStageConfigs shaderConfig) { LoadShaderStage(shaderConfig); }
-	VkShader(std::vector<VkShaderStageConfigs> shaderConfigs) { LoadShaderStages(shaderConfigs); }
+	VkShaderUtil() {};
+	VkShaderUtil(VkShaderStageConfigs shaderConfig) { LoadShaderStage(shaderConfig); }
+	VkShaderUtil(std::vector<VkShaderStageConfigs> shaderConfigs) { LoadShaderStages(shaderConfigs); }
 	
 	// uniform utility functions
 	void SetParams(std::vector<VkShaderParams> uniformParams);
-	void SetBool(const bool& val, VkShaderStageFlags shaderStage);
-	void SetFloat(const float& val, VkShaderStageFlags shaderStage);
-	void SetInt(const int& val, VkShaderStageFlags shaderStage);
-	void SetMat3(const DMat3x3& val, VkShaderStageFlags shaderStage);
-	void SetMat4(const DMat4x4& val, VkShaderStageFlags shaderStage);
-	void SetFloat4(const DVector4& val, VkShaderStageFlags shaderStage);
-	void SetFloat4(const float& x, const float& y, const float& z, const float& w, VkShaderStageFlags shaderStage);
-	void SetFloat3(const DVector3& val, VkShaderStageFlags shaderStage);
-	void SetFloat3(const float& x, const float& y, const float& z, VkShaderStageFlags shaderStage);
-	void SetFloat2(const DVector2& val, VkShaderStageFlags shaderStage);
-	void SetFloat2(const float& x, const float& y, VkShaderStageFlags shaderStage);
+	void SetBool(const VkBool32& bindingIndex, const bool& val, VkShaderStageFlags shaderStage);
+	void SetFloat(const VkBool32& bindingIndex, const float& val, VkShaderStageFlags shaderStage);
+	void SetInt(const VkBool32& bindingIndex, const int& val, VkShaderStageFlags shaderStage);
+	void SetMat3(const VkBool32& bindingIndex, const DMat3x3& val, VkShaderStageFlags shaderStage);
+	void SetMat4(const VkBool32& bindingIndex, const DMat4x4& val, VkShaderStageFlags shaderStage);
+	void SetFloat4(const VkBool32& bindingIndex, const DVector4& val, VkShaderStageFlags shaderStage);
+	void SetFloat4(const VkBool32& bindingIndex, const float& x, const float& y, const float& z, const float& w, VkShaderStageFlags shaderStage);
+	void SetFloat3(const VkBool32& bindingIndex, const DVector3& val, VkShaderStageFlags shaderStage);
+	void SetFloat3(const VkBool32& bindingIndex, const float& x, const float& y, const float& z, VkShaderStageFlags shaderStage);
+	void SetFloat2(const VkBool32& bindingIndex, const DVector2& val, VkShaderStageFlags shaderStage);
+	void SetFloat2(const VkBool32& bindingIndex, const float& x, const float& y, VkShaderStageFlags shaderStage);
 	//void SetTexture()
 	void BindParams();
 
@@ -54,25 +58,72 @@ private:
 	std::vector<VkShaderParams> bindings;
 };
 
-inline void VkShader::LoadShaderStage(const VkShaderStageConfigs& shaderConfig)
+inline void VkShaderUtil::LoadShaderStage(const VkShaderStageConfigs& shaderConfig)
 {
+	if(~(shaderConfig.shaderFlag & shaderStagingMask))
 	shaderStagingMask |= shaderConfig.shaderFlag;
 	shaderFiles.push_back(shaderConfig.shaderFile);
 }
 
-inline void VkShader::LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs)
+inline void VkShaderUtil::LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs)
 {
 	for (auto config : shaderConfigs)
 		LoadShaderStage(config);
+}
+
+inline bool VkShaderUtil::LoadShaderModule(const VkShaderStageConfigs& shaderConfig, VkShaderModule& shaderModule)
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	std::vector<char> fileBuf;
+	std::ifstream file (shaderConfig.shaderFile, std::ios::ate | std::ifstream::binary);
+	size_t fileSize = 0;
+	// pass shader file data into buffer
+	if (file)
+	{
+		fileSize = file.tellg();
+		fileBuf.resize(fileSize);
+		file.seekg(0);
+		file.read(fileBuf.data(), fileSize);
+
+		file.close();
+	}
+	else
+		return false;
+	auto code = reinterpret_cast<const uint32_t*>(fileBuf.data());
+	// feed it into shader module
+	VkShaderModuleCreateInfo shaderModuleInfo = {};
+	shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shaderModuleInfo.pNext = VK_NULL_HANDLE;
+	shaderModuleInfo.pCode = code;
+	shaderModuleInfo.codeSize = fileSize;
+	shaderModuleInfo.flags = 0;
+	VkResult result = vkCreateShaderModule(vkSettings->device, &shaderModuleInfo, vkSettings->allocationCallback, &shaderModule);
+	if (result != VK_SUCCESS)
+		return false;
+
+		
+
+	VkPipelineShaderStageCreateInfo pipelineShaderInfo = {};
+	pipelineShaderInfo.stage = (VkShaderStageFlagBits)shaderConfig.shaderFlag;
+	pipelineShaderInfo.module = shaderModule;
+	pipelineShaderInfo.flags = 0;
+	pipelineShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	pipelineShaderInfo.pNext = 0;
+	pipelineShaderInfo.pName = shaderConfig.shaderFile.c_str();
+	pipelineShaderInfo.pSpecializationInfo = NULL;
+
+	return true;
+		
+
 }
 
 /// <summary>
 /// Insert a list of layout bindings
 /// </summary>
 /// <param name="uniformParams"></param>
-inline void VkShader::SetParams(std::vector<VkShaderParams> uniformParams)
+inline void VkShaderUtil::SetParams(std::vector<VkShaderParams> uniformParams)
 {
-	bindingCount += uniformParams.size();
+	bindingCount += (uint32_t)uniformParams.size();
 	for (auto param : uniformParams)
 		bindings.push_back(param);
 }
@@ -82,11 +133,11 @@ inline void VkShader::SetParams(std::vector<VkShaderParams> uniformParams)
 /// </summary>
 /// <param name="val">boolean</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetBool(const bool& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetBool(const VkBool32& bindingIndex, const bool& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(bool);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -100,11 +151,11 @@ inline void VkShader::SetBool(const bool& val, VkShaderStageFlags shaderStage)
 /// </summary>
 /// <param name="val">float</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat(const float& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat(const VkBool32& bindingIndex, const float& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(float);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -118,11 +169,11 @@ inline void VkShader::SetFloat(const float& val, VkShaderStageFlags shaderStage)
 /// </summary>
 /// <param name="val">integer</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetInt(const int& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetInt(const VkBool32& bindingIndex, const int& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(int);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -136,11 +187,11 @@ inline void VkShader::SetInt(const int& val, VkShaderStageFlags shaderStage)
 /// </summary>
 /// <param name="val">Matrix 3x3</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetMat3(const DMat3x3& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetMat3(const VkBool32& bindingIndex, const DMat3x3& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStage & shaderStagingMask);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DMat3x3);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -154,11 +205,11 @@ inline void VkShader::SetMat3(const DMat3x3& val, VkShaderStageFlags shaderStage
 /// </summary>
 /// <param name="val">Matrix 4x4</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetMat4(const DMat4x4& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetMat4(const VkBool32& bindingIndex, const DMat4x4& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DMat4x4);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -172,11 +223,11 @@ inline void VkShader::SetMat4(const DMat4x4& val, VkShaderStageFlags shaderStage
 /// </summary>
 /// <param name="val">DVector2</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat2(const DVector2& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat2(const VkBool32& bindingIndex, const DVector2& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DVector2);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -191,11 +242,11 @@ inline void VkShader::SetFloat2(const DVector2& val, VkShaderStageFlags shaderSt
 /// <param name="x">float</param>
 /// <param name="y">float</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat2(const float& x, const float& y, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat2(const VkBool32& bindingIndex, const float& x, const float& y, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DVector2);
 	param.shaderUsageFlags = shaderStage;
 	DVector2 val(x, y);
@@ -212,11 +263,11 @@ inline void VkShader::SetFloat2(const float& x, const float& y, VkShaderStageFla
 /// <param name="y">float</param>
 /// <param name="z">float</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat3(const float& x, const float& y, const float& z, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat3(const VkBool32& bindingIndex, const float& x, const float& y, const float& z, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DVector3);
 	param.shaderUsageFlags = shaderStage;
 	DVector3 val(x, y, z);
@@ -231,11 +282,11 @@ inline void VkShader::SetFloat3(const float& x, const float& y, const float& z, 
 /// </summary>
 /// <param name="val">DVector3</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat3(const DVector3& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat3(const VkBool32& bindingIndex, const DVector3& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DVector3);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -249,11 +300,11 @@ inline void VkShader::SetFloat3(const DVector3& val, VkShaderStageFlags shaderSt
 /// </summary>
 /// <param name="val">DVector4</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat4(const DVector4& val, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat4(const VkBool32& bindingIndex, const DVector4& val, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DVector4);
 	param.shaderUsageFlags = shaderStage;
 	memcpy(&param.data, &val, param.dataSize);
@@ -270,11 +321,11 @@ inline void VkShader::SetFloat4(const DVector4& val, VkShaderStageFlags shaderSt
 /// <param name="z">float</param>
 /// <param name="w">float</param>
 /// <param name="shaderStage">VkShaderStageFlags</param>
-inline void VkShader::SetFloat4(const float& x, const float& y, const float& z, const float& w, VkShaderStageFlags shaderStage)
+inline void VkShaderUtil::SetFloat4(const VkBool32& bindingIndex, const float& x, const float& y, const float& z, const float& w, VkShaderStageFlags shaderStage)
 {
 	assert(shaderStagingMask & shaderStage);
 	VkShaderParams param = {};
-	param.bindingIndex = bindingCount;
+	param.bindingIndex = bindingIndex;
 	param.dataSize = sizeof(DVector4);
 	param.shaderUsageFlags = shaderStage;
 	DVector4 val(x, y, z, w);
@@ -286,7 +337,7 @@ inline void VkShader::SetFloat4(const float& x, const float& y, const float& z, 
 
 // create layout bindings for each of the parameters provided
 // for all of the intended shader stage(s)
-inline void VkShader::BindParams()
+inline void VkShaderUtil::BindParams()
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	VkResult result;
@@ -395,5 +446,13 @@ inline void VkShader::BindParams()
 	assert(result == VK_SUCCESS);
 
 	// Allocate the pool with Descriptor sets
-	vkAllocateDescriptorSets
+	VkDescriptorSetAllocateInfo descriptorAllocationInfo = {};
+	descriptorAllocationInfo.descriptorPool = descriptorPool;
+	descriptorAllocationInfo.descriptorSetCount = bindingCount;
+	descriptorAllocationInfo.pNext = VK_NULL_HANDLE;
+	descriptorAllocationInfo.pSetLayouts = &shaderDescriptorLayout;
+	descriptorAllocationInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	VkDescriptorSet descriptorSet;
+	vkAllocateDescriptorSets(vkSettings->device, &descriptorAllocationInfo, &descriptorSet);
+
 }

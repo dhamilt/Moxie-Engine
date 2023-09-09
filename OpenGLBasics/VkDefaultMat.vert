@@ -25,7 +25,7 @@ void main()
 {	
 	// Transform normal without perspective (projection matrix) added
 	// and normalize it
-	normal = normalize(normalBuf.normalMatrix * vertexNormal);
+	normal = vec4(normalize(normalInfo.normalMatrix * vertexNormal),1.0);
 	position = mvpInfo.view * mvpInfo.model * vec4(vertexPosition, 1.0);
 	gl_Position = mvpInfo.projection * mvpInfo.view * mvpInfo.model * vec4(vertexPosition, 1.0);
 }

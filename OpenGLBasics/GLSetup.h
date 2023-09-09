@@ -46,6 +46,7 @@ class GLSetup
 		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
 		void GetViewportDimensions(int& _width, int& _height);
 		void AddMaterialToPipeline(std::string primitiveName, Material* mat);
+		void CreateVkPipelineForTriangle();
 		void AddCubemapMaterial(Material* cubeMapMat);
 		void GetDefaultMeshShader(Shader* defaultShader);
 		void SubmitCubeMapData(std::vector<TextureData*> cubemapData);
@@ -102,8 +103,16 @@ private:
 	bool viewportInFocus;
 	WMainMenu* mainMenu;
 	BRenderingPipeline* pipeline;
-	VkCommandBuffer* cmdBuffer;
-	std::vector<VkFramebuffer> framebuffers;
+	VkCommandBufferBeginInfo beginCmdBufferInfo;
+	VkRenderPassBeginInfo beginRenderPassInfo;
+	VkClearValue* clearValues;
+	VkCommandBuffer* mainCmdBuffer;
+	std::vector<VkPipeline> triangleShaderPipeline;
+	VkSemaphore *presentSemaphore, *renderSemaphore;
+	VkFence* fence;
+	VkDevice* currentVkDevice;
+	VkSwapchainKHR* VkSwapchain;
+	std::vector<VkFramebuffer> glFramebuffers;
 	
 };
 

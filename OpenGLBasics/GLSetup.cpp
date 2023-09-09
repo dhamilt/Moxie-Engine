@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "Mesh.h"
 #include "VulkanPlatformInit.h"
+#include "VulkanPipelineBuilder.h"
 
 
 
@@ -20,9 +21,12 @@ GLSetup::GLSetup()
 
 GLSetup::~GLSetup()
 {
-	
+	// Clean up Rendering Pipeline
+	pipeline->CleanupRenderingPipeline();
 	// Shutdown and clean GUI
 #if USE_VULKAN
+	if (clearValues)
+		delete[] clearValues;
 	ImGui_ImplVulkan_Shutdown();
 	PVulkanPlatformInit::Get()->CleanupVulkan();
 #else
@@ -124,12 +128,13 @@ void GLSetup::StartSDLWindow()
 	}
 
 	auto platformInstance =PVulkanPlatformInit::Get();
+	auto vkSettings = platformInstance->GetInfo();
 	// Make sure the vulkan instance was created correctly
 	assert(platformInstance->CreateInstance(sdlWindow));
-	// Make sure that imgui is setup correctly on the SDL2 Window
-	assert(platformInstance->ImGuiVkSetup(sdlWindow));
 
-	
+	// Keep ref to the logical device being used
+	currentVkDevice = &vkSettings->device;
+
 	auto platformInfo = platformInstance->GetInfo();
 	auto surface = &platformInfo->surface;
 	auto instance = &platformInfo->instance;
@@ -139,14 +144,59 @@ void GLSetup::StartSDLWindow()
 		printf("Error! %s\n", SDL_GetError());
 		throw std::runtime_error("Could not create Vulkan surface.");
 	}
-	// Ensure that the swap chain was created properly
+
+	// Ensure that the debug callbacks were created
+	assert(platformInstance->SetupDebugCallbacks());
+
+	// Ensure that the discrete gpu is being used
+	assert(platformInstance->GetPhysicalDevices());
+
+	// Ensure that the logical device and device queue are created properly
+	assert(platformInstance->CreateLogicalDeviceAndQueue());
+
+	// Ensure the descriptor pool is created properly
+	assert(platformInstance->CreateDescriptorPool());
+
+	// Ensure that the swap chain is created properly
 	assert(platformInstance->CreateSwapChain());
-	 //assert(platformInstance->SetupVulkanWindow(platformInfo->surface, width, height));
-	//vulkanSurface = vk::SurfaceKHR(_vulkanSurface);
+
+	// Keep ref to swapchain being used
+	VkSwapchain = &vkSettings->swapchain;
+
+	// Ensure that the render pass is created properly
+	assert(platformInstance->CreateRenderPass());
+	 
+	// Ensure that the command buffer is created properly
+	assert(platformInstance->CreateCommandPool(&mainCmdBuffer));
+
+	// Ensure that the sync object fence is created properly
+	assert(platformInstance->CreateFence(&fence));
+
+	// Ensure that the sync object semaphores are created properly
+	assert(platformInstance->CreateSemaphores(&presentSemaphore, &renderSemaphore));
+
+	// Dictate how the command buffer is used on startup of each frame
+
+	beginCmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginCmdBufferInfo.pNext = 0;
+	beginCmdBufferInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	beginCmdBufferInfo.pInheritanceInfo = VK_NULL_HANDLE;
+
+	// Dictate how the render pass is used for the startup of each frame
+	// NOTE: only the static values are assigned here
+	// the dynamic values are assigned at the beginning of each frame
+	beginRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	beginRenderPassInfo.pNext = 0;
+	beginRenderPassInfo.renderArea.offset = { 0, 0 };
+
+	/*assert(vkBeginCommandBuffer(*cmdBuffer, beginCmdBufferInfo) == VK_SUCCESS);
+
+
+	vkResetCommandBuffer(*cmdBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);*/
+
 #endif // USE_VULKAN
 	
-	// Create default mesh shader
-	pipeline->CreateDefaultShader();
+	
 
 	// Setup GUI
 	IMGUI_CHECKVERSION();
@@ -168,19 +218,36 @@ void GLSetup::StartSDLWindow()
 	// Set the GUI style
 	ImGui::StyleColorsDark();
 #if USE_OPENGL
+	// Create default mesh shader
+	pipeline->CreateDefaultShader();
+
 	// Link the GUI to the correct context and rendering frameworks
 	ImGui_ImplSDL2_InitForOpenGL(sdlWindow, mainSDLContext);
 	ImGui_ImplOpenGL3_Init("#version 330");
+	// Setup an initial Framebuffer
+	if (pipeline)
+		pipeline->GenerateDefaultFramebuffer();
 #elif USE_VULKAN
+	// Make sure that imgui is setup correctly on the SDL2 Window
+	assert(platformInstance->ImGuiVkSetup(sdlWindow));
 	ImGui_ImplSDL2_InitForVulkan(sdlWindow);
-	ImGui_ImplVulkan_Init(&platformInfo->imGuiInitInfo, platformInfo->window.RenderPass);
+	ImGui_ImplVulkan_Init(&platformInfo->imGuiInitInfo, platformInstance->GetInfo()->renderPass);
+
+	// Create clear values for Vulkan screen
+	clearValues = new VkClearValue[2];
+	clearValues[0].color = { { 0.0f, 0.25f, 0.75f } };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
+	// Setup initial framebuffers
+	if (pipeline)
+		pipeline->GenerateVkFrameBuffers();
+	// Create default shader pipeline for triangle FOR TESTING
+	CreateVkPipelineForTriangle();
 #endif
 	
 
 	
-	// Setup an initial Framebuffer
-	if(pipeline)
-		pipeline->GenerateDefaultFramebuffer();
+	
 
 	
 	// Setup main camera
@@ -237,7 +304,7 @@ void GLSetup::Render()
 	// Run one frame of the Render thread
 	if (sdlWindow)
 	{		
-		
+#if USE_OPENGL
 		pipeline->LoadCurrentFramebuffer();
 
 		// Use the initial framebuffer to record all render data for this frame
@@ -321,6 +388,91 @@ void GLSetup::Render()
 		
 		// Refresh screen with new buffer
 		SDL_GL_SwapWindow(sdlWindow);
+#elif USE_VULKAN
+		auto platformInstance = PVulkanPlatformInit::Get();
+		auto vkSettings = platformInstance->GetInfo();
+
+		// Get the index of the requested swapchain index being rendered on
+		// set timeout period to 1 second
+		VkBool32 swapchainImgIndex;
+		assert(vkAcquireNextImageKHR(*currentVkDevice, *VkSwapchain, 1000000000, *presentSemaphore, VK_NULL_HANDLE, &swapchainImgIndex) == VK_SUCCESS);
+
+		// Wait for GPU to finish rendering the previous frame before drawing the current frame
+		// set timeout period to 1 second
+		assert(vkWaitForFences(*currentVkDevice, 1, fence, VK_TRUE, 1000000000) == VK_SUCCESS);
+		assert(vkResetFences(*currentVkDevice, 1, fence) == VK_SUCCESS);
+
+
+		// Restart the command buffer to be ready to record draw commands for the current frame
+		assert(vkResetCommandBuffer(*mainCmdBuffer, 0) == VK_SUCCESS);
+
+		// Begin command buffer recording for the current frame
+		assert(vkBeginCommandBuffer(*mainCmdBuffer, &beginCmdBufferInfo) == VK_SUCCESS);
+
+		
+
+		VkClearDepthStencilValue clearDepthStencilVal = {};
+		clearDepthStencilVal.depth = 0.0f;
+		clearDepthStencilVal.stencil = 0;	
+
+		//vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
+
+		// Get the current framebuffer to be used from swapchain
+		VkFramebuffer currentFrameBuffer;
+		pipeline->GetVkFramebuffer(currentFrameBuffer, swapchainImgIndex);
+
+		// Get the current extent of the swapchain images
+		VkExtent2D currentExtent;
+		platformInstance->GetWindowExtent(currentExtent);
+
+		beginRenderPassInfo.clearValueCount = 2;
+		beginRenderPassInfo.framebuffer = currentFrameBuffer;
+		beginRenderPassInfo.renderArea.extent = currentExtent;
+		beginRenderPassInfo.pClearValues = clearValues;
+		beginRenderPassInfo.renderPass = vkSettings->renderPass;
+
+		// Create render pass on command buffer
+		// ensures that the subpass contents is passed into the main command buffer (for now, at least)
+		vkCmdBeginRenderPass(*mainCmdBuffer, &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// RUN DRAW COMMANDS HERE
+		vkCmdBindPipeline(*mainCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
+		vkCmdDraw(*mainCmdBuffer, 3, 0, 0, 0);
+
+		// Finalize the render pass for the command buffer
+		vkCmdEndRenderPass(*mainCmdBuffer);
+		// Stops recording of draw commands
+		assert(vkEndCommandBuffer(*mainCmdBuffer) == VK_SUCCESS);
+
+		// Submit draw commands to the device queue to be drawn
+		VkSubmitInfo queueSubmitInfo = {};
+		queueSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		queueSubmitInfo.commandBufferCount = 1;
+		queueSubmitInfo.pCommandBuffers = mainCmdBuffer;
+		queueSubmitInfo.pNext = VK_NULL_HANDLE;
+		queueSubmitInfo.signalSemaphoreCount = 1;
+		queueSubmitInfo.pSignalSemaphores = &vkSettings->renderSemaphore;
+		queueSubmitInfo.waitSemaphoreCount = 1;
+		queueSubmitInfo.pWaitSemaphores = &vkSettings->presentSemaphore;
+		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		queueSubmitInfo.pWaitDstStageMask = &waitStage;
+
+		assert(vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, *fence) == VK_SUCCESS);
+		
+		// Render the image to the window/surface
+		VkPresentInfoKHR presentationInfo = {};
+		presentationInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentationInfo.pNext = VK_NULL_HANDLE;
+		presentationInfo.swapchainCount = 1;
+		presentationInfo.pSwapchains = &vkSettings->swapchain;
+		presentationInfo.waitSemaphoreCount = 1;
+		presentationInfo.pWaitSemaphores = &vkSettings->renderSemaphore;
+		presentationInfo.pImageIndices = &swapchainImgIndex;
+		presentationInfo.pResults = VK_NULL_HANDLE;
+
+		assert(vkQueuePresentKHR(vkSettings->queue, &presentationInfo) == VK_SUCCESS);
+
+#endif
 	}
 
 
@@ -332,6 +484,8 @@ void GLSetup::GetWindowDimensions(int& w, int& h)
 	w = width;
 	h = height;
 }
+
+
 
 float GLSetup::GetFarClippingPlane()
 {
@@ -379,6 +533,17 @@ void GLSetup::AddMaterialToPipeline(std::string primitiveName, Material* mat)
 
 }
 
+void GLSetup::CreateVkPipelineForTriangle()
+{
+	VkExtent2D windowExtent{};
+	windowExtent.width = width;
+	windowExtent.height = height;
+	VkPipelineBuilder* pipelineBuilder = new VkPipelineBuilder();
+	triangleShaderPipeline.resize(1);
+	pipelineBuilder->GetTriangleShaderPipeline(windowExtent, &triangleShaderPipeline[0]);
+	delete pipelineBuilder;
+}
+
 void GLSetup::AddCubemapMaterial(Material* cubeMapMat)
 {
 	
@@ -392,8 +557,12 @@ void GLSetup::GetDefaultMeshShader(Shader* defaultShader)
 
 void GLSetup::SubmitCubeMapData(std::vector<TextureData*> cubemapData)
 {
+#if USE_OPENGL
 	if (pipeline)
 		pipeline->GenerateCubemap(cubemapData);
+#elif USE_VULKAN
+
+#endif
 }
 
 void GLSetup::ImportMesh(std::string name, Mesh* mesh)
