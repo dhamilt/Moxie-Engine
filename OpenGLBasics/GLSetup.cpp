@@ -170,10 +170,10 @@ void GLSetup::StartSDLWindow()
 	assert(platformInstance->CreateCommandPool(&mainCmdBuffer));
 
 	// Ensure that the sync object fence is created properly
-	assert(platformInstance->CreateFence(&fence));
+	assert(platformInstance->CreateFence(&inFlightFence));
 
 	// Ensure that the sync object semaphores are created properly
-	assert(platformInstance->CreateSemaphores(&presentSemaphore, &renderSemaphore));
+	assert(platformInstance->CreateSemaphores(&imageAvailableSemaphore, &renderFinishedSemaphore));
 
 	// Dictate how the command buffer is used on startup of each frame
 
@@ -235,7 +235,7 @@ void GLSetup::StartSDLWindow()
 
 	// Create clear values for Vulkan screen
 	clearValues = new VkClearValue[2];
-	clearValues[0].color = { { 0.0f, 0.25f, 0.75f } };
+	clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
 	// Setup initial framebuffers
@@ -395,12 +395,12 @@ void GLSetup::Render()
 		// Get the index of the requested swapchain index being rendered on
 		// set timeout period to 1 second
 		VkBool32 swapchainImgIndex;
-		assert(vkAcquireNextImageKHR(*currentVkDevice, *VkSwapchain, 1000000000, *presentSemaphore, VK_NULL_HANDLE, &swapchainImgIndex) == VK_SUCCESS);
+		assert(vkAcquireNextImageKHR(*currentVkDevice, *VkSwapchain, 1000000000, *imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainImgIndex) == VK_SUCCESS);
 
 		// Wait for GPU to finish rendering the previous frame before drawing the current frame
 		// set timeout period to 1 second
-		assert(vkWaitForFences(*currentVkDevice, 1, fence, VK_TRUE, 1000000000) == VK_SUCCESS);
-		assert(vkResetFences(*currentVkDevice, 1, fence) == VK_SUCCESS);
+		assert(vkWaitForFences(*currentVkDevice, 1, inFlightFence, VK_TRUE, 1000000000) == VK_SUCCESS);
+		assert(vkResetFences(*currentVkDevice, 1, inFlightFence) == VK_SUCCESS);
 
 
 		// Restart the command buffer to be ready to record draw commands for the current frame
@@ -414,8 +414,6 @@ void GLSetup::Render()
 		VkClearDepthStencilValue clearDepthStencilVal = {};
 		clearDepthStencilVal.depth = 0.0f;
 		clearDepthStencilVal.stencil = 0;	
-
-		//vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
 
 		// Get the current framebuffer to be used from swapchain
 		VkFramebuffer currentFrameBuffer;
@@ -437,10 +435,32 @@ void GLSetup::Render()
 
 		// RUN DRAW COMMANDS HERE
 		vkCmdBindPipeline(*mainCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
-		vkCmdDraw(*mainCmdBuffer, 3, 0, 0, 0);
+
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(width);
+		viewport.height = static_cast<float>(height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		//vkCmdSetViewport(*mainCmdBuffer, 0, 1, &viewport);
+
+		VkExtent2D windowExtent{};
+		windowExtent.width = width;
+		windowExtent.height = height;
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = windowExtent;
+		//vkCmdSetScissor(*mainCmdBuffer, 0, 1, &scissor);
+
+		vkCmdDraw(*mainCmdBuffer, 3, 1, 0, 0);
 
 		// Finalize the render pass for the command buffer
 		vkCmdEndRenderPass(*mainCmdBuffer);
+
+		vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
+
 		// Stops recording of draw commands
 		assert(vkEndCommandBuffer(*mainCmdBuffer) == VK_SUCCESS);
 
@@ -451,24 +471,25 @@ void GLSetup::Render()
 		queueSubmitInfo.pCommandBuffers = mainCmdBuffer;
 		queueSubmitInfo.pNext = VK_NULL_HANDLE;
 		queueSubmitInfo.signalSemaphoreCount = 1;
-		queueSubmitInfo.pSignalSemaphores = &vkSettings->renderSemaphore;
+		queueSubmitInfo.pSignalSemaphores = &vkSettings->renderFinishedSemaphore;
 		queueSubmitInfo.waitSemaphoreCount = 1;
-		queueSubmitInfo.pWaitSemaphores = &vkSettings->presentSemaphore;
+		queueSubmitInfo.pWaitSemaphores = &vkSettings->imageAvailableSemaphore;
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		queueSubmitInfo.pWaitDstStageMask = &waitStage;
 
-		assert(vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, *fence) == VK_SUCCESS);
+		assert(vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, *inFlightFence) == VK_SUCCESS);
 		
 		// Render the image to the window/surface
+		
 		VkPresentInfoKHR presentationInfo = {};
 		presentationInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentationInfo.pNext = VK_NULL_HANDLE;
 		presentationInfo.swapchainCount = 1;
 		presentationInfo.pSwapchains = &vkSettings->swapchain;
 		presentationInfo.waitSemaphoreCount = 1;
-		presentationInfo.pWaitSemaphores = &vkSettings->renderSemaphore;
+		presentationInfo.pWaitSemaphores = &vkSettings->renderFinishedSemaphore;
 		presentationInfo.pImageIndices = &swapchainImgIndex;
-		presentationInfo.pResults = VK_NULL_HANDLE;
+		presentationInfo.pResults = &renderingResult;
 
 		assert(vkQueuePresentKHR(vkSettings->queue, &presentationInfo) == VK_SUCCESS);
 

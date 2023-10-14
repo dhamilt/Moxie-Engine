@@ -65,8 +65,8 @@ struct PVulkanPlatformInitInfo
     std::vector<PVkImageBuffer> imageBuffers;
 
     VkRenderPass renderPass;
-    VkFence fence;
-    VkSemaphore renderSemaphore, presentSemaphore;
+    VkFence inFlightFence;
+    VkSemaphore renderFinishedSemaphore, imageAvailableSemaphore;
 
     ImGui_ImplVulkanH_Window window;
     ImGui_ImplVulkan_InitInfo imGuiInitInfo;    
@@ -106,6 +106,10 @@ public:
 protected:
     virtual bool IsSupported() override;
     virtual bool InitializePlatform() override;
+    // Choose the Mailbox Present Mode ("Triple Buffering")
+   // if available, otherwise default to FIFO Mode
+    VkPresentModeKHR SetPresentMode(const std::vector<VkPresentModeKHR>& availableModes);
+    void TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, VkFormat imgFormat);
     PVulkanPlatformInit();
 
 private:

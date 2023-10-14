@@ -109,7 +109,7 @@ inline bool VkShaderUtil::LoadShaderModule(const VkShaderStageConfigs& shaderCon
 	pipelineShaderInfo.flags = 0;
 	pipelineShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	pipelineShaderInfo.pNext = 0;
-	pipelineShaderInfo.pName = shaderConfig.shaderFile.c_str();
+	pipelineShaderInfo.pName = "main"/*shaderConfig.shaderFile.c_str()*/;
 	pipelineShaderInfo.pSpecializationInfo = NULL;
 
 	return true;

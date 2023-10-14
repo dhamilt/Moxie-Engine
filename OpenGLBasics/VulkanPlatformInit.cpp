@@ -59,8 +59,8 @@ bool PVulkanPlatformInit::CreateFence(VkFence** fencePtr)
     // Create the fence with the Create Signaled flag,
     //so the fence can wait before using it on a GPU command (for the first frame)
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &currentVKSettings.fence);
-    *fencePtr = &currentVKSettings.fence;
+    vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &currentVKSettings.inFlightFence);
+    *fencePtr = &currentVKSettings.inFlightFence;
     return true;
 }
 
@@ -135,6 +135,7 @@ bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
         _initInfo->ppEnabledExtensionNames = currentVKSettings.extensions.data();
         _initInfo->enabledLayerCount = currentVKSettings.layerCount;
         _initInfo->ppEnabledLayerNames = currentVKSettings.layers.data();
+ 
 
         // Create vulkan instance
         result = vkCreateInstance(&currentVKSettings.initInfo, currentVKSettings.allocationCallback, &currentVKSettings.instance);
@@ -284,12 +285,12 @@ bool PVulkanPlatformInit::CreateSemaphores(VkSemaphore** presentSemaphorePtr, Vk
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     semaphoreInfo.flags = 0;
     semaphoreInfo.pNext = VK_NULL_HANDLE;
-    VkResult result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.presentSemaphore);
+    VkResult result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.imageAvailableSemaphore);
     assert(result == VK_SUCCESS);
-    result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderSemaphore);
+    result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderFinishedSemaphore);
     assert(result == VK_SUCCESS);
-    *presentSemaphorePtr = &currentVKSettings.presentSemaphore;
-    *renderSemaphorePtr = &currentVKSettings.renderSemaphore;
+    *presentSemaphorePtr = &currentVKSettings.imageAvailableSemaphore;
+    *renderSemaphorePtr = &currentVKSettings.renderFinishedSemaphore;
     return true;
 }
 
@@ -307,6 +308,21 @@ bool PVulkanPlatformInit::InitializePlatform()
 
         return true;
     }
+}
+
+VkPresentModeKHR PVulkanPlatformInit::SetPresentMode(const std::vector<VkPresentModeKHR>& availableModes)
+{
+    for (const auto& mode : availableModes)
+        if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
+            return VK_PRESENT_MODE_MAILBOX_KHR;
+
+
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+void PVulkanPlatformInit::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, VkFormat imgFormat)
+{
+  
 }
 
 // Create a Logical Device using 1 queue
@@ -412,6 +428,7 @@ bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer** commandBuffer)
     bufferInfo.commandBufferCount   = MAX_COMMAND_POOL_SIZE;
     bufferInfo.level                = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
+    // TODO: allocate for only command buffers that have been requested
     currentVKSettings.commandBuffers = std::vector<VkCommandBuffer>(MAX_COMMAND_POOL_SIZE);
     result = vkAllocateCommandBuffers(device, &bufferInfo, &currentVKSettings.commandBuffers[0]);
 
@@ -461,7 +478,10 @@ bool PVulkanPlatformInit::CreateSwapChain()
         return false;
     }
 
-    swapchainInfo.minImageCount = surfaceCapabilities.minImageCount;
+    // Make one more than the swapchain requires
+    // as long as it is permitted
+    swapchainInfo.minImageCount = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageCount,
+        surfaceCapabilities.maxImageCount,surfaceCapabilities.minImageCount+1);
     currentVKSettings.minImageCount = swapchainInfo.minImageCount;
     // Clamp swapchain image extent to surface extent threshold
     swapchainInfo.imageExtent.height = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageExtent.height,
@@ -489,8 +509,9 @@ bool PVulkanPlatformInit::CreateSwapChain()
             break;
         }
     }
+    
     swapchainInfo.imageArrayLayers = 1;
-    swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    swapchainInfo.presentMode = SetPresentMode(currentVKSettings.presentModes);
     swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchainInfo.queueFamilyIndexCount = 1;
     swapchainInfo.pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
@@ -567,6 +588,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     imgCreateInfo.pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
     imgCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imgCreateInfo.flags = 0;
+    imgCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     result = vkCreateImage(device, &imgCreateInfo, currentVKSettings.allocationCallback, &currentVKSettings.depthBuffer.image);
 
@@ -626,9 +648,9 @@ void PVulkanPlatformInit::CleanupVulkan()
     // Wait for device to be in idle state
     auto device = currentVKSettings.device;
     vkDeviceWaitIdle(device);
-    vkDestroyFence(device, currentVKSettings.fence, currentVKSettings.allocationCallback);
-    vkDestroySemaphore(device, currentVKSettings.presentSemaphore, currentVKSettings.allocationCallback);
-    vkDestroySemaphore(device, currentVKSettings.renderSemaphore, currentVKSettings.allocationCallback);
+    vkDestroyFence(device, currentVKSettings.inFlightFence, currentVKSettings.allocationCallback);
+    vkDestroySemaphore(device, currentVKSettings.imageAvailableSemaphore, currentVKSettings.allocationCallback);
+    vkDestroySemaphore(device, currentVKSettings.renderFinishedSemaphore, currentVKSettings.allocationCallback);
     vkFreeCommandBuffers(device, currentVKSettings.commandPool, MAX_COMMAND_POOL_SIZE, &currentVKSettings.commandBuffers[0]);
     vkDestroyRenderPass(device, currentVKSettings.renderPass, currentVKSettings.allocationCallback);
     vkDestroyCommandPool(device, currentVKSettings.commandPool, currentVKSettings.allocationCallback);
@@ -686,11 +708,11 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
     depthAttachmentInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
     depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     std::vector<VkAttachmentDescription> attachments(2);
     attachments[0] = colorAttachmentInfo;
     attachments[1] = depthAttachmentInfo;
@@ -717,6 +739,15 @@ bool PVulkanPlatformInit::CreateRenderPass()
     subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
     subpassDescription.pResolveAttachments = VK_NULL_HANDLE;
     subpassDescription.pInputAttachments = VK_NULL_HANDLE;
+   
+
+    // Create subpass dependency for auto transititoning between image layouts
+    VkSubpassDependency dependency = {};
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
 
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -724,6 +755,8 @@ bool PVulkanPlatformInit::CreateRenderPass()
     renderPassInfo.pNext = VK_NULL_HANDLE;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpassDescription;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
   
     renderPassInfo.pAttachments = &attachments[0];
     renderPassInfo.flags = NULL;

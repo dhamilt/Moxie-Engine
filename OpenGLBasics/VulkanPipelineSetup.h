@@ -70,12 +70,12 @@ struct VkMultisamplingInfo
 
 struct VkDepthStencilInfo
 {
-	VkDepthStencilFlags depthStencilFlags = VK_PIPELINE_DEPTH_BIT | VK_PIPELINE_STENCIL_BIT;
+	VkDepthStencilFlags depthStencilFlags = VK_PIPELINE_DEPTH_BIT | VK_PIPELINE_DEPTH_WRITE_BIT | VK_PIPELINE_STENCIL_BIT;
 	VkCompareOp depthComparisonOperations = VK_COMPARE_OP_LESS_OR_EQUAL;
 	VkStencilOpState frontStencilState;
 	VkStencilOpState backStencilState;
 	float minDepthBounds = 0.0f;
-	float maxDepthBounds = 0.0f;
+	float maxDepthBounds = 1.0f;
 
 };
 

@@ -80,7 +80,7 @@ private:
 	GLuint fbo, rbo;
 	// Viewport
 	WViewport* viewport;
-	int width = 800, height = 600;
+	int width = 1600, height = 900;
 	float nearClippingPlane = 0.1f;
 	float farClippingPlane = 100.0f;
 	SDL_Window* sdlWindow = nullptr;
@@ -108,8 +108,9 @@ private:
 	VkClearValue* clearValues;
 	VkCommandBuffer* mainCmdBuffer;
 	std::vector<VkPipeline> triangleShaderPipeline;
-	VkSemaphore *presentSemaphore, *renderSemaphore;
-	VkFence* fence;
+	VkSemaphore *imageAvailableSemaphore, *renderFinishedSemaphore;
+	VkResult renderingResult;
+	VkFence* inFlightFence;
 	VkDevice* currentVkDevice;
 	VkSwapchainKHR* VkSwapchain;
 	std::vector<VkFramebuffer> glFramebuffers;

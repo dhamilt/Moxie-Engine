@@ -123,6 +123,7 @@ void VkPipelineSetup::AddDepthStencilInfo(VkDepthStencilInfo depthStencilInfo)
 		& VK_PIPELINE_DEPTH_BOUNDS_BIT ? VK_TRUE : VK_FALSE;
 	_depthStencilInfo.stencilTestEnable = depthStencilInfo.depthStencilFlags
 		& VK_PIPELINE_STENCIL_BIT ? VK_TRUE : VK_FALSE;
+	_depthStencilInfo.depthCompareOp = depthStencilInfo.depthComparisonOperations;
 	_depthStencilInfo.minDepthBounds = depthStencilInfo.minDepthBounds;
 	_depthStencilInfo.maxDepthBounds = depthStencilInfo.maxDepthBounds;
 	_depthStencilInfo.front = depthStencilInfo.frontStencilState;
@@ -173,6 +174,8 @@ void VkPipelineSetup::AddViewportInfo(VkViewport* viewports, VkRect2D* scissors,
 	_viewportInfo.pViewports = viewports;
 	_viewportInfo.scissorCount = scissorCount;
 	_viewportInfo.pScissors = scissors;
+
+
 
 	pipelineParams.viewportInfo = _viewportInfo;
 }
