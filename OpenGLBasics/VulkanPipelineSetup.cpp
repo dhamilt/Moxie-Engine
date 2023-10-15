@@ -49,87 +49,20 @@ void VkPipelineSetup::AddInputAssemblyInfo(VkPrimitiveTopology topology)
 	pipelineParams.inputAssemblyInfo = _inputAssemblyInfo;
 }
 
-void VkPipelineSetup::AddRasterizationInfo(VkRasterizationInfo rasterizationInfo)
+void VkPipelineSetup::AddRasterizationInfo(VkPipelineRasterizationStateCreateInfo rasterizationInfo)
 {
-	VkPipelineRasterizationStateCreateInfo _rasterizationStateInfo = {};
-	_rasterizationStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	_rasterizationStateInfo.pNext = VK_NULL_HANDLE;
-	_rasterizationStateInfo.flags = 0;
-
-	// Determines the draw mode 
-	_rasterizationStateInfo.polygonMode = rasterizationInfo.polygonMode;
-	// Width of the lines drawn between vertex points
-	_rasterizationStateInfo.lineWidth = rasterizationInfo.lineWidth;
-	// Determines which triangles are discarded in rendering process
-	_rasterizationStateInfo.cullMode = rasterizationInfo.cullMode;
-	// Determines if polygon is front or back facing
-	_rasterizationStateInfo.frontFace = rasterizationInfo.frontFace;
-
-	// Determines if depth bias is used
-	_rasterizationStateInfo.depthBiasEnable = rasterizationInfo.rasterizationFlags 
-		& VkRasterizationFlagBits::VK_PIPELINE_RASTERIZATION_DEPTH_BIAS_BIT;
-	// How much to scale the depth by
-	_rasterizationStateInfo.depthBiasConstantFactor = rasterizationInfo.depthBiasConstantFactor;
-	// How much to scale the slope depth by
-	_rasterizationStateInfo.depthBiasSlopeFactor = rasterizationInfo.depthBiasSlopeFactor;
-	// Determines if depth clamp is used
-	_rasterizationStateInfo.depthClampEnable = rasterizationInfo.rasterizationFlags
-		& VkRasterizationFlagBits::VK_PIPELINE_RASTERIZATION_DEPTH_CLAMP_BIT;
-	// The range for the depth bias
-	_rasterizationStateInfo.depthBiasClamp = rasterizationInfo.depthBiasClamp;
-	// If ENABLED, discards all primitives before starting the rasterization stage
-	_rasterizationStateInfo.rasterizerDiscardEnable = rasterizationInfo.rasterizationFlags
-		& VkRasterizationFlagBits::VK_PIPELINE_RASTERIZATION_DISCARD_BIT;
-
-	pipelineParams.rasterizationInfo = _rasterizationStateInfo;
+	pipelineParams.rasterizationInfo = rasterizationInfo;
 
 }
 
-void VkPipelineSetup::AddMultiSamplingInfo(VkMultisamplingInfo multisamplingInfo)
+void VkPipelineSetup::AddMultiSamplingInfo(VkPipelineMultisampleStateCreateInfo multisamplingInfo)
 {
-	VkPipelineMultisampleStateCreateInfo _multisamplingInfo = {};
-	_multisamplingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	_multisamplingInfo.pNext = VK_NULL_HANDLE;
-	_multisamplingInfo.flags = 0;
-	// Determines if sample shading is used
-	_multisamplingInfo.sampleShadingEnable = multisamplingInfo.multisamplingFlags 
-		& VkMultisamplingFlagBits::VK_PIPELINE_MULTISAMPLING_SAMPLE_SHADING_BIT;
-	// Determines how many samples are used in rasterization
-	_multisamplingInfo.rasterizationSamples = (VkSampleCountFlagBits)multisamplingInfo.rasterizationSamples;
-	// Determines the minimum fraction to be used in sample shading
-	_multisamplingInfo.minSampleShading = multisamplingInfo.minSampleShading;
-	// Assigns the set of masks to use when sampling
-	_multisamplingInfo.pSampleMask = multisamplingInfo.sampleMasks.size() > 0 ? & multisamplingInfo.sampleMasks[0] : VK_NULL_HANDLE;
-	// Determines if the alpha component for the first color value of the fragment is to be transferred between samples
-	_multisamplingInfo.alphaToCoverageEnable = multisamplingInfo.multisamplingFlags
-		& VkMultisamplingFlagBits::VK_PIPELINE_MULTISAMPLING_ALPHA_TO_COVERAGE_BIT;
-	// Determines of the alpha component for the first color value of the fragment is to be replaced by subsequent samples' alpha values
-	_multisamplingInfo.alphaToOneEnable = multisamplingInfo.multisamplingFlags
-		& VkMultisamplingFlagBits::VK_PIPELINE_MULTISAMPLING_ALPHA_TO_ONE_BIT;
-
-	pipelineParams.multisamplingInfo = _multisamplingInfo;
+	pipelineParams.multisamplingInfo = multisamplingInfo;
 }
 
-void VkPipelineSetup::AddDepthStencilInfo(VkDepthStencilInfo depthStencilInfo)
+void VkPipelineSetup::AddDepthStencilInfo(VkPipelineDepthStencilStateCreateInfo depthStencilInfo)
 {
-	VkPipelineDepthStencilStateCreateInfo _depthStencilInfo = { };
-	_depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	_depthStencilInfo.flags = 0;
-	_depthStencilInfo.depthTestEnable = depthStencilInfo.depthStencilFlags
-		& VK_PIPELINE_DEPTH_BIT ? VK_TRUE : VK_FALSE;
-	_depthStencilInfo.depthWriteEnable = depthStencilInfo.depthStencilFlags
-		& VK_PIPELINE_DEPTH_WRITE_BIT ? VK_TRUE : VK_FALSE;
-	_depthStencilInfo.depthBoundsTestEnable = depthStencilInfo.depthStencilFlags
-		& VK_PIPELINE_DEPTH_BOUNDS_BIT ? VK_TRUE : VK_FALSE;
-	_depthStencilInfo.stencilTestEnable = depthStencilInfo.depthStencilFlags
-		& VK_PIPELINE_STENCIL_BIT ? VK_TRUE : VK_FALSE;
-	_depthStencilInfo.depthCompareOp = depthStencilInfo.depthComparisonOperations;
-	_depthStencilInfo.minDepthBounds = depthStencilInfo.minDepthBounds;
-	_depthStencilInfo.maxDepthBounds = depthStencilInfo.maxDepthBounds;
-	_depthStencilInfo.front = depthStencilInfo.frontStencilState;
-	_depthStencilInfo.back = depthStencilInfo.backStencilState;
-
-	pipelineParams.depthStencilInfo = _depthStencilInfo;
+	pipelineParams.depthStencilInfo = depthStencilInfo;
 }
 
 void VkPipelineSetup::AddColorBlendAttachmentInfo(VkPipelineColorBlendAttachmentState colorBlendAttachmentState)

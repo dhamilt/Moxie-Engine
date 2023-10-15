@@ -460,7 +460,7 @@ void GLSetup::Render()
 		// Finalize the render pass for the command buffer
 		vkCmdEndRenderPass(*mainCmdBuffer);
 
-		vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
+		//vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
 
 		// Stops recording of draw commands
 		assert(vkEndCommandBuffer(*mainCmdBuffer) == VK_SUCCESS);

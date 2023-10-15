@@ -72,10 +72,9 @@ void VkPipelineBuilder::GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPip
     pipelineSetup->AddVertexInputInfo();
     pipelineSetup->AddColorBlendAttachmentInfo();
     pipelineSetup->AddColorBlendStateInfo();
-    pipelineSetup->AddMultiSamplingInfo(VkMultisamplingPresets::DefaultSingleSamplingSetup());
+    pipelineSetup->AddMultiSamplingInfo();
     pipelineSetup->AddPipelineLayout();
-    pipelineSetup->AddDepthStencilInfo();
-    pipelineSetup->AddRasterizationInfo(VkRasterizationPresets::Default2DImageRasterization());
+    pipelineSetup->AddRasterizationInfo();
 
     
     VkViewport viewport = {};
@@ -96,4 +95,62 @@ void VkPipelineBuilder::GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPip
     pipelineSetup->BuildPipelines(vkSettings->device, vkSettings->renderPass, pipelines);
     delete pipelineSetup;
     
+}
+
+void VkPipelineBuilder::CreateMeshShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline, const VkPipelineBuilderParams& params)
+{
+    VkPipelineSetup* pipelineSetup = new VkPipelineSetup();
+    for (auto shaderConfig = params.shaderStagingConfigs.begin(); shaderConfig != params.shaderStagingConfigs.end(); shaderConfig++)
+    {
+        VkShaderModule shaderModule;
+        if (!VkShaderUtil::LoadShaderModule(*shaderConfig, shaderModule))
+        {
+            std::string shaderStageType = "";
+
+            auto shaderStage = shaderConfig->shaderFlag;
+
+            switch (shaderStage)
+            {
+            case VK_SHADER_STAGE_VERTEX_BIT:
+                shaderStageType = "vertex";
+                break;
+            case VK_SHADER_STAGE_FRAGMENT_BIT:
+                shaderStageType = "fragment";
+                break;
+            case VK_SHADER_STAGE_GEOMETRY_BIT:
+                shaderStageType = "geometry";
+                break;
+            case VK_SHADER_STAGE_COMPUTE_BIT:
+                shaderStageType = "compute";
+                break;
+            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+                shaderStageType = "tessellation control";
+                break;
+            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+                shaderStageType = "tessellation evaluation";
+                break;
+            default:
+                shaderStageType = "default vertex";
+                break;
+
+                printf("Unable shader file for %s stage!", shaderStageType.c_str());
+            }
+        }
+        else 
+        {
+            pipelineSetup->AddShaderStageInfo(shaderModule, (VkShaderStageFlagBits)shaderConfig->shaderFlag);
+        }
+    }
+}
+
+void VkPipelineBuilder::BuildVertexInputDescriptions(VkPipelineBuilderParams& params, VkVertexInputAttributeDescription* vertexInputAttributes, VkBool32 attributeCount)
+{
+    params.vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes;
+    params.vertexInputInfo.vertexAttributeDescriptionCount = attributeCount;
+}
+
+void VkPipelineBuilder::BuildVertexInputBindings(VkPipelineBuilderParams& params, VkVertexInputBindingDescription* vertexInputBindings, VkBool32 vertexInputBindingCount)
+{
+    params.vertexInputInfo.pVertexBindingDescriptions = vertexInputBindings;
+    params.vertexInputInfo.vertexBindingDescriptionCount = vertexInputBindingCount;
 }

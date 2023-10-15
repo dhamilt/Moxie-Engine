@@ -1,54 +1,17 @@
-﻿  AssetImportLibrary.cpp
-  AudioClass.cpp
-  AudioCommand.cpp
-  AudioEQComponent.cpp
-  AudioSource.cpp
-  AxisCommand.cpp
-  BaseObject.cpp
-  ButtonCommand.cpp
-  Command.cpp
-  Cubemaps.cpp
-  EntityComponent.cpp
-  Camera.cpp
-  Entity.cpp
-  EventHandler.cpp
-  GameLoop.cpp
-  GLErrorReporting.cpp
-  GLSetup.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\VulkanPipelineBuilder.h(9,7): error C2143: syntax error: missing ';' before 'std::vector<VkShaderStageConfigs,std::allocator<VkShaderStageConfigs>>'
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\VulkanPipelineBuilder.h(9,36): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  GLWindow.cpp
-  Graphic.cpp
-  GUI_Base.cpp
-  InputHandler.cpp
-  Light.cpp
-  LightComponent.cpp
-  LineRenderComponent.cpp
-  LineRenderer.cpp
-  LineShaperComponent.cpp
-  Log.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\Log.cpp(55): warning C5082: second argument to 'va_start' is not the last named parameter
-  MActor.cpp
-  MainMenu.cpp
-  Material.cpp
-  Mesh.cpp
-  MeshComponent.cpp
-  MouseCapture.cpp
-  MoxieEvents.cpp
-  MViewport.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\MViewport.cpp(69,16): warning C4312: 'type cast': conversion from 'GLuint' to 'ImTextureID' of greater size
-  MyLightComponent.cpp
-  PlatformInit.cpp
-  VulkanErrorReporting.cpp
-  VulkanPipelineSetup.cpp
-  VulkanPlatformInit.cpp
-  RenderingPipeline.cpp
-  RotatingLightComponent.cpp
-  ShapeTransformationLibrary.cpp
-  SoundEngine.cpp
-  StandaloneWindow.cpp
-  Texture.cpp
-  VulkanPipelineBuilder.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\VulkanPipelineBuilder.h(9,7): error C2143: syntax error: missing ';' before 'std::vector<VkShaderStageConfigs,std::allocator<VkShaderStageConfigs>>'
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\VulkanPipelineBuilder.h(9,36): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  WavReader.cpp
+﻿  VulkanPipelineBuilder.cpp
+  MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied

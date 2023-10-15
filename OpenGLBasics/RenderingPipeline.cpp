@@ -14,23 +14,38 @@ BRenderingPipeline::BRenderingPipeline()
 
 void BRenderingPipeline::CleanupRenderingPipeline()
 {
-	// Free primitive data 
-	for (auto it = primitives.begin(); it != primitives.end(); it++)
-		delete it->second;
-
-	primitives.clear();
 #if USE_VULKAN
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+#endif
+	// Free primitive data 
+	for (auto it = primitives.begin(); it != primitives.end(); it++) {
+
+#if USE_VULKAN
+		vkDestroyBuffer(vkSettings->device, it->second->vertexBuffer, vkSettings->allocationCallback);
+		vkFreeMemory(vkSettings->device, it->second->deviceMemory, vkSettings->allocationCallback);
+		delete vulkanPipelineBuilder;
+#endif
+		delete it->second;
+	}
+
+#if USE_VULKAN
 	// free framebuffers
 	for (int i = 0; i < (int)vkFramebuffers.size(); i++)
 		vkDestroyFramebuffer(vkSettings->device, vkFramebuffers[i], vkSettings->allocationCallback);
 	vkFramebuffers.clear();
 #endif
+	primitives.clear();
 }
 
 void BRenderingPipeline::Init()
 {
+#if USE_OPENGL
 	GenerateDefaultFramebuffer();
+#elif USE_VULKAN
+	GenerateVkFrameBuffers();
+	vulkanPipelineBuilder = new VkPipelineBuilder();
+#endif
+
 }
 
 void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> _vertices, std::vector<uint16_t> _indices)
@@ -49,7 +64,7 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 		RenderBufferData* renderData = new RenderBufferData();
 		renderData->indices = _indices;
 		renderData->vertices = _vertices;
-
+		
 		// Cache container under identifier
 		primitives.insert({ primitiveName, renderData });
 	}
@@ -61,6 +76,100 @@ void BRenderingPipeline::Import(std::string primitiveName, Mesh* mesh)
 	Import(primitiveName, meshData->vertices, meshData->indices);
 }
 
+void BRenderingPipeline::LoadVertexReadingFormatToVkPipeline(std::string primitiveName)
+{
+	auto params = primitives[primitiveName]->pipelineBuilderParams;
+	// Determines format on how to read vertex buffer
+	VkVertexInputBindingDescription vertexInputBindingInfo;
+	vertexInputBindingInfo.binding = 0;
+	vertexInputBindingInfo.stride = sizeof(DVertex);
+	vertexInputBindingInfo.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	// Determines the mapping of vertex buffer data
+	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
+	vertexInputAttributes.resize(3); 
+	vertexInputAttributes[0].binding = 0;
+	vertexInputAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	vertexInputAttributes[0].location = 0;
+	vertexInputAttributes[0].offset = offsetof(DVertex, DVertex::pos);
+
+	vertexInputAttributes[1].binding = 0;
+	vertexInputAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	vertexInputAttributes[1].location = 1;
+	vertexInputAttributes[1].offset = offsetof(DVertex, DVertex::texCoord);
+
+	vertexInputAttributes[2].binding = 0;
+	vertexInputAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+	vertexInputAttributes[2].location = 2;
+	vertexInputAttributes[2].offset = offsetof(DVertex, DVertex::normal);
+
+	vulkanPipelineBuilder->BuildVertexInputDescriptions(params, vertexInputAttributes.data(),
+		(VkBool32)vertexInputAttributes.size());
+
+	vulkanPipelineBuilder->BuildVertexInputBindings(params, &vertexInputBindingInfo, 1);
+}
+
+void BRenderingPipeline::CreateVkVertexBuffer(std::string primitiveName)
+{
+	// Reserve memory for vertex buffer
+	auto renderBufferData = primitives[primitiveName];
+	auto vertexBuffer = renderBufferData->vertexBuffer;
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = renderBufferData->vertices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkResult result = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback,
+		&vertexBuffer);
+	if (result == VK_SUCCESS)
+	{
+		throw new std::runtime_error("Unable to reserve memory for vertex buffer!");
+	}
+
+	// Retrieve memory requirements for setting up vertex buffer
+	VkMemoryRequirements memoryRequirements;
+	vkGetBufferMemoryRequirements(vkSettings->device, vertexBuffer, &memoryRequirements);
+
+	// find out if memory type is supported in vertex buffer
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex],
+		&memoryProperties);
+	// Flags for allowing the device memory to be accessible and malleable to application code
+	VkBool32 memoryType = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	VkBool32 memoryFlagIndex = -1;
+	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
+	{
+		if (memoryRequirements.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & memoryType) == memoryType)
+		{
+			memoryFlagIndex = i;
+			break;
+		}
+	}
+
+	if (memoryFlagIndex == -1)
+	{
+		throw new std::runtime_error("Unable to access vulkan device memory!");
+	}
+
+	// Allocate device memory for vertex buffer
+	VkMemoryAllocateInfo memoryAllocationInfo = {};
+	memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryAllocationInfo.memoryTypeIndex = memoryFlagIndex;
+	memoryAllocationInfo.allocationSize = memoryRequirements.size;
+	auto deviceMemory = renderBufferData->deviceMemory;
+
+	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo, vkSettings->allocationCallback, &deviceMemory);
+	if (result != VK_SUCCESS)
+	{
+		throw new std::runtime_error("Unable to allocate device memory for vertex buffer!");
+	}
+
+	// Bind device memory to vertex buffer
+	vkBindBufferMemory(vkSettings->device, vertexBuffer, deviceMemory, 0);
+}
+
 void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)
 {
 	// ensure that all sides of the cubemap have texture data
@@ -68,6 +177,7 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 	// create cubemap
 	if (!cubemapParams)
 		cubemapParams = &defaultSkyBox;
+#if USE_OPENGL
 	glGenTextures(1, &cubemapParams->cubemapID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapParams->cubemapID);
 	int i = 0;
@@ -89,7 +199,9 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 
 	// create the default cubemap shader
 	cubemapShader = new Shader("CubeMap.vertex", "CubeMap.fragment");
+#elif USE_VULKAN
 
+#endif
 	// Create vertex buffers and pass in data
 	RequestForDefaultSkyboxVerts();
 }

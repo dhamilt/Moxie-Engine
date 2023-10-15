@@ -79,7 +79,53 @@ struct VkDepthStencilInfo
 
 };
 
-static VkPipelineColorBlendAttachmentState defaultColorBlendAttachmentState = { .blendEnable= VK_FALSE };
+// default color blending state is set off
+static VkPipelineColorBlendAttachmentState defaultColorBlendAttachmentState = { 
+	.blendEnable= VK_FALSE,
+	.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+
+};
+
+//the blending is just "no blend", but we do write to the color attachment
+static VkPipelineColorBlendStateCreateInfo defaultColorBlendState = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+	.logicOpEnable = VK_FALSE,
+	.logicOp = VK_LOGIC_OP_COPY,
+	.attachmentCount = 1,
+	.pAttachments = &defaultColorBlendAttachmentState
+};
+
+// default multisampling state is single sampling
+static VkPipelineMultisampleStateCreateInfo defaultMultisamplingState = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+	.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+	.sampleShadingEnable = VK_FALSE,
+	.minSampleShading = 1.0f
+};
+
+// default depth/stencil state is depth testing and writing enabled
+// but depth bounds testing and stencil testing are disabled
+static VkPipelineDepthStencilStateCreateInfo defaultDepthStencilInfo = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+	.depthTestEnable = VK_TRUE,
+	.depthWriteEnable = VK_TRUE,
+	.depthCompareOp = VK_COMPARE_OP_LESS,
+	.depthBoundsTestEnable = VK_FALSE,
+	.stencilTestEnable = VK_FALSE
+};
+
+// default rasterization state for graphics pipeline is neither having depth clamping
+// nor discarding while culling the triangles behind the mesh with respect to the camera and
+// setting the vertex order for reading the vertices for each face in clockwise order
+static VkPipelineRasterizationStateCreateInfo defaultRasterizationInfo = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+	.depthClampEnable = VK_FALSE,
+	.rasterizerDiscardEnable = VK_FALSE,
+	.polygonMode = VK_POLYGON_MODE_FILL,
+	.cullMode = VK_CULL_MODE_BACK_BIT,
+	.frontFace = VK_FRONT_FACE_CLOCKWISE,
+	.lineWidth = 1.0f
+};
 
 class VkPipelineSetup
 {
@@ -93,15 +139,15 @@ public:
 	// TODO: allow for parameterized input assembly
 	void AddInputAssemblyInfo(VkPrimitiveTopology topology);
 	// Adds configuration for rasterization stage of the shader pipeline
-	void AddRasterizationInfo(VkRasterizationInfo rasterizationInfo = VkRasterizationInfo());
+	void AddRasterizationInfo(VkPipelineRasterizationStateCreateInfo rasterizationInfo = defaultRasterizationInfo);
 	// Add configuration for sampling the rasterization stage of the shader pipeline
-	void AddMultiSamplingInfo(VkMultisamplingInfo multisamplingInfo = VkMultisamplingInfo());
+	void AddMultiSamplingInfo(VkPipelineMultisampleStateCreateInfo multisamplingInfo = defaultMultisamplingState);
 	// Add configuration for depth/stencil attachments in shader pipeline
-	void AddDepthStencilInfo(VkDepthStencilInfo depthStencilInfo = VkDepthStencilInfo());
-	// TODO: allow for parameterized inputs for the color blending attachment
-	void AddColorBlendAttachmentInfo(VkPipelineColorBlendAttachmentState colorBlendAttachmentState = VkPipelineColorBlendAttachmentState());
-	// TODO: allow for parameterized inputs for the color blending state
-	void AddColorBlendStateInfo();
+	void AddDepthStencilInfo(VkPipelineDepthStencilStateCreateInfo depthStencilInfo = defaultDepthStencilInfo);
+	// Adds configuration for color blending attachments
+	void AddColorBlendAttachmentInfo(VkPipelineColorBlendAttachmentState colorBlendAttachmentState = defaultColorBlendAttachmentState);
+	// Adds configuration for color blend state
+	void AddColorBlendStateInfo(VkPipelineColorBlendStateCreateInfo colorBlendState = defaultColorBlendState);
 	// TODO: allow for parameterized viewport info
 	void AddViewportInfo(VkViewport* viewports, VkRect2D* scissors, const VkBool32& viewportCount, const VkBool32& scissorCount);
 	// TODO: allow for parameterized input for the pipeline layout

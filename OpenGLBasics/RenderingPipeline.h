@@ -5,6 +5,7 @@
 #include "VulkanShaders.h"
 #include "TextureData.h"
 #include "Light.h"
+#include "VulkanPipelineBuilder.h"
 
 class EntityComponent;
 class Camera;
@@ -24,6 +25,9 @@ struct RenderBufferData
 	DMat4x4 transform;
 	std::shared_ptr<Shader> shader;
 	std::shared_ptr<VkShaderUtil> vkShader;
+	VkPipelineBuilderParams pipelineBuilderParams;
+	VkBuffer vertexBuffer;
+	VkDeviceMemory deviceMemory;
 };
 
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
@@ -37,6 +41,10 @@ class BRenderingPipeline final
 	// Imports mesh data for pipeline to render 
 	void Import(std::string primitiveName, std::vector<DVertex>_vertices, std::vector<uint16_t>_indices);
 	void Import(std::string primitiveName, Mesh* mesh);
+	// Instructs the vulkan graphics pipeline on how to read the vertex buffer data
+	void LoadVertexReadingFormatToVkPipeline(std::string primitiveName);
+	// Allocates memory on application to allow mesh vertex data to feed to pipeline
+	void CreateVkVertexBuffer(std::string primitiveName);
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
 	// Feeds mesh data to rendering platform
 	void RequestForMeshVertexData(std::string primitiveName);
@@ -102,6 +110,7 @@ private:
 	int screenWidth, screenHeight;
 	std::vector<GLuint> glFramebuffers;
 	std::vector<VkFramebuffer> vkFramebuffers;
+	VkPipelineBuilder* vulkanPipelineBuilder;
 	std::unordered_map<std::string, RenderBufferData*>primitives;
 	std::vector<Light*> lightCache;
 	DMat4x4 projectionMatrix, viewMatrix;
