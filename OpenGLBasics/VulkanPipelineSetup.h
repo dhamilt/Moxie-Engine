@@ -79,6 +79,8 @@ struct VkDepthStencilInfo
 
 };
 
+static VkPipelineColorBlendAttachmentState defaultColorBlendAttachmentState = { .blendEnable= VK_FALSE };
+
 class VkPipelineSetup
 {
 public:
@@ -97,7 +99,7 @@ public:
 	// Add configuration for depth/stencil attachments in shader pipeline
 	void AddDepthStencilInfo(VkDepthStencilInfo depthStencilInfo = VkDepthStencilInfo());
 	// TODO: allow for parameterized inputs for the color blending attachment
-	void AddColorBlendAttachmentInfo();
+	void AddColorBlendAttachmentInfo(VkPipelineColorBlendAttachmentState colorBlendAttachmentState = VkPipelineColorBlendAttachmentState());
 	// TODO: allow for parameterized inputs for the color blending state
 	void AddColorBlendStateInfo();
 	// TODO: allow for parameterized viewport info

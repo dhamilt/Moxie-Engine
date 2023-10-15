@@ -132,33 +132,14 @@ void VkPipelineSetup::AddDepthStencilInfo(VkDepthStencilInfo depthStencilInfo)
 	pipelineParams.depthStencilInfo = _depthStencilInfo;
 }
 
-void VkPipelineSetup::AddColorBlendAttachmentInfo()
+void VkPipelineSetup::AddColorBlendAttachmentInfo(VkPipelineColorBlendAttachmentState colorBlendAttachmentState)
 {
-	VkPipelineColorBlendAttachmentState _colorBlendAttachmentInfo = {};
-	// TODO: Have these values dynamically assigned
-	_colorBlendAttachmentInfo.blendEnable = VK_FALSE;
-	_colorBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-	pipelineParams.colorBlendAttachmentStates.push_back(_colorBlendAttachmentInfo);
-	//pipelineParams.colorBlendAttachmentStates.push_back(_colorBlendAttachmentInfo);
-
+	pipelineParams.colorBlendAttachmentStates.push_back(colorBlendAttachmentState);
 }
 
-void VkPipelineSetup::AddColorBlendStateInfo()
+void VkPipelineSetup::AddColorBlendStateInfo(VkPipelineColorBlendStateCreateInfo colorBlendState)
 {
-	//setup dummy color blending. We aren't using transparent objects yet
-	//the blending is just "no blend", but we do write to the color attachment
-	VkPipelineColorBlendStateCreateInfo _colorBlendInfo = {};
-	// TODO: Have these values dynamically assigned
-	_colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	_colorBlendInfo.pNext = VK_NULL_HANDLE;
-	_colorBlendInfo.attachmentCount = (VkBool32)pipelineParams.colorBlendAttachmentStates.size();
-	_colorBlendInfo.pAttachments = &pipelineParams.colorBlendAttachmentStates[0];
-	_colorBlendInfo.logicOpEnable = VK_FALSE;
-	_colorBlendInfo.logicOp = VK_LOGIC_OP_COPY;
-
-	pipelineParams.colorBlendInfo = _colorBlendInfo;
+	pipelineParams.colorBlendInfo = colorBlendState;
 }
 
 void VkPipelineSetup::AddViewportInfo(VkViewport* viewports, VkRect2D* scissors, const VkBool32& viewportCount, const VkBool32& scissorCount)

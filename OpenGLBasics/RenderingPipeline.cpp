@@ -229,10 +229,10 @@ void BRenderingPipeline::CreateDefaultShader()
 {
 #if USE_OPENGL
 	// create default mesh shader for cache
-	std::shared_ptr<Shader> cachedShader(new Shader("DefaultMatVS.shader", "DefaultMatFS.shader"));
+	std::shared_ptr<Shader> cachedShader(new Shader("DefaultMat.vertex", "DefaultMat.fragment"));
 	shaderCache.push_back(cachedShader);
 #elif USE_VULKAN
-
+	
 #endif
 }
 

@@ -303,7 +303,16 @@ void GLSetup::Render()
 {
 	// Run one frame of the Render thread
 	if (sdlWindow)
-	{		
+	{
+		// Keep a reference of the 4x4 view and projection matrices each frame
+		// in order to pass into the drawing of meshes
+		view = mainCamera->GetViewMatrix();
+		pipeline->UpdateViewMatrix(view);
+
+		// get projection matrix
+		//projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
+		pipeline->UpdateProjectionMatrix(fov, (float)width, (float)height, nearClippingPlane, farClippingPlane);
+
 #if USE_OPENGL
 		pipeline->LoadCurrentFramebuffer();
 
@@ -314,14 +323,6 @@ void GLSetup::Render()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);// Black background
 		
-			// Keep a reference of the 4x4 view and projection matrices each frame
-		// in order to pass into the drawing of meshes
-		view = mainCamera->GetViewMatrix();
-		pipeline->UpdateViewMatrix(view);
-
-		// get projecttion matrix
-		//projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
-		pipeline->UpdateProjectionMatrix(fov, (float)width, (float)height, nearClippingPlane, farClippingPlane);
 		
 		// Draw Cubemap
 		pipeline->DrawCubeMap();

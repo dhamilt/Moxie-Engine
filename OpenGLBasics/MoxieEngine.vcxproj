@@ -145,7 +145,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>glPCH.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
