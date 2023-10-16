@@ -437,30 +437,12 @@ void GLSetup::Render()
 		// RUN DRAW COMMANDS HERE
 		vkCmdBindPipeline(*mainCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
 
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(width);
-		viewport.height = static_cast<float>(height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		//vkCmdSetViewport(*mainCmdBuffer, 0, 1, &viewport);
-
-		VkExtent2D windowExtent{};
-		windowExtent.width = width;
-		windowExtent.height = height;
-
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = windowExtent;
-		//vkCmdSetScissor(*mainCmdBuffer, 0, 1, &scissor);
-
-		vkCmdDraw(*mainCmdBuffer, 3, 1, 0, 0);
+		pipeline->DrawVkIndexed(*mainCmdBuffer);
 
 		// Finalize the render pass for the command buffer
 		vkCmdEndRenderPass(*mainCmdBuffer);
 
-		//vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
+		vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
 
 		// Stops recording of draw commands
 		assert(vkEndCommandBuffer(*mainCmdBuffer) == VK_SUCCESS);

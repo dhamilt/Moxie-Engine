@@ -22,13 +22,17 @@ void BRenderingPipeline::CleanupRenderingPipeline()
 
 #if USE_VULKAN
 		vkDestroyBuffer(vkSettings->device, it->second->vertexBuffer, vkSettings->allocationCallback);
-		vkFreeMemory(vkSettings->device, it->second->deviceMemory, vkSettings->allocationCallback);
-		delete vulkanPipelineBuilder;
+		vkFreeMemory(vkSettings->device, it->second->vertexBufferMemory, vkSettings->allocationCallback);
+
+		vkDestroyBuffer(vkSettings->device, it->second->indexBuffer, vkSettings->allocationCallback);
+		vkFreeMemory(vkSettings->device, it->second->indexBufferMemory, vkSettings->allocationCallback);
 #endif
 		delete it->second;
 	}
 
 #if USE_VULKAN
+	// free vulkan pipeline builder
+	delete vulkanPipelineBuilder;
 	// free framebuffers
 	for (int i = 0; i < (int)vkFramebuffers.size(); i++)
 		vkDestroyFramebuffer(vkSettings->device, vkFramebuffers[i], vkSettings->allocationCallback);
@@ -158,16 +162,101 @@ void BRenderingPipeline::CreateVkVertexBuffer(std::string primitiveName)
 	memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocationInfo.memoryTypeIndex = memoryFlagIndex;
 	memoryAllocationInfo.allocationSize = memoryRequirements.size;
-	auto deviceMemory = renderBufferData->deviceMemory;
+	auto vertexBufferMemory = renderBufferData->vertexBufferMemory;
 
-	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo, vkSettings->allocationCallback, &deviceMemory);
+	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo, vkSettings->allocationCallback, &vertexBufferMemory);
 	if (result != VK_SUCCESS)
 	{
 		throw new std::runtime_error("Unable to allocate device memory for vertex buffer!");
 	}
 
 	// Bind device memory to vertex buffer
-	vkBindBufferMemory(vkSettings->device, vertexBuffer, deviceMemory, 0);
+	vkBindBufferMemory(vkSettings->device, vertexBuffer, vertexBufferMemory, 0);
+}
+
+void BRenderingPipeline::CreateVkIndexBuffer(std::string primitiveName)
+{
+	// Reserve memory for vertex buffer
+	auto renderBufferData = primitives[primitiveName];
+	auto indexBuffer = renderBufferData->indexBuffer;
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = renderBufferData->indices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkResult result = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback,
+		&indexBuffer);
+	if (result == VK_SUCCESS)
+	{
+		throw new std::runtime_error("Unable to reserve memory for index buffer!");
+	}
+
+	// Retrieve memory requirements for setting up vertex buffer
+	VkMemoryRequirements memoryRequirements;
+	vkGetBufferMemoryRequirements(vkSettings->device, indexBuffer, &memoryRequirements);
+
+	// find out if memory type is supported in vertex buffer
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex],
+		&memoryProperties);
+	// Flags for allowing the device memory to be accessible and malleable to application code
+	VkBool32 memoryType = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	VkBool32 memoryFlagIndex = -1;
+	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
+	{
+		if (memoryRequirements.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & memoryType) == memoryType)
+		{
+			memoryFlagIndex = i;
+			break;
+		}
+	}
+
+	if (memoryFlagIndex == -1)
+	{
+		throw new std::runtime_error("Unable to access vulkan device memory!");
+	}
+
+	// Allocate device memory for vertex buffer
+	VkMemoryAllocateInfo memoryAllocationInfo = {};
+	memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryAllocationInfo.memoryTypeIndex = memoryFlagIndex;
+	memoryAllocationInfo.allocationSize = memoryRequirements.size;
+	auto vertexBufferMemory = renderBufferData->vertexBufferMemory;
+
+	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo,
+		vkSettings->allocationCallback, &vertexBufferMemory);
+	if (result != VK_SUCCESS)
+	{
+		throw new std::runtime_error("Unable to allocate device memory for vertex buffer!");
+	}
+	
+	// set index buffer size
+	renderBufferData->indexBufferSize = sizeof(renderBufferData->indices[0]) * renderBufferData->indices.size();
+
+	// Bind device memory to vertex buffer
+	vkBindBufferMemory(vkSettings->device, indexBuffer, vertexBufferMemory, 0);
+}
+
+void BRenderingPipeline::FillVkVertexBuffer(std::string primitiveName)
+{
+	auto renderData = primitives[primitiveName];
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	void* data;
+	vkMapMemory(vkSettings->device, renderData->vertexBufferMemory, 0, renderData->vertices.size(), 0, &data);
+	memcpy(data, renderData->vertices.data(), renderData->vertices.size());
+	vkUnmapMemory(vkSettings->device, renderData->vertexBufferMemory);
+}
+
+void BRenderingPipeline::FillVkIndexBuffer(std::string primitiveName)
+{
+	auto renderData = primitives[primitiveName];
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	void* data;
+	vkMapMemory(vkSettings->device, renderData->indexBufferMemory, 0, renderData->indexBufferSize, 0, &data);
+	memcpy(data, renderData->indices.data(), (size_t)renderData->indexBufferSize);
+	vkUnmapMemory(vkSettings->device, renderData->indexBufferMemory);
 }
 
 void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)
@@ -574,9 +663,48 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 		framebufferInfo.layers = 1;
 		framebufferInfo.flags = 0;
 		VkFramebuffer vkFramebuffer;
-		auto result = vkCreateFramebuffer(vkSettings->device, &framebufferInfo, vkSettings->allocationCallback, &vkFramebuffer);
+		auto result = vkCreateFramebuffer(vkSettings->device, &framebufferInfo,
+			vkSettings->allocationCallback, &vkFramebuffer);
 		assert(result == VK_SUCCESS);
 		vkFramebuffers.push_back(vkFramebuffer);
+	}
+}
+
+void BRenderingPipeline::DrawVk(VkCommandBuffer cmdBuffer)
+{
+	std::vector<VkBuffer> vertexBuffers;
+	std::vector<VkDeviceSize> offsets;
+	auto it = primitives.begin();
+	for (;it != primitives.end(); it++)
+	{
+		vertexBuffers.push_back(it->second->vertexBuffer);
+		offsets.push_back(it->second->vertexBufferOffset);
+	}
+
+	vkCmdBindVertexBuffers(cmdBuffer, 0, (VkBool32)vertexBuffers.size(),
+		vertexBuffers.data(), offsets.data());
+
+	for (it = primitives.begin(); it != primitives.end(); it++)
+	{
+		auto renderData = it->second;
+		vkCmdDraw(cmdBuffer, (VkBool32)renderData->vertices.size(), 1, 0, 0);
+	}
+	
+}
+
+void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
+{
+	for (auto it = primitives.begin(); it != primitives.end(); it++)
+	{
+		auto renderData = it->second;
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1,
+			&renderData->vertexBuffer, &renderData->vertexBufferOffset);
+
+		vkCmdBindIndexBuffer(cmdBuffer, renderData->indexBuffer, 0,
+			VK_INDEX_TYPE_UINT16);
+
+		vkCmdDrawIndexed(cmdBuffer, (VkBool32)renderData->indices.size(),
+			1, 0, 0, 0);
 	}
 }
 

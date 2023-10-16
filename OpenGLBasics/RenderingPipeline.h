@@ -27,7 +27,11 @@ struct RenderBufferData
 	std::shared_ptr<VkShaderUtil> vkShader;
 	VkPipelineBuilderParams pipelineBuilderParams;
 	VkBuffer vertexBuffer;
-	VkDeviceMemory deviceMemory;
+	VkDeviceMemory vertexBufferMemory;
+	VkDeviceSize vertexBufferOffset = 0;
+	VkBuffer indexBuffer;
+	VkDeviceMemory indexBufferMemory;
+	VkDeviceSize indexBufferSize = 0;
 };
 
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
@@ -43,8 +47,15 @@ class BRenderingPipeline final
 	void Import(std::string primitiveName, Mesh* mesh);
 	// Instructs the vulkan graphics pipeline on how to read the vertex buffer data
 	void LoadVertexReadingFormatToVkPipeline(std::string primitiveName);
-	// Allocates memory on application to allow mesh vertex data to feed to pipeline
+	// Allocates memory on application to allow mesh vertex data to fed to pipeline
 	void CreateVkVertexBuffer(std::string primitiveName);
+	// Allocates memory on application to allow index data for drawing
+	//  mesh to be fed to the graphics pipeline
+	void CreateVkIndexBuffer(std::string primitiveName);
+	// Fills vertex buffer with vertex data
+	void FillVkVertexBuffer(std::string primitiveName);
+	// Fills index buffer with index data for mesh
+	void FillVkIndexBuffer(std::string primitiveName);
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
 	// Feeds mesh data to rendering platform
 	void RequestForMeshVertexData(std::string primitiveName);
@@ -82,6 +93,10 @@ class BRenderingPipeline final
 	void GenerateDefaultFramebuffer();
 	// Generates a Vulkan framebuffer
 	void GenerateVkFrameBuffers();
+	// Adds vertex buffers to command buffer 
+	void DrawVk(VkCommandBuffer cmdBuffer);
+	// Adds draw commands to command buffer with indexed vertex buffer data
+	void DrawVkIndexed(VkCommandBuffer cmdBuffer);
 	// Grabs the Vulkan framebuffer at the requested index
 	void GetVkFramebuffer(VkFramebuffer& framebuf, VkBool32 frameBufIndex);
 	// Loads in framebuffer
