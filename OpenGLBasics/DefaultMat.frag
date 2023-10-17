@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 
 struct LightProperties
 {
@@ -18,19 +18,30 @@ struct LightProperties
 };
 
 // max number of lights to apply in shader
-const int maxLightCount = 10;
-uniform LightProperties Lights[maxLightCount];
-uniform int lightCount;
-uniform float shininess;
-uniform float strength;
-uniform vec3 eyeDir;
-uniform vec4 objectColor;
+layout(constant_id = 0) const int maxLightCount = 10;
+layout(binding = 0)uniform LightPropertyBuffer
+{
+LightProperties Lights[maxLightCount];
+int lightCount;
+float shininess;
+float strength;
+}lightProperties;
 
-//in vec2 texCoord;
-in vec3 normal;
-in vec4 position;
+layout(binding = 1)uniform ViewPropertyBuffer
+{
+vec3 eyeDir;
+}viewProperties;
 
-out vec4 FragColor;
+layout(binding = 2)uniform ObjectPropertyBuffer
+{
+vec4 color;
+}objectProperties;
+
+layout(location = 3) in vec3 normal;
+layout(location = 4) in vec2 texCoord;
+layout(location = 5) in vec4 position;
+
+layout(location = 0)out vec4 FragColor;
 
 void main()
 {
@@ -91,6 +102,6 @@ void main()
 	//	}
 	//	vec3 rgb = min(objectColor.rgb * scatteredLight + reflectedLight, vec3(1.0));
 	//	FragColor = vec4(rgb, objectColor.a);
-	FragColor = objectColor;
+	FragColor = objectProperties.color;
 	
 }

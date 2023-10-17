@@ -70,6 +70,7 @@ void VkPipelineBuilder::GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPip
     pipelineSetup->AddShaderStageInfo(triangleFrag, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     pipelineSetup->AddVertexInputInfo();
+    pipelineSetup->AddDepthStencilInfo();
     pipelineSetup->AddColorBlendAttachmentInfo();
     pipelineSetup->AddColorBlendStateInfo();
     pipelineSetup->AddMultiSamplingInfo();
@@ -141,6 +142,10 @@ void VkPipelineBuilder::CreateMeshShaderPipeline(VkExtent2D windowExtent, VkPipe
             pipelineSetup->AddShaderStageInfo(shaderModule, (VkShaderStageFlagBits)shaderConfig->shaderFlag);
         }
     }
+
+    pipelineSetup->AddColorBlendStateInfo(params.colorBlendInfo);
+    pipelineSetup->AddDepthStencilInfo(params.depthStencilInfo);
+    pipelineSetup->AddPipelineLayout(params.pipelineLayout);
 }
 
 void VkPipelineBuilder::BuildVertexInputDescriptions(VkPipelineBuilderParams& params, VkVertexInputAttributeDescription* vertexInputAttributes, VkBool32 attributeCount)

@@ -94,21 +94,16 @@ void VkPipelineSetup::AddViewportInfo(VkViewport* viewports, VkRect2D* scissors,
 	pipelineParams.viewportInfo = _viewportInfo;
 }
 
-void VkPipelineSetup::AddPipelineLayout()
+void VkPipelineSetup::AddPipelineLayout(VkPipelineLayout pipelineLayout)
 {
-	VkPipelineLayoutCreateInfo _pipelineLayoutInfo = {};
-	_pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	_pipelineLayoutInfo.pNext = VK_NULL_HANDLE;
-	// TODO: Have these values dynamically assigned
-	_pipelineLayoutInfo.flags = 0;
-	_pipelineLayoutInfo.pSetLayouts = VK_NULL_HANDLE;
-	_pipelineLayoutInfo.pushConstantRangeCount = 0;
-	_pipelineLayoutInfo.setLayoutCount = 0;
-	_pipelineLayoutInfo.pPushConstantRanges = VK_NULL_HANDLE;
+   pipelineParams.pipelineLayout = pipelineLayout;
+}
+
+void VkPipelineSetup::AddPipelineLayout(VkPipelineLayoutCreateInfo pipelineInfo)
+{
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult result = vkCreatePipelineLayout(vkSettings->device, &_pipelineLayoutInfo, vkSettings->allocationCallback, &pipelineParams.pipelineLayout);
+	VkResult result = vkCreatePipelineLayout(vkSettings->device, &pipelineInfo, vkSettings->allocationCallback, &pipelineParams.pipelineLayout);
 	assert(result == VK_SUCCESS);
-	
 }
 
 void VkPipelineSetup::BuildPipelines(VkDevice device, VkRenderPass renderPass, VkPipeline* pipeline)

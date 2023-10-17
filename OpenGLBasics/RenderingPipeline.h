@@ -28,10 +28,61 @@ struct RenderBufferData
 	VkPipelineBuilderParams pipelineBuilderParams;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
+	VkDeviceSize vertexBufferSize = 0;
 	VkDeviceSize vertexBufferOffset = 0;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 	VkDeviceSize indexBufferSize = 0;
+	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+};
+
+static VkDescriptorSetLayoutBinding defaultVertexMVPDescriptorLayout = {
+	.binding = 0,
+	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	.descriptorCount = 1,
+	.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+	.pImmutableSamplers = nullptr
+};
+
+static VkDescriptorSetLayoutBinding defaultVertexNormalsDescriptorLayout = {
+	.binding = 1,
+	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	.descriptorCount = 1,
+	.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+	.pImmutableSamplers = nullptr
+};
+
+static VkDescriptorSetLayoutBinding defaultFragmentLightDescriptorLayout = {
+	.binding = 0,
+	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	.descriptorCount = 4,
+	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+	.pImmutableSamplers = nullptr
+};
+
+static VkDescriptorSetLayoutBinding defaultFragmentViewDescriptorLayout = {
+	.binding = 1,
+	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	.descriptorCount = 1,
+	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+	.pImmutableSamplers = nullptr
+};
+
+static VkDescriptorSetLayoutBinding defaultFragmentObjectDescriptorLayout = {
+	.binding = 2,
+	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	.descriptorCount = 1,
+	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+	.pImmutableSamplers = nullptr
+};
+
+static std::vector<VkDescriptorSetLayoutBinding> defaultDescriptorLayoutBindings = {
+	defaultVertexMVPDescriptorLayout,
+	defaultVertexNormalsDescriptorLayout,
+	defaultFragmentLightDescriptorLayout,
+	defaultFragmentViewDescriptorLayout,
+	defaultFragmentObjectDescriptorLayout
 };
 
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
@@ -56,6 +107,10 @@ class BRenderingPipeline final
 	void FillVkVertexBuffer(std::string primitiveName);
 	// Fills index buffer with index data for mesh
 	void FillVkIndexBuffer(std::string primitiveName);
+	// Sets the descriptor layouts for the uniform buffers on shaders
+	void SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
+	// Creates pipeline layout from descriptor set layout(s)
+	void CreatePipelineLayout(std::string primitiveName);
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
 	// Feeds mesh data to rendering platform
 	void RequestForMeshVertexData(std::string primitiveName);

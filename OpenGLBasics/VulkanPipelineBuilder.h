@@ -15,6 +15,7 @@ struct VkPipelineBuilderParams {
 	std::vector<VkViewport> viewports;
 	std::vector<VkRect2D>scissors;
 	std::vector<VkShaderStageConfigs> shaderStagingConfigs;
+	VkPipelineLayout pipelineLayout;
 };
 
 class VkPipelineBuilder

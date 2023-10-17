@@ -127,6 +127,18 @@ static VkPipelineRasterizationStateCreateInfo defaultRasterizationInfo = {
 	.lineWidth = 1.0f
 };
 
+static VkPipelineLayoutCreateInfo defaultPipelineLayoutInfo = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+	.pNext = VK_NULL_HANDLE,
+	.flags = 0,
+	.setLayoutCount = 0,
+	.pSetLayouts = VK_NULL_HANDLE,
+	.pushConstantRangeCount = 0,
+	.pPushConstantRanges = VK_NULL_HANDLE
+};
+
+
+
 class VkPipelineSetup
 {
 public:
@@ -150,8 +162,9 @@ public:
 	void AddColorBlendStateInfo(VkPipelineColorBlendStateCreateInfo colorBlendState = defaultColorBlendState);
 	// TODO: allow for parameterized viewport info
 	void AddViewportInfo(VkViewport* viewports, VkRect2D* scissors, const VkBool32& viewportCount, const VkBool32& scissorCount);
-	// TODO: allow for parameterized input for the pipeline layout
-	void AddPipelineLayout();
+	// Add the shader layouts for the descriptors and bindings for the pipeline
+	void AddPipelineLayout(VkPipelineLayout pipelineLayout);
+	void AddPipelineLayout(VkPipelineLayoutCreateInfo pipelineInfo = defaultPipelineLayoutInfo);
 
 
 private:

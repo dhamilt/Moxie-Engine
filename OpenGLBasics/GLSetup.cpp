@@ -241,8 +241,12 @@ void GLSetup::StartSDLWindow()
 	// Setup initial framebuffers
 	if (pipeline)
 		pipeline->GenerateVkFrameBuffers();
-	// Create default shader pipeline for triangle FOR TESTING
 	CreateVkPipelineForTriangle();
+	// Add an icosahedron mesh to rendering queue for pipeline
+	std::vector<DVertex>vertices;
+	std::vector<uint16_t> indices;
+	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+	pipeline->Import("ico", vertices, indices);
 #endif
 	
 
