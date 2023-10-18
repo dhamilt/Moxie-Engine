@@ -1,5 +1,6 @@
 #include "glPCH.h"
 #include "VulkanPlatformInit.h"
+#include "GLSetup.h"
 
 PVulkanPlatformInit::PVulkanPlatformInit()
 {
@@ -52,15 +53,23 @@ PVulkanPlatformInit* PVulkanPlatformInit::Get()
     return instance;
 }
 
-bool PVulkanPlatformInit::CreateFence(VkFence** fencePtr)
+bool PVulkanPlatformInit::CreateFences(VkFence* fencePtr)
 {
-    VkFenceCreateInfo fenceInfo = {};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    // Create the fence with the Create Signaled flag,
-    //so the fence can wait before using it on a GPU command (for the first frame)
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &currentVKSettings.inFlightFence);
-    *fencePtr = &currentVKSettings.inFlightFence;
+    currentVKSettings.inFlightFences.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+    for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
+    {
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        // Create the fence with the Create Signaled flag,
+        //so the fence can wait before using it on a GPU command (for the first frame)
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        VkResult result = vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &currentVKSettings.inFlightFences[i]);
+        if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Unable to create in flight fence #" + std::to_string(i) + "!");
+        }
+    }
+    memcpy(fencePtr, currentVKSettings.inFlightFences.data(), sizeof(currentVKSettings.inFlightFences[0]) * MAX_VULKAN_FRAMES_IN_FLIGHT);
     return true;
 }
 
@@ -279,18 +288,31 @@ bool PVulkanPlatformInit::IsSupported()
 /// <param name="presentSemaphorePtr"></param>
 /// <param name="renderSemaphore"></param>
 /// <returns></returns>
-bool PVulkanPlatformInit::CreateSemaphores(VkSemaphore** presentSemaphorePtr, VkSemaphore** renderSemaphorePtr)
+bool PVulkanPlatformInit::CreateSemaphores(VkSemaphore* presentSemaphorePtr, VkSemaphore* renderSemaphorePtr)
 {
-    VkSemaphoreCreateInfo semaphoreInfo = {};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphoreInfo.flags = 0;
-    semaphoreInfo.pNext = VK_NULL_HANDLE;
-    VkResult result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.imageAvailableSemaphore);
-    assert(result == VK_SUCCESS);
-    result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderFinishedSemaphore);
-    assert(result == VK_SUCCESS);
-    *presentSemaphorePtr = &currentVKSettings.imageAvailableSemaphore;
-    *renderSemaphorePtr = &currentVKSettings.renderFinishedSemaphore;
+    currentVKSettings.imageAvailableSemaphores.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+    currentVKSettings.renderFinishedSemaphores.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+    for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
+    {
+        VkSemaphoreCreateInfo semaphoreInfo = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .flags = 0
+        };
+        VkResult result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.imageAvailableSemaphores[i]);
+        if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Unable to create Image Available Semaphore #" + std::to_string(i) + "!");
+        }
+        result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderFinishedSemaphores[i]);
+        if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Unable to create Rendering Finished Semaphore #" + std::to_string(i) + "!");
+        }
+    }
+    memcpy(presentSemaphorePtr,  currentVKSettings.imageAvailableSemaphores.data(), sizeof(currentVKSettings.imageAvailableSemaphores[0]) * MAX_VULKAN_FRAMES_IN_FLIGHT);
+    memcpy(renderSemaphorePtr, currentVKSettings.renderFinishedSemaphores.data(), sizeof(currentVKSettings.renderFinishedSemaphores[0]) * MAX_VULKAN_FRAMES_IN_FLIGHT);
+
     return true;
 }
 
@@ -403,7 +425,7 @@ void PVulkanPlatformInit::GetDeviceExtensions(VkBool32& extCount, std::vector<Vk
     }
 }
 
-bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer** commandBuffer)
+bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer* commandBuffers)
 {
  
     // Create a command pool for command buffer actions to be placed
@@ -425,19 +447,22 @@ bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer** commandBuffer)
     VkCommandBufferAllocateInfo bufferInfo = {};
     bufferInfo.sType                = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     bufferInfo.commandPool          = currentVKSettings.commandPool;
-    bufferInfo.commandBufferCount   = MAX_COMMAND_POOL_SIZE;
+    bufferInfo.commandBufferCount   = MAX_VULKAN_FRAMES_IN_FLIGHT;
     bufferInfo.level                = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    // TODO: allocate for only command buffers that have been requested
-    currentVKSettings.commandBuffers = std::vector<VkCommandBuffer>(MAX_COMMAND_POOL_SIZE);
-    result = vkAllocateCommandBuffers(device, &bufferInfo, &currentVKSettings.commandBuffers[0]);
-
-    if (result != VK_SUCCESS)
+    // Allocate for only command buffers that have been requested
+    currentVKSettings.commandBuffers = std::vector<VkCommandBuffer>(MAX_VULKAN_FRAMES_IN_FLIGHT);
+    for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
     {
-        perror("Error! Unable to allocate for command buffer(s)!");
-        return false;
+        result = vkAllocateCommandBuffers(device, &bufferInfo, &currentVKSettings.commandBuffers[i]);
+
+        if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Unable to allocate for command buffer #" + std::to_string(i) + "!");
+            return false;
+        }
     }
-    *commandBuffer = &currentVKSettings.commandBuffers[0];
+    memcpy(commandBuffers, currentVKSettings.commandBuffers.data(), MAX_VULKAN_FRAMES_IN_FLIGHT * sizeof(currentVKSettings.commandBuffers[0]));
     return true;
 
 }
@@ -648,10 +673,14 @@ void PVulkanPlatformInit::CleanupVulkan()
     // Wait for device to be in idle state
     auto device = currentVKSettings.device;
     vkDeviceWaitIdle(device);
-    vkDestroyFence(device, currentVKSettings.inFlightFence, currentVKSettings.allocationCallback);
-    vkDestroySemaphore(device, currentVKSettings.imageAvailableSemaphore, currentVKSettings.allocationCallback);
-    vkDestroySemaphore(device, currentVKSettings.renderFinishedSemaphore, currentVKSettings.allocationCallback);
-    vkFreeCommandBuffers(device, currentVKSettings.commandPool, MAX_COMMAND_POOL_SIZE, &currentVKSettings.commandBuffers[0]);
+    for (VkBool32 j = 0; j < MAX_VULKAN_FRAMES_IN_FLIGHT; j++)
+    {
+        vkDestroyFence(device, currentVKSettings.inFlightFences[j], currentVKSettings.allocationCallback);
+        vkDestroySemaphore(device, currentVKSettings.imageAvailableSemaphores[j], currentVKSettings.allocationCallback);
+        vkDestroySemaphore(device, currentVKSettings.renderFinishedSemaphores[j], currentVKSettings.allocationCallback);
+        vkFreeCommandBuffers(device, currentVKSettings.commandPool, MAX_VULKAN_FRAMES_IN_FLIGHT, &currentVKSettings.commandBuffers[j]);
+    }
+    
     vkDestroyRenderPass(device, currentVKSettings.renderPass, currentVKSettings.allocationCallback);
     vkDestroyCommandPool(device, currentVKSettings.commandPool, currentVKSettings.allocationCallback);
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)

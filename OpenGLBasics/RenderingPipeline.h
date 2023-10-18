@@ -14,6 +14,45 @@ class Material;
 class Mesh;
 struct CubemapData;
 
+struct MVPBuffer
+{
+	DMat4x4 model;
+	DMat4x4 view;
+	DMat4x4 projection;
+};
+
+struct NormalBuffer
+{
+	DMat3x3 normalMat;
+};
+
+struct LightPropertyBuffer
+{
+	bool isEnabled;
+	bool isLocal;
+	bool isSpot;
+	DVector3 ambientColor;
+	DVector3 mainColor;
+	DVector3 position;
+	DVector3 halfVector;
+	DVector3 coneDirection;
+	float spotCosineCutoff;
+	float spotExponent;
+	float attenuationConstant;
+	float linearAttenuation;
+	float quadraticAttenuation;
+};
+
+struct ViewPropertyBuffer
+{
+	DVector3 lookDir;
+};
+
+struct ObjectPropertyBuffer
+{
+	DVector4 color;
+};
+
 struct RenderBufferData
 {
 	~RenderBufferData();
@@ -35,6 +74,15 @@ struct RenderBufferData
 	VkDeviceSize indexBufferSize = 0;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceSize> uniformBuffersSize;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<void*> uniformBuffersMapped;
+	MVPBuffer mvpBuffer;
+	NormalBuffer normalBuffer;
+	LightPropertyBuffer lightPropertyBuffer;
+	ViewPropertyBuffer viewPropertyBuffer;
+	ObjectPropertyBuffer objectPropertyBuffer;
 };
 
 static VkDescriptorSetLayoutBinding defaultVertexMVPDescriptorLayout = {
@@ -103,10 +151,14 @@ class BRenderingPipeline final
 	// Allocates memory on application to allow index data for drawing
 	//  mesh to be fed to the graphics pipeline
 	void CreateVkIndexBuffer(std::string primitiveName);
+	// Allocates memory for uniform buffers
+	void CreateVkUniformBuffers(std::string primitiveName);
 	// Fills vertex buffer with vertex data
 	void FillVkVertexBuffer(std::string primitiveName);
 	// Fills index buffer with index data for mesh
 	void FillVkIndexBuffer(std::string primitiveName);
+	// Fills uniform buffers with binding data
+	void FillVkUniformBuffers(std::string primitiveName);
 	// Sets the descriptor layouts for the uniform buffers on shaders
 	void SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
 	// Creates pipeline layout from descriptor set layout(s)

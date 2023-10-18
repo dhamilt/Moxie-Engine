@@ -166,14 +166,19 @@ void GLSetup::StartSDLWindow()
 	// Ensure that the render pass is created properly
 	assert(platformInstance->CreateRenderPass());
 	 
+	// Allocate commandBuffer queue for max possible frames in flight
+	cmdBuffers.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
 	// Ensure that the command buffer is created properly
-	assert(platformInstance->CreateCommandPool(&mainCmdBuffer));
+	assert(platformInstance->CreateCommandPool(cmdBuffers.data()));
 
+	inFlightFences.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
 	// Ensure that the sync object fence is created properly
-	assert(platformInstance->CreateFence(&inFlightFence));
+	assert(platformInstance->CreateFences(inFlightFences.data()));
 
+	imageAvailableSemaphores.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+	renderFinishedSemaphores.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
 	// Ensure that the sync object semaphores are created properly
-	assert(platformInstance->CreateSemaphores(&imageAvailableSemaphore, &renderFinishedSemaphore));
+	assert(platformInstance->CreateSemaphores(imageAvailableSemaphores.data(), renderFinishedSemaphores.data()));
 
 	// Dictate how the command buffer is used on startup of each frame
 
@@ -400,19 +405,19 @@ void GLSetup::Render()
 		// Get the index of the requested swapchain index being rendered on
 		// set timeout period to 1 second
 		VkBool32 swapchainImgIndex;
-		assert(vkAcquireNextImageKHR(*currentVkDevice, *VkSwapchain, 1000000000, *imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainImgIndex) == VK_SUCCESS);
+		assert(vkAcquireNextImageKHR(*currentVkDevice, *VkSwapchain, 1000000000, imageAvailableSemaphores[currentRenderingFrame], VK_NULL_HANDLE, &swapchainImgIndex) == VK_SUCCESS);
 
 		// Wait for GPU to finish rendering the previous frame before drawing the current frame
 		// set timeout period to 1 second
-		assert(vkWaitForFences(*currentVkDevice, 1, inFlightFence, VK_TRUE, 1000000000) == VK_SUCCESS);
-		assert(vkResetFences(*currentVkDevice, 1, inFlightFence) == VK_SUCCESS);
+		assert(vkWaitForFences(*currentVkDevice, 1, &inFlightFences[currentRenderingFrame], VK_TRUE, 1000000000) == VK_SUCCESS);
+		assert(vkResetFences(*currentVkDevice, 1, &inFlightFences[currentRenderingFrame]) == VK_SUCCESS);
 
 
 		// Restart the command buffer to be ready to record draw commands for the current frame
-		assert(vkResetCommandBuffer(*mainCmdBuffer, 0) == VK_SUCCESS);
+		assert(vkResetCommandBuffer(cmdBuffers[currentRenderingFrame], 0) == VK_SUCCESS);
 
 		// Begin command buffer recording for the current frame
-		assert(vkBeginCommandBuffer(*mainCmdBuffer, &beginCmdBufferInfo) == VK_SUCCESS);
+		assert(vkBeginCommandBuffer(cmdBuffers[currentRenderingFrame], &beginCmdBufferInfo) == VK_SUCCESS);
 
 		
 
@@ -436,35 +441,35 @@ void GLSetup::Render()
 
 		// Create render pass on command buffer
 		// ensures that the subpass contents is passed into the main command buffer (for now, at least)
-		vkCmdBeginRenderPass(*mainCmdBuffer, &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmdBuffers[currentRenderingFrame], &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		// RUN DRAW COMMANDS HERE
-		vkCmdBindPipeline(*mainCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
+		vkCmdBindPipeline(cmdBuffers[currentRenderingFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
 
-		pipeline->DrawVkIndexed(*mainCmdBuffer);
+		pipeline->DrawVkIndexed(cmdBuffers[currentRenderingFrame]);
 
 		// Finalize the render pass for the command buffer
-		vkCmdEndRenderPass(*mainCmdBuffer);
+		vkCmdEndRenderPass(cmdBuffers[currentRenderingFrame]);
 
-		vkCmdClearDepthStencilImage(*mainCmdBuffer, vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
+		vkCmdClearDepthStencilImage(cmdBuffers[currentRenderingFrame], vkSettings->depthBuffer.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencilVal, 1, &vkSettings->depthViewInfo.subresourceRange);
 
 		// Stops recording of draw commands
-		assert(vkEndCommandBuffer(*mainCmdBuffer) == VK_SUCCESS);
+		assert(vkEndCommandBuffer(cmdBuffers[currentRenderingFrame]) == VK_SUCCESS);
 
 		// Submit draw commands to the device queue to be drawn
 		VkSubmitInfo queueSubmitInfo = {};
 		queueSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		queueSubmitInfo.commandBufferCount = 1;
-		queueSubmitInfo.pCommandBuffers = mainCmdBuffer;
+		queueSubmitInfo.pCommandBuffers = &cmdBuffers[currentRenderingFrame];
 		queueSubmitInfo.pNext = VK_NULL_HANDLE;
 		queueSubmitInfo.signalSemaphoreCount = 1;
-		queueSubmitInfo.pSignalSemaphores = &vkSettings->renderFinishedSemaphore;
+		queueSubmitInfo.pSignalSemaphores = &vkSettings->renderFinishedSemaphores[currentRenderingFrame];
 		queueSubmitInfo.waitSemaphoreCount = 1;
-		queueSubmitInfo.pWaitSemaphores = &vkSettings->imageAvailableSemaphore;
+		queueSubmitInfo.pWaitSemaphores = &vkSettings->imageAvailableSemaphores[currentRenderingFrame];
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		queueSubmitInfo.pWaitDstStageMask = &waitStage;
 
-		assert(vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, *inFlightFence) == VK_SUCCESS);
+		assert(vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, inFlightFences[currentRenderingFrame]) == VK_SUCCESS);
 		
 		// Render the image to the window/surface
 		
@@ -474,12 +479,14 @@ void GLSetup::Render()
 		presentationInfo.swapchainCount = 1;
 		presentationInfo.pSwapchains = &vkSettings->swapchain;
 		presentationInfo.waitSemaphoreCount = 1;
-		presentationInfo.pWaitSemaphores = &vkSettings->renderFinishedSemaphore;
+		presentationInfo.pWaitSemaphores = &vkSettings->renderFinishedSemaphores[currentRenderingFrame];
 		presentationInfo.pImageIndices = &swapchainImgIndex;
 		presentationInfo.pResults = &renderingResult;
 
 		assert(vkQueuePresentKHR(vkSettings->queue, &presentationInfo) == VK_SUCCESS);
 
+		// Retrieve the next frame
+		currentRenderingFrame = (currentRenderingFrame + 1) % MAX_VULKAN_FRAMES_IN_FLIGHT;
 #endif
 	}
 

@@ -1,21 +1,4 @@
-﻿  Cubemaps.cpp
-  EntityComponent.cpp
-  Camera.cpp
-  GameLoop.cpp
-  GLSetup.cpp
-  GLWindow.cpp
-  Graphic.cpp
-  GUI_Base.cpp
-  InputHandler.cpp
-  LightComponent.cpp
-  Mesh.cpp
-  MeshComponent.cpp
-  MouseCapture.cpp
-  MViewport.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\MViewport.cpp(69,16): warning C4312: 'type cast': conversion from 'GLuint' to 'ImTextureID' of greater size
-  VulkanPipelineSetup.cpp
-  RenderingPipeline.cpp
-  VulkanPipelineBuilder.cpp
+﻿  RenderingPipeline.cpp
   MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
   0 File(s) copied
   0 File(s) copied

@@ -65,8 +65,8 @@ struct PVulkanPlatformInitInfo
     std::vector<PVkImageBuffer> imageBuffers;
 
     VkRenderPass renderPass;
-    VkFence inFlightFence;
-    VkSemaphore renderFinishedSemaphore, imageAvailableSemaphore;
+    std::vector<VkFence> inFlightFences;
+    std::vector<VkSemaphore> renderFinishedSemaphores, imageAvailableSemaphores;
 
     ImGui_ImplVulkanH_Window window;
     ImGui_ImplVulkan_InitInfo imGuiInitInfo;    
@@ -88,7 +88,7 @@ public:
     void GetInstanceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
     void GetDeviceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
     void GetSupportedImageFormats(VkBool32& formatCount, std::vector<VkSurfaceFormatKHR>& supportedFormats);
-    bool CreateCommandPool(VkCommandBuffer** commandBuffer = nullptr);
+    bool CreateCommandPool(VkCommandBuffer* commandBuffers);
     void GetWindowExtent(VkExtent2D& windowExtent);
     bool GetPhysicalDevices();
     bool SetupDebugCallbacks();
@@ -96,8 +96,8 @@ public:
     bool CreateDescriptorPool();
     bool CreateSwapChain();
     bool CreateRenderPass();
-    bool CreateSemaphores(VkSemaphore** presentSemaphorePtr = nullptr, VkSemaphore** renderSemaphorePtr = nullptr);
-    bool CreateFence(VkFence** fencePtr = nullptr);
+    bool CreateSemaphores(VkSemaphore* presentSemaphorePtr, VkSemaphore* renderSemaphorePtr);
+    bool CreateFences(VkFence* fencePtr);
     //bool SetupVulkanWindow(VkSurfaceKHR surface, int width, int height);
     void CleanupVulkan();
     PVulkanPlatformInitInfo* GetInfo();

@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "Mesh.h"
 #include "Cubemaps.h"
+#include "VulkanFunctionLibrary.h"
 
 extern GLSetup* GGLSPtr;
 const int BRenderingPipeline::MAX_LIGHT_COUNT = 10;
@@ -100,11 +101,17 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 	// Create, allocate, and bind memory for index buffer
 	CreateVkIndexBuffer(primitiveName);
 
+	// Create, allocate and bind memory for uniform buffers
+	CreateVkUniformBuffers(primitiveName);
+
 	// Fill vertex buffer with data
 	FillVkVertexBuffer(primitiveName);
 
 	// Fill index buffer with data
 	FillVkIndexBuffer(primitiveName);
+
+	// Fill uniform buffers with data
+	FillVkUniformBuffers(primitiveName);
 #endif
 
 }
@@ -153,7 +160,8 @@ void BRenderingPipeline::CreateVkVertexBuffer(std::string primitiveName)
 	// Reserve memory for vertex buffer
 	auto renderBufferData = primitives[primitiveName];
 	auto vertexBuffer = &renderBufferData->vertexBuffer;
-
+	
+	
 	// set vertex buffer size
 	renderBufferData->vertexBufferSize = sizeof(renderBufferData->vertices[0]) * renderBufferData->vertices.size();
 
@@ -164,52 +172,10 @@ void BRenderingPipeline::CreateVkVertexBuffer(std::string primitiveName)
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult result = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback,
-		vertexBuffer);
-	if (result != VK_SUCCESS)
-	{
-		throw new std::runtime_error("Unable to reserve memory for vertex buffer!");
-	}
 
-	// Retrieve memory requirements for setting up vertex buffer
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(vkSettings->device, *vertexBuffer, &memoryRequirements);
+	VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->vertexBufferSize,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->vertexBuffer, renderBufferData->vertexBufferMemory);
 
-	// find out if memory type is supported in vertex buffer
-	VkPhysicalDeviceMemoryProperties memoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex],
-		&memoryProperties);
-	// Flags for allowing the device memory to be accessible and malleable to application code
-	VkBool32 memoryType = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-	VkBool32 memoryFlagIndex = -1;
-	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
-	{
-		if (memoryRequirements.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & memoryType) == memoryType)
-		{
-			memoryFlagIndex = i;
-			break;
-		}
-	}
-
-	if (memoryFlagIndex == -1)
-	{
-		throw new std::runtime_error("Unable to access vulkan device memory!");
-	}
-
-	// Allocate device memory for vertex buffer
-	VkMemoryAllocateInfo memoryAllocationInfo = {};
-	memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memoryAllocationInfo.memoryTypeIndex = memoryFlagIndex;
-	memoryAllocationInfo.allocationSize = memoryRequirements.size;
-
-	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo, vkSettings->allocationCallback, &renderBufferData->vertexBufferMemory);
-	if (result != VK_SUCCESS)
-	{
-		throw new std::runtime_error("Unable to allocate device memory for vertex buffer!");
-	}
-
-	// Bind device memory to vertex buffer
-	vkBindBufferMemory(vkSettings->device, *vertexBuffer, renderBufferData->vertexBufferMemory, 0);
 }
 
 void BRenderingPipeline::CreateVkIndexBuffer(std::string primitiveName)
@@ -228,55 +194,51 @@ void BRenderingPipeline::CreateVkIndexBuffer(std::string primitiveName)
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult result = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback,
-		indexBuffer);
-	if (result != VK_SUCCESS)
-	{
-		throw new std::runtime_error("Unable to reserve memory for index buffer!");
-	}
+	VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->indexBufferSize,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->indexBuffer, renderBufferData->indexBufferMemory);
+}
 
-	// Retrieve memory requirements for setting up vertex buffer
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(vkSettings->device, *indexBuffer, &memoryRequirements);
+void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
+{
+	auto renderBufferData = primitives[primitiveName];
+	auto uniformBuffers = &renderBufferData->uniformBuffers;
 
-	// find out if memory type is supported in vertex buffer
-	VkPhysicalDeviceMemoryProperties memoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex],
-		&memoryProperties);
-	// Flags for allowing the device memory to be accessible and malleable to application code
-	VkBool32 memoryType = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-	VkBool32 memoryFlagIndex = -1;
-	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = renderBufferData->indexBufferSize;
+	bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkDeviceSize deviceSizes[5] = {
+		sizeof(RenderBufferData::mvpBuffer),
+		sizeof(RenderBufferData::normalBuffer),
+		sizeof(RenderBufferData::lightPropertyBuffer),
+		sizeof(RenderBufferData::viewPropertyBuffer),
+		sizeof(RenderBufferData::objectPropertyBuffer)
+	};
+
+	VkBool32 bindingCount = sizeof(deviceSizes) / sizeof(VkDeviceSize);
+
+	renderBufferData->uniformBuffersMemory.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
+	renderBufferData->uniformBuffersMapped.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
+	renderBufferData->uniformBuffersSize.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
+	renderBufferData->uniformBuffers.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
+
+	for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
 	{
-		if (memoryRequirements.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & memoryType) == memoryType)
+		
+		for (VkBool32 j = 0; j < bindingCount; j++)
 		{
-			memoryFlagIndex = i;
-			break;
+			VkBool32 index = i * bindingCount + j;
+			// set uniform buffer sizes
+			renderBufferData->uniformBuffersSize[index] = deviceSizes[j];
+			VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->uniformBuffersSize[index],
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->uniformBuffers[index], renderBufferData->uniformBuffersMemory[index]);
+
+			
 		}
 	}
-
-	if (memoryFlagIndex == -1)
-	{
-		throw new std::runtime_error("Unable to access vulkan device memory!");
-	}
-
-	// Allocate device memory for vertex buffer
-	VkMemoryAllocateInfo memoryAllocationInfo = {};
-	memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memoryAllocationInfo.memoryTypeIndex = memoryFlagIndex;
-	memoryAllocationInfo.allocationSize = memoryRequirements.size;
-
-	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo,
-		vkSettings->allocationCallback, &renderBufferData->indexBufferMemory);
-	if (result != VK_SUCCESS)
-	{
-		throw new std::runtime_error("Unable to allocate device memory for vertex buffer!");
-	}
-	
-	
-
-	// Bind device memory to vertex buffer
-	vkBindBufferMemory(vkSettings->device, *indexBuffer, renderBufferData->indexBufferMemory, 0);
 }
 
 void BRenderingPipeline::FillVkVertexBuffer(std::string primitiveName)
@@ -297,6 +259,42 @@ void BRenderingPipeline::FillVkIndexBuffer(std::string primitiveName)
 	vkMapMemory(vkSettings->device, renderData->indexBufferMemory, 0, renderData->indexBufferSize, 0, &data);
 	memcpy(data, renderData->indices.data(), (size_t)renderData->indexBufferSize);
 	vkUnmapMemory(vkSettings->device, renderData->indexBufferMemory);
+}
+
+void BRenderingPipeline::FillVkUniformBuffers(std::string primitiveName)
+{
+	auto renderData = primitives[primitiveName];
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+
+	VkDeviceSize deviceSizes[5] = {
+		sizeof(RenderBufferData::mvpBuffer),
+		sizeof(RenderBufferData::normalBuffer),
+		sizeof(RenderBufferData::lightPropertyBuffer),
+		sizeof(RenderBufferData::viewPropertyBuffer),
+		sizeof(RenderBufferData::objectPropertyBuffer)
+	};
+
+	void* destinations[5] = {
+		&renderData->mvpBuffer,
+		&renderData->normalBuffer,
+		&renderData->lightPropertyBuffer,
+		&renderData->viewPropertyBuffer,
+		&renderData->objectPropertyBuffer
+	};
+
+	for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
+	{
+		VkBool32 bindingCount = sizeof(deviceSizes) / sizeof(VkDeviceSize);
+		for (VkBool32 j = 0; j < bindingCount; j++)
+		{
+			VkBool32 index = i * bindingCount + j;
+
+			vkMapMemory(vkSettings->device, renderData->uniformBuffersMemory[index], 0, renderData->uniformBuffersSize[index], 0, &renderData->uniformBuffersMapped[index]);
+			memcpy(renderData->uniformBuffersMapped[index], destinations[j], (size_t)renderData->uniformBuffersSize[index]);
+			vkUnmapMemory(vkSettings->device, renderData->uniformBuffersMemory[index]);
+			
+		}
+	}
 }
 
 void BRenderingPipeline::SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
@@ -342,6 +340,8 @@ void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 	{
 		throw std::runtime_error("Unable to create pipeline layout from descriptor set layout!");
 	}
+
+	auto val = MAX_VULKAN_FRAMES_IN_FLIGHT;
 }
 
 void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)

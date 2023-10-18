@@ -412,6 +412,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="PlatformFlags.h" />
     <ClInclude Include="PlatformInit.h" />
     <ClInclude Include="VulkanErrorReporting.h" />
+    <ClInclude Include="VulkanFunctionLibrary.h" />
     <ClInclude Include="VulkanMultisamplingPresets.h" />
     <ClInclude Include="VulkanPipelineSetup.h" />
     <ClInclude Include="VulkanPlatformInit.h" />

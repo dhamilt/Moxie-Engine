@@ -21,6 +21,9 @@ class Material;
 #define USE_VULKAN 1
 #define USE_OPENGL 0
 
+
+#define MAX_VULKAN_FRAMES_IN_FLIGHT (const VkBool32)3
+
 // TODO: Have the default rendering language be determined by an ini file
 // for now, set the rendering language to be Vulkan
 
@@ -106,14 +109,15 @@ private:
 	VkCommandBufferBeginInfo beginCmdBufferInfo;
 	VkRenderPassBeginInfo beginRenderPassInfo;
 	VkClearValue* clearValues;
-	VkCommandBuffer* mainCmdBuffer;
+	std::vector<VkCommandBuffer> cmdBuffers;
 	std::vector<VkPipeline> triangleShaderPipeline;
-	VkSemaphore *imageAvailableSemaphore, *renderFinishedSemaphore;
+	std::vector<VkSemaphore> imageAvailableSemaphores, renderFinishedSemaphores;
 	VkResult renderingResult;
-	VkFence* inFlightFence;
+	std::vector<VkFence> inFlightFences;
 	VkDevice* currentVkDevice;
 	VkSwapchainKHR* VkSwapchain;
 	std::vector<VkFramebuffer> glFramebuffers;
+	VkBool32 currentRenderingFrame = 0;
 	
 };
 
