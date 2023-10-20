@@ -74,13 +74,13 @@ void Mesh::AddDataToGLBuffer()
 	
 }
 
-void Mesh::Import(std::vector<DVertex> _vertices, std::vector<uint16_t> indices, std::string meshName)
+void Mesh::Import(std::vector<DVertex> vertices, std::vector<uint16_t> indices, std::string meshName)
 {
 	if (!meshData)
-		meshData = new MeshDataParams(_vertices, indices);
+		meshData = new MeshDataParams(vertices, indices);
 	else
 	{
-		meshData->vertices	= _vertices;
+		meshData->vertices	= vertices;
 		meshData->indices	= indices;
 	}
 	meshData->name = meshName;

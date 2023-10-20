@@ -63,7 +63,7 @@ struct RenderBufferData
 	std::vector<uint16_t> indices;
 	DMat4x4 transform;
 	std::shared_ptr<Shader> shader;
-	std::shared_ptr<VkShaderUtil> vkShader;
+	std::vector<VkShaderStageConfigs> vkShaderStageFiles;
 	VkPipelineBuilderParams pipelineBuilderParams;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
@@ -83,6 +83,7 @@ struct RenderBufferData
 	LightPropertyBuffer lightPropertyBuffer;
 	ViewPropertyBuffer viewPropertyBuffer;
 	ObjectPropertyBuffer objectPropertyBuffer;
+	VkPipeline graphicsPipeline;
 };
 
 static VkDescriptorSetLayoutBinding defaultVertexMVPDescriptorLayout = {
@@ -161,6 +162,10 @@ class BRenderingPipeline final
 	void FillVkUniformBuffers(std::string primitiveName);
 	// Sets the descriptor layouts for the uniform buffers on shaders
 	void SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
+	// Adds shader stage file(s) to be used and read by the graphics pipeline
+	void LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages);
+	// Sets the depth info for the depth/stencil state of the current graphics pipeline
+	void SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds, float maxDepthBounds);
 	// Creates pipeline layout from descriptor set layout(s)
 	void CreatePipelineLayout(std::string primitiveName);
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
@@ -176,6 +181,8 @@ class BRenderingPipeline final
 	// Updates the world space view matrix
 	void UpdateProjectionMatrix(float fieldOfView, float width, float height, float nearClippingPlane, float farClippingPlane);
 	void UpdateViewMatrix(DMat4x4 _view);
+	// Updates MVP matrix of primitive
+	void UpdateTransformMatrix(std::string primitiveName);
 	/** Vertex Shading Functions */
 	// Create default mesh shader
 	void CreateDefaultShader();
@@ -195,7 +202,7 @@ class BRenderingPipeline final
 	void UpdateLightDataForShader(RenderBufferData* renderData);
 	/** Vertex Post Processing Functions */
 
-	/** Drawing Functions */
+	/** DRAWING FUNCTIONS */
 	// Generates the default framebuffer
 	void GenerateDefaultFramebuffer();
 	// Generates a Vulkan framebuffer

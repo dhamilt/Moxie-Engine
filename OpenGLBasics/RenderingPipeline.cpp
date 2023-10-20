@@ -77,6 +77,15 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 			vkDestroyBuffer(vkSettings->device, data->indexBuffer, vkSettings->allocationCallback);
 			vkFreeMemory(vkSettings->device, data->indexBufferMemory, vkSettings->allocationCallback);
 		}
+		// destroy uniform buffers and release memory associated
+		for (auto uniformBufferPtr = data->uniformBuffers.begin(); uniformBufferPtr != data->uniformBuffers.end(); uniformBufferPtr++)
+			vkDestroyBuffer(vkSettings->device, *uniformBufferPtr, vkSettings->allocationCallback);
+		for (auto uniformBufferMemoryPtr = data->uniformBuffersMemory.begin(); uniformBufferMemoryPtr != data->uniformBuffersMemory.end(); uniformBufferMemoryPtr++)
+			vkFreeMemory(vkSettings->device, *uniformBufferMemoryPtr, vkSettings->allocationCallback);
+		
+		// destroy descriptor layout bindings
+		for (auto descriptorLayoutPtr = data->descriptorSetLayouts.begin(); descriptorLayoutPtr != data->descriptorSetLayouts.end(); descriptorLayoutPtr++)
+			vkDestroyDescriptorSetLayout(vkSettings->device, *descriptorLayoutPtr, vkSettings->allocationCallback);
 #endif
 		data->vertices	= _vertices;
 		data->indices = _indices;
@@ -103,6 +112,9 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 
 	// Create, allocate and bind memory for uniform buffers
 	CreateVkUniformBuffers(primitiveName);
+
+	// Create Descriptor Layouts for uniform buffers in shader(s)
+	SetVkDescriptorsForUniformBuffers(primitiveName);
 
 	// Fill vertex buffer with data
 	FillVkVertexBuffer(primitiveName);
@@ -322,6 +334,41 @@ void BRenderingPipeline::SetVkDescriptorsForUniformBuffers(std::string primitive
 
 }
 
+void BRenderingPipeline::LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages)
+{
+	auto renderData = primitives[primitiveName];
+	for (VkBool32 i = 0; i < shaderStageFileCount; i++)
+	{
+		auto config = shaderStages[i];
+		renderData->vkShaderStageFiles.push_back(config);
+		vulkanPipelineBuilder->LoadShaderModule(config, renderData->pipelineBuilderParams);
+	}
+}
+
+void BRenderingPipeline::SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds = 0.0f, float maxDepthBounds = 1.0f)
+{
+	auto depthStencilInfo = primitives[primitiveName]->pipelineBuilderParams.depthStencilInfo;
+	depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencilInfo.depthTestEnable = VK_TRUE;
+	depthStencilInfo.depthWriteEnable = VK_TRUE;
+	depthStencilInfo.depthCompareOp = comparisonOperation;
+	depthStencilInfo.depthBoundsTestEnable = isDepthBoundsEnabled;
+	if (isDepthBoundsEnabled)
+	{
+		depthStencilInfo.minDepthBounds = minDepthBounds;
+		depthStencilInfo.maxDepthBounds = maxDepthBounds;
+	}
+}
+
+void BRenderingPipeline::SetVkPipelineStencilState(std::string primitiveName, VkStencilOpState frontStencilState, VkStencilOpState backStencilState)
+{
+	auto depthStencilInfo = primitives[primitiveName]->pipelineBuilderParams.depthStencilInfo;
+	depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencilInfo.stencilTestEnable = VK_TRUE;
+	depthStencilInfo.front = frontStencilState;
+	depthStencilInfo.back = backStencilState;
+}
+
 void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
@@ -509,6 +556,16 @@ void BRenderingPipeline::UpdateProjectionMatrix(float fieldOfView, float width, 
 void BRenderingPipeline::UpdateViewMatrix(DMat4x4 _view)
 {
 	viewMatrix = _view;
+}
+
+void BRenderingPipeline::UpdateTransformMatrix(std::string primitiveName)
+{
+	auto renderData = primitives[primitiveName];
+	renderData->mvpBuffer = {
+		.model = renderData->transform,
+		.view = viewMatrix,
+		.projection = projectionMatrix,
+	};
 }
 
 void BRenderingPipeline::CreateDefaultShader()
@@ -782,6 +839,8 @@ void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 	for (auto it = primitives.begin(); it != primitives.end(); it++)
 	{
 		auto renderData = it->second;
+		// update mvp for model
+		UpdateTransformMatrix(it->first);
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1,
 			&renderData->vertexBuffer, &renderData->vertexBufferOffset);
 

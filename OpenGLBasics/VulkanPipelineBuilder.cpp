@@ -9,9 +9,10 @@ void VkPipelineBuilder::SetInputAssembly(VkPrimitiveTopology* _topology)
     pipelineSetup->AddInputAssemblyInfo(*_topology);
 }
 
-void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs& shaderConfig, VkShaderModule& shaderModule)
+void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params)
 {
-    if (!VkShaderUtil::LoadShaderModule(shaderConfig, shaderModule))
+    VkShaderModule shader;
+    if (!VkShaderUtil::LoadShaderModule(shaderConfig, shader))
     {
         std::string shaderStageType = "";
 
@@ -45,7 +46,10 @@ void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs& shaderConfig, VkS
         printf("Unable to load %s shader stage of module!", shaderStageType.c_str());
     }
     else
-        pipelineSetup->AddShaderStageInfo(shaderModule, (VkShaderStageFlagBits)shaderConfig.shaderFlag);
+    {
+        pipelineSetup->AddShaderStageInfo(shader, (VkShaderStageFlagBits)shaderConfig.shaderFlag);
+        params.shaders.push_back(shader);
+    }
 }
 
 void VkPipelineBuilder::GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipelines)
@@ -98,50 +102,9 @@ void VkPipelineBuilder::GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPip
     
 }
 
-void VkPipelineBuilder::CreateMeshShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline, const VkPipelineBuilderParams& params)
+void VkPipelineBuilder::CreateMeshShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline,  VkPipelineBuilderParams& params)
 {
     VkPipelineSetup* pipelineSetup = new VkPipelineSetup();
-    for (auto shaderConfig = params.shaderStagingConfigs.begin(); shaderConfig != params.shaderStagingConfigs.end(); shaderConfig++)
-    {
-        VkShaderModule shaderModule;
-        if (!VkShaderUtil::LoadShaderModule(*shaderConfig, shaderModule))
-        {
-            std::string shaderStageType = "";
-
-            auto shaderStage = shaderConfig->shaderFlag;
-
-            switch (shaderStage)
-            {
-            case VK_SHADER_STAGE_VERTEX_BIT:
-                shaderStageType = "vertex";
-                break;
-            case VK_SHADER_STAGE_FRAGMENT_BIT:
-                shaderStageType = "fragment";
-                break;
-            case VK_SHADER_STAGE_GEOMETRY_BIT:
-                shaderStageType = "geometry";
-                break;
-            case VK_SHADER_STAGE_COMPUTE_BIT:
-                shaderStageType = "compute";
-                break;
-            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-                shaderStageType = "tessellation control";
-                break;
-            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-                shaderStageType = "tessellation evaluation";
-                break;
-            default:
-                shaderStageType = "default vertex";
-                break;
-
-                printf("Unable shader file for %s stage!", shaderStageType.c_str());
-            }
-        }
-        else 
-        {
-            pipelineSetup->AddShaderStageInfo(shaderModule, (VkShaderStageFlagBits)shaderConfig->shaderFlag);
-        }
-    }
 
     pipelineSetup->AddColorBlendStateInfo(params.colorBlendInfo);
     pipelineSetup->AddDepthStencilInfo(params.depthStencilInfo);

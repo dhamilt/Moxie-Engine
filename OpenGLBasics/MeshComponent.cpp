@@ -10,11 +10,13 @@ MeshComponent::MeshComponent()
 	Init();
 	component_id++;
 	usesRenderData = true;
+#if USE_OPENGL
 	Shader defaultShader;
 	
 	GGLSPtr->GetDefaultMeshShader(&defaultShader);
 	if (&defaultShader)
 		material = new Material(&defaultShader);
+#endif
 }
 
 void MeshComponent::AddMesh(Mesh* _mesh)

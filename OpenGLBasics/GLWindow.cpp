@@ -111,30 +111,31 @@ int main(int argc, char* argv[])
 	//Cubemaps* skybox = new Cubemaps(faceFilePaths);	
 
 	//// Load a OBJ file to use as a 3d model
-	//std::vector<DVertex> vertices;
-	//std::vector<uint16_t> indices;
+	std::vector<DVertex> vertices;
+	std::vector<uint16_t> indices;
 	////MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
-	////MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
+	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
 	//MeshDefaultsLibrary::GetSpherePrimitive(3, vertices, indices);
 
 	///*bool modelLoaded = LoadObj("Suzanne.obj", vertices, indices);
 	//if (!modelLoaded)
 	//	return 0;*/
 
-	//// Create an actor to exist in the scene
-	//MActor* actor = new MActor();
+	// Create an actor to exist in the scene
+	MActor* actor = new MActor();
+
 
 	//// Create a texture
 	//Texture* texture = new Texture("MemeJoe.bmp");
 
 	//// Make a monkey mesh 	
-	//Mesh* monkeyMesh = new Mesh();
-	//monkeyMesh->Import(vertices, indices, "cube");
-	//MeshComponent* monkeyMeshComponent = new MeshComponent();
-	//monkeyMeshComponent->AddMesh(monkeyMesh);
-	//monkeyMeshComponent->transform.Translate(DVector3(0, -2, 7));
-	//monkeyMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
-	//actor->AddComponent(monkeyMeshComponent);
+	Mesh* customMesh = new Mesh();
+	customMesh->Import(vertices, indices, "ico");
+	MeshComponent* customMeshComponent = new MeshComponent();
+	customMeshComponent->AddMesh(customMesh);
+	customMeshComponent->transform.Translate(DVector3(0, -2, 7));
+	customMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
+	actor->AddComponent(customMeshComponent);
 
 	//// Make a light 
 	//MyLightComponent* lightComponent = new MyLightComponent();		

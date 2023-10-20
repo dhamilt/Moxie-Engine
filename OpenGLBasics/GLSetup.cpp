@@ -247,11 +247,6 @@ void GLSetup::StartSDLWindow()
 	if (pipeline)
 		pipeline->GenerateVkFrameBuffers();
 	CreateVkPipelineForTriangle();
-	// Add an icosahedron mesh to rendering queue for pipeline
-	std::vector<DVertex>vertices;
-	std::vector<uint16_t> indices;
-	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
-	pipeline->Import("ico", vertices, indices);
 #endif
 	
 
@@ -585,8 +580,10 @@ void GLSetup::ImportMesh(std::string name, Mesh* mesh)
 	if (pipeline)
 	{
 		pipeline->Import(name, mesh);
+#if USE_OPENGL
 		// pass in render data to the renderer in the pipeline
 		pipeline->RequestForMeshVertexData(name);
+#endif
 	}
 	
 }
@@ -596,8 +593,10 @@ void GLSetup::ImportMesh(std::string primitiveName, std::vector<DVertex> vertice
 	if (pipeline)
 	{
 		pipeline->Import(primitiveName, vertices, indices);
+#if USE_OPENGL
 		// pass in render data to the renderer in the pipeline
 		pipeline->RequestForMeshVertexData(primitiveName);
+#endif
 	}
 }
 

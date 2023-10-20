@@ -28,7 +28,7 @@ class VkShaderUtil
 public:
 	void LoadShaderStage(const VkShaderStageConfigs& shaderConfig);
 	void LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs);
-	static bool LoadShaderModule(const VkShaderStageConfigs& shaderConfig, VkShaderModule& shaderModule);
+	static bool LoadShaderModule(const VkShaderStageConfigs shaderConfig, VkShaderModule& shaderModule);
 
 	VkShaderUtil() {};
 	VkShaderUtil(VkShaderStageConfigs shaderConfig) { LoadShaderStage(shaderConfig); }
@@ -71,7 +71,7 @@ inline void VkShaderUtil::LoadShaderStages(const std::vector<VkShaderStageConfig
 		LoadShaderStage(config);
 }
 
-inline bool VkShaderUtil::LoadShaderModule(const VkShaderStageConfigs& shaderConfig, VkShaderModule& shaderModule)
+inline bool VkShaderUtil::LoadShaderModule(const VkShaderStageConfigs shaderConfig, VkShaderModule& shaderModule)
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	std::vector<char> fileBuf;
@@ -101,16 +101,6 @@ inline bool VkShaderUtil::LoadShaderModule(const VkShaderStageConfigs& shaderCon
 	if (result != VK_SUCCESS)
 		return false;
 
-		
-
-	VkPipelineShaderStageCreateInfo pipelineShaderInfo = {};
-	pipelineShaderInfo.stage = (VkShaderStageFlagBits)shaderConfig.shaderFlag;
-	pipelineShaderInfo.module = shaderModule;
-	pipelineShaderInfo.flags = 0;
-	pipelineShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	pipelineShaderInfo.pNext = 0;
-	pipelineShaderInfo.pName = "main"/*shaderConfig.shaderFile.c_str()*/;
-	pipelineShaderInfo.pSpecializationInfo = NULL;
 
 	return true;
 		

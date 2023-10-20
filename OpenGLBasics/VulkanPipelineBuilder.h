@@ -15,6 +15,7 @@ struct VkPipelineBuilderParams {
 	std::vector<VkViewport> viewports;
 	std::vector<VkRect2D>scissors;
 	std::vector<VkShaderStageConfigs> shaderStagingConfigs;
+	std::vector<VkShaderModule> shaders;
 	VkPipelineLayout pipelineLayout;
 };
 
@@ -23,9 +24,9 @@ class VkPipelineBuilder
 public:
 	VkPipelineBuilder() { pipelineSetup = new VkPipelineSetup(); };
 	void SetInputAssembly(VkPrimitiveTopology* _topology);
-	void LoadShaderModule(VkShaderStageConfigs& shaderConfig, VkShaderModule& shaderModule);
+	void LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params);
 	void GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline);
-	void CreateMeshShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline, const VkPipelineBuilderParams& params);
+	void CreateMeshShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline, VkPipelineBuilderParams& params);
 	static void BuildVertexInputDescriptions(VkPipelineBuilderParams& params, VkVertexInputAttributeDescription* vertexInputAttributes, VkBool32 attributeCount);
 	static void BuildVertexInputBindings(VkPipelineBuilderParams& params, VkVertexInputBindingDescription* vertexInputBindings, VkBool32 vertexInputBindingCount);
 	
