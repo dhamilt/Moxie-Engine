@@ -72,6 +72,8 @@ struct RenderBufferData
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 	VkDeviceSize indexBufferSize = 0;
+	std::vector<VkVertexInputBindingDescription>inputBindingDescriptions;
+	std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	std::vector<VkBuffer> uniformBuffers;
@@ -103,7 +105,7 @@ static VkDescriptorSetLayoutBinding defaultVertexNormalsDescriptorLayout = {
 };
 
 static VkDescriptorSetLayoutBinding defaultFragmentLightDescriptorLayout = {
-	.binding = 0,
+	.binding = 2,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	.descriptorCount = 4,
 	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -111,7 +113,7 @@ static VkDescriptorSetLayoutBinding defaultFragmentLightDescriptorLayout = {
 };
 
 static VkDescriptorSetLayoutBinding defaultFragmentViewDescriptorLayout = {
-	.binding = 1,
+	.binding = 3,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	.descriptorCount = 1,
 	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -119,7 +121,7 @@ static VkDescriptorSetLayoutBinding defaultFragmentViewDescriptorLayout = {
 };
 
 static VkDescriptorSetLayoutBinding defaultFragmentObjectDescriptorLayout = {
-	.binding = 2,
+	.binding = 4,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	.descriptorCount = 1,
 	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -138,6 +140,7 @@ static std::vector<VkDescriptorSetLayoutBinding> defaultDescriptorLayoutBindings
 class BRenderingPipeline final
 {
 	BRenderingPipeline();
+	~BRenderingPipeline();
 	void CleanupRenderingPipeline();
 	// Initialization function for setting up default framebuffer and renderbuffer
 	void Init();
@@ -165,7 +168,9 @@ class BRenderingPipeline final
 	// Adds shader stage file(s) to be used and read by the graphics pipeline
 	void LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages);
 	// Sets the depth info for the depth/stencil state of the current graphics pipeline
-	void SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds, float maxDepthBounds);
+	void SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds = 0.0f, float maxDepthBounds = 1.0f);
+	// Sets the stencil info for depth/stencil state of the current graphics pipeline
+	void SetVkPipelineStencilState(std::string primitiveName, VkStencilOpState frontStencilState, VkStencilOpState backStencilState);
 	// Creates pipeline layout from descriptor set layout(s)
 	void CreatePipelineLayout(std::string primitiveName);
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
@@ -178,8 +183,9 @@ class BRenderingPipeline final
 	void SetOrthoView(bool isOrtho);
 	// Updates the transform of the primitive
 	void UpdateModelMatrix(DMat4x4 _transform, std::string primitiveName);
-	// Updates the world space view matrix
+	// Updates the world space matrix
 	void UpdateProjectionMatrix(float fieldOfView, float width, float height, float nearClippingPlane, float farClippingPlane);
+	// Updates the view matrix (matrix respresenting the camera and its view)
 	void UpdateViewMatrix(DMat4x4 _view);
 	// Updates MVP matrix of primitive
 	void UpdateTransformMatrix(std::string primitiveName);
@@ -207,12 +213,15 @@ class BRenderingPipeline final
 	void GenerateDefaultFramebuffer();
 	// Generates a Vulkan framebuffer
 	void GenerateVkFrameBuffers();
+	// Sends viewport info to graphics pipeline based on screen resolution
+	void SetViewportInfo(std::string primitiveName);
 	// Adds vertex buffers to command buffer 
 	void DrawVk(VkCommandBuffer cmdBuffer);
 	// Adds draw commands to command buffer with indexed vertex buffer data
 	void DrawVkIndexed(VkCommandBuffer cmdBuffer);
 	// Grabs the Vulkan framebuffer at the requested index
 	void GetVkFramebuffer(VkFramebuffer& framebuf, VkBool32 frameBufIndex);
+	void ResizeScreen(int width, int height);
 	// Loads in framebuffer
 	// set to 0 for default framebuffer
 	void LoadGLFramebuffer(GLuint fbID);
@@ -236,7 +245,7 @@ private:
 	CubemapData* cubemapParams;
 	Shader* cubemapShader;
 	GLuint defaultFrameBufferTextureID;
-	int screenWidth, screenHeight;
+	VkExtent2D screenResolution;
 	std::vector<GLuint> glFramebuffers;
 	std::vector<VkFramebuffer> vkFramebuffers;
 	VkPipelineBuilder* vulkanPipelineBuilder;

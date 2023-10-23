@@ -19,7 +19,7 @@ struct LightProperties
 
 // max number of lights to apply in shader
 layout(constant_id = 0) const int maxLightCount = 10;
-layout(binding = 0)uniform LightPropertyBuffer
+layout(binding = 2)uniform LightPropertyBuffer
 {
 LightProperties Lights[maxLightCount];
 int lightCount;
@@ -27,12 +27,12 @@ float shininess;
 float strength;
 }lightProperties;
 
-layout(binding = 1)uniform ViewPropertyBuffer
+layout(binding = 3)uniform ViewPropertyBuffer
 {
 vec3 eyeDir;
 }viewProperties;
 
-layout(binding = 2)uniform ObjectPropertyBuffer
+layout(binding = 4)uniform ObjectPropertyBuffer
 {
 vec4 color;
 }objectProperties;

@@ -206,9 +206,6 @@
     <ClCompile Include="imgui\imgui_impl_vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanPipelineSetup.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="VulkanPipelineBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -475,16 +472,10 @@
     <ClInclude Include="VulkanShaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanPipelineSetup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VulkanPipelineBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRasterizationPresets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanMultisamplingPresets.h">
+    <ClInclude Include="VulkanFunctionLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -20,9 +20,7 @@ GLSetup::GLSetup()
 }
 
 GLSetup::~GLSetup()
-{
-	// Clean up Rendering Pipeline
-	pipeline->CleanupRenderingPipeline();
+{	
 	// Shutdown and clean GUI
 #if USE_VULKAN
 	if (clearValues)
@@ -126,7 +124,6 @@ void GLSetup::StartSDLWindow()
 		assert(sdlWindow);
 		throw std::runtime_error("Context window could not be created!");
 	}
-
 	auto platformInstance =PVulkanPlatformInit::Get();
 	auto vkSettings = platformInstance->GetInfo();
 	// Make sure the vulkan instance was created correctly
@@ -242,11 +239,17 @@ void GLSetup::StartSDLWindow()
 	clearValues = new VkClearValue[2];
 	clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 	clearValues[1].depthStencil = { 1.0f, 0 };
+	assert(pipeline != VK_NULL_HANDLE);
+	// Initial setup of engine's rendering pipeline
+	pipeline->screenResolution = {VkBool32(width), VkBool32(height)};
+	pipeline->Init();
 
-	// Setup initial framebuffers
-	if (pipeline)
-		pipeline->GenerateVkFrameBuffers();
-	CreateVkPipelineForTriangle();
+	// Bind window resizing delegate to graphics pipeline
+	auto binding = std::function<void(int, int)>(std::bind(&BRenderingPipeline::ResizeScreen, pipeline, std::placeholders::_1, std::placeholders::_2));
+	windowResizeDelegate += binding;
+	
+	
+	//CreateVkPipelineForTriangle();
 #endif
 	
 
@@ -303,18 +306,43 @@ void GLSetup::GetAllLightInfo(std::vector<Light>& _lightingInfo)
 	_lightingInfo = lightsCache;
 }
 
+void GLSetup::TestVulkan3DRun()
+{
+	// TEMP FUNCTION CALLS (For testing only)
+	// Add depth stencil info to pipeline for mesh
+	pipeline->SetVkPipelineDepthState("MeshComponent", VK_COMPARE_OP_LESS, true);
+	// Add shaders for mesh
+	VkShaderStageConfigs shaderConfigs[2] = {
+		{ "DefaultMatVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+		{ "DefaultMatFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT }
+	};
+	pipeline->LoadVkShaderStages("MeshComponent", 2, shaderConfigs);
+	pipeline->CreatePipelineLayout("MeshComponent");
+	pipeline->SetViewportInfo("MeshComponent");
+	pipeline->SetVkPipelineDepthState("MeshComponent", VK_COMPARE_OP_LESS, VK_TRUE);
+}
+
 void GLSetup::Render()
 {
 	// Run one frame of the Render thread
 	if (sdlWindow)
 	{
+		// If window has been resized
+		// broadcast it to all functions subscribed to the delegate
+		int currentWidth = 0, currentHeight = 0;
+		SDL_GetWindowSize(sdlWindow, &currentWidth, &currentHeight);
+		if (currentWidth != width || currentHeight != height)
+		{
+			windowResizeDelegate.Broadcast(currentWidth, currentHeight);
+			width = currentWidth;
+			height = currentHeight;
+		}
 		// Keep a reference of the 4x4 view and projection matrices each frame
 		// in order to pass into the drawing of meshes
 		view = mainCamera->GetViewMatrix();
 		pipeline->UpdateViewMatrix(view);
 
 		// get projection matrix
-		//projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
 		pipeline->UpdateProjectionMatrix(fov, (float)width, (float)height, nearClippingPlane, farClippingPlane);
 
 #if USE_OPENGL
@@ -439,7 +467,7 @@ void GLSetup::Render()
 		vkCmdBeginRenderPass(cmdBuffers[currentRenderingFrame], &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		// RUN DRAW COMMANDS HERE
-		vkCmdBindPipeline(cmdBuffers[currentRenderingFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
+		//vkCmdBindPipeline(cmdBuffers[currentRenderingFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
 
 		pipeline->DrawVkIndexed(cmdBuffers[currentRenderingFrame]);
 
@@ -543,16 +571,16 @@ void GLSetup::AddMaterialToPipeline(std::string primitiveName, Material* mat)
 
 }
 
-void GLSetup::CreateVkPipelineForTriangle()
-{
-	VkExtent2D windowExtent{};
-	windowExtent.width = width;
-	windowExtent.height = height;
-	VkPipelineBuilder* pipelineBuilder = new VkPipelineBuilder();
-	triangleShaderPipeline.resize(1);
-	pipelineBuilder->GetTriangleShaderPipeline(windowExtent, &triangleShaderPipeline[0]);
-	delete pipelineBuilder;
-}
+//void GLSetup::CreateVkPipelineForTriangle()
+//{
+//	VkExtent2D windowExtent{};
+//	windowExtent.width = width;
+//	windowExtent.height = height;
+//	VkPipelineBuilder* pipelineBuilder = new VkPipelineBuilder();
+//	triangleShaderPipeline.resize(1);
+//	pipelineBuilder->GetTriangleShaderPipeline(windowExtent, &triangleShaderPipeline[0]);
+//	delete pipelineBuilder;
+//}
 
 void GLSetup::AddCubemapMaterial(Material* cubeMapMat)
 {

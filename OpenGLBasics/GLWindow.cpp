@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 	customMeshComponent->transform.Translate(DVector3(0, -2, 7));
 	customMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
 	actor->AddComponent(customMeshComponent);
-
+	GGLSPtr->TestVulkan3DRun();
 	//// Make a light 
 	//MyLightComponent* lightComponent = new MyLightComponent();		
 	//lightComponent->transform.Rotate(DVector3(0.0f, 1.0f, 0.0f), 90);

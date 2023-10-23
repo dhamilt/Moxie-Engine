@@ -290,7 +290,6 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="MyLightComponent.cpp" />
     <ClCompile Include="PlatformInit.cpp" />
     <ClCompile Include="VulkanErrorReporting.cpp" />
-    <ClCompile Include="VulkanPipelineSetup.cpp" />
     <ClCompile Include="VulkanPlatformInit.cpp" />
     <ClCompile Include="RenderingPipeline.cpp" />
     <ClCompile Include="RotatingLightComponent.cpp" />
@@ -413,8 +412,6 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="PlatformInit.h" />
     <ClInclude Include="VulkanErrorReporting.h" />
     <ClInclude Include="VulkanFunctionLibrary.h" />
-    <ClInclude Include="VulkanMultisamplingPresets.h" />
-    <ClInclude Include="VulkanPipelineSetup.h" />
     <ClInclude Include="VulkanPlatformInit.h" />
     <ClInclude Include="RenderingPipeline.h" />
     <ClInclude Include="RotatingLightComponent.h" />
@@ -432,7 +429,6 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="vector3D.h" />
     <ClInclude Include="VectorLibrary.h" />
     <ClInclude Include="vertex.h" />
-    <ClInclude Include="VulkanRasterizationPresets.h" />
     <ClInclude Include="VulkanRenderpassFactory.h" />
     <ClInclude Include="VulkanPipelineBuilder.h" />
     <ClInclude Include="VulkanShaders.h" />

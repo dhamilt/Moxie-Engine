@@ -13,6 +13,11 @@ BRenderingPipeline::BRenderingPipeline()
 	
 }
 
+BRenderingPipeline::~BRenderingPipeline()
+{
+	CleanupRenderingPipeline();
+}
+
 void BRenderingPipeline::CleanupRenderingPipeline()
 {
 #if USE_VULKAN
@@ -64,6 +69,8 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 		// update the mesh data in the render data struct
 		RenderBufferData* data = primitives[primitiveName];
 #if USE_VULKAN
+		
+		
 		// if mesh data already exists and using vulkan
 		// free up the previous memory buffers in order to be reallocated
 		auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
@@ -138,13 +145,14 @@ void BRenderingPipeline::LoadVertexReadingFormatToVkPipeline(std::string primiti
 {
 	auto params = primitives[primitiveName]->pipelineBuilderParams;
 	// Determines format on how to read vertex buffer
-	VkVertexInputBindingDescription vertexInputBindingInfo;
-	vertexInputBindingInfo.binding = 0;
-	vertexInputBindingInfo.stride = sizeof(DVertex);
-	vertexInputBindingInfo.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	auto vertexInputBindings = primitives[primitiveName]->inputBindingDescriptions;
+	vertexInputBindings.resize(1);
+	vertexInputBindings[0].binding = 0;
+	vertexInputBindings[0].stride = sizeof(DVertex);
+	vertexInputBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	// Determines the mapping of vertex buffer data
-	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
+	auto vertexInputAttributes = primitives[primitiveName]->inputAttributeDescriptions;
 	vertexInputAttributes.resize(3); 
 	vertexInputAttributes[0].binding = 0;
 	vertexInputAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -161,10 +169,17 @@ void BRenderingPipeline::LoadVertexReadingFormatToVkPipeline(std::string primiti
 	vertexInputAttributes[2].location = 2;
 	vertexInputAttributes[2].offset = offsetof(DVertex, DVertex::normal);
 
-	vulkanPipelineBuilder->BuildVertexInputDescriptions(params, vertexInputAttributes.data(),
-		(VkBool32)vertexInputAttributes.size());
+	params.vertexInputInfo = {
+		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		VK_NULL_HANDLE,
+		0,
+		(VkBool32)vertexInputBindings.size(),
+		vertexInputBindings.data(),
+		(VkBool32)vertexInputAttributes.size(),
+		vertexInputAttributes.data()
+	};
+	vulkanPipelineBuilder->BuildVertexInputState(params);
 
-	vulkanPipelineBuilder->BuildVertexInputBindings(params, &vertexInputBindingInfo, 1);
 }
 
 void BRenderingPipeline::CreateVkVertexBuffer(std::string primitiveName)
@@ -345,7 +360,7 @@ void BRenderingPipeline::LoadVkShaderStages(std::string primitiveName, VkBool32 
 	}
 }
 
-void BRenderingPipeline::SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds = 0.0f, float maxDepthBounds = 1.0f)
+void BRenderingPipeline::SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds, float maxDepthBounds)
 {
 	auto depthStencilInfo = primitives[primitiveName]->pipelineBuilderParams.depthStencilInfo;
 	depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -358,6 +373,7 @@ void BRenderingPipeline::SetVkPipelineDepthState(std::string primitiveName, VkCo
 		depthStencilInfo.minDepthBounds = minDepthBounds;
 		depthStencilInfo.maxDepthBounds = maxDepthBounds;
 	}
+	vulkanPipelineBuilder->LoadDepthStencilState(primitives[primitiveName]->pipelineBuilderParams, depthStencilInfo);
 }
 
 void BRenderingPipeline::SetVkPipelineStencilState(std::string primitiveName, VkStencilOpState frontStencilState, VkStencilOpState backStencilState)
@@ -367,6 +383,7 @@ void BRenderingPipeline::SetVkPipelineStencilState(std::string primitiveName, Vk
 	depthStencilInfo.stencilTestEnable = VK_TRUE;
 	depthStencilInfo.front = frontStencilState;
 	depthStencilInfo.back = backStencilState;
+	vulkanPipelineBuilder->LoadDepthStencilState(primitives[primitiveName]->pipelineBuilderParams, depthStencilInfo);
 }
 
 void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
@@ -382,13 +399,13 @@ void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 	};
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	//Create and load pipeline layout to graphics pipeline
 	VkResult result = vkCreatePipelineLayout(vkSettings->device, &pipelineLayoutInfo, vkSettings->allocationCallback, &renderData->pipelineBuilderParams.pipelineLayout);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Unable to create pipeline layout from descriptor set layout!");
 	}
-
-	auto val = MAX_VULKAN_FRAMES_IN_FLIGHT;
+	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, renderData->pipelineBuilderParams.pipelineLayout);
 }
 
 void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)
@@ -759,9 +776,8 @@ void BRenderingPipeline::GenerateDefaultFramebuffer()
 	glGenTextures(1, &defaultFrameBufferTextureID);
 	// Texture params
 	glBindTexture(GL_TEXTURE_2D, defaultFrameBufferTextureID);
-	if (GGLSPtr)
-		GGLSPtr->GetWindowDimensions(screenWidth, screenHeight);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screenResolution.width, screenResolution.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, defaultFrameBufferTextureID, 0);
@@ -769,7 +785,7 @@ void BRenderingPipeline::GenerateDefaultFramebuffer()
 	glGenRenderbuffers(1, &renderbuffer);
 	// As well as the renderbuffer
 	glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenResolution.width, screenResolution.height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
 	Moxie::FrameBufferErrorCheck();
 	
@@ -787,11 +803,19 @@ void BRenderingPipeline::GenerateDefaultFramebuffer()
 void BRenderingPipeline::GenerateVkFrameBuffers()
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	GGLSPtr->GetWindowDimensions(screenWidth, screenHeight);
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.width = screenWidth;
-	framebufferInfo.height = screenHeight;
+	framebufferInfo.width = screenResolution.width;
+	framebufferInfo.height = screenResolution.height;
+	// if being recalled due to resizing
+	if (vkFramebuffers.size() > 0)
+	{
+		// destroy existing framebuffers
+		for (int i = 0; i < (int)vkFramebuffers.size(); i++)
+			vkDestroyFramebuffer(vkSettings->device, vkFramebuffers[i], vkSettings->allocationCallback);
+		vkFramebuffers.clear();
+	}
+	
 	// Set the attachment count to be same as the number of image buffers allocated for in the swapchain
 	framebufferInfo.attachmentCount = 2;
 	for (uint32_t i = 0; i < vkSettings->swapchainImageCount; i++)
@@ -810,6 +834,12 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 		assert(result == VK_SUCCESS);
 		vkFramebuffers.push_back(vkFramebuffer);
 	}
+}
+
+void BRenderingPipeline::SetViewportInfo(std::string primitiveName)
+{
+	auto renderData = primitives[primitiveName];
+	vulkanPipelineBuilder->LoadViewportInfo(renderData->pipelineBuilderParams, screenResolution);
 }
 
 void BRenderingPipeline::DrawVk(VkCommandBuffer cmdBuffer)
@@ -841,6 +871,11 @@ void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 		auto renderData = it->second;
 		// update mvp for model
 		UpdateTransformMatrix(it->first);
+		if(renderData->graphicsPipeline == NULL)
+			vulkanPipelineBuilder->CreateMeshShaderPipeline(&renderData->graphicsPipeline, renderData->pipelineBuilderParams);
+		// tell vulkan to use the graphics pipeline attached to current primitive
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderData->graphicsPipeline);
+
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1,
 			&renderData->vertexBuffer, &renderData->vertexBufferOffset);
 
@@ -856,6 +891,17 @@ void BRenderingPipeline::GetVkFramebuffer(VkFramebuffer& framebuf, VkBool32 fram
 {
 	assert(frameBufIndex < (VkBool32)vkFramebuffers.size());
 	framebuf = vkFramebuffers[frameBufIndex];
+}
+
+void BRenderingPipeline::ResizeScreen(int width, int height)
+{
+	screenResolution.width = width;
+	screenResolution.height = height;
+	// Resize the framebuffer capture to new resolution
+	GenerateVkFrameBuffers();
+	// Update the viewport info for the graphics pipeline(s)
+	for (auto primitivePtr = primitives.begin(); primitivePtr != primitives.end(); primitivePtr++)
+		vulkanPipelineBuilder->LoadViewportInfo(primitivePtr->second->pipelineBuilderParams, screenResolution);
 }
 
 void BRenderingPipeline::LoadGLFramebuffer(GLuint fbID)
@@ -942,6 +988,7 @@ void BRenderingPipeline::DrawCubeMap()
 
 RenderBufferData::~RenderBufferData()
 {
+#if USE_OPENGL
 	// remove ownership to Shader
 	if(shader)
 		shader.reset();
@@ -953,4 +1000,8 @@ RenderBufferData::~RenderBufferData()
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
+#elif USE_VULKAN
+
+#endif
+
 }

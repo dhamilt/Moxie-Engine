@@ -33,6 +33,8 @@ class Material;
 // FOR A LIGHT END UP ADDING TO A QUEUE OF LIGHTS TO BE DRAWN ON EVERY
 // MESH IN THE SCENE
 // Facade class used to hide the GLEW, GLFW, and callbacks
+typedef EventHandler<void, int, int> WindowResizeSignature;
+
 class GLSetup
 {
 	public:
@@ -49,7 +51,7 @@ class GLSetup
 		void GetViewportTextureID(GLuint& textureID, GLuint& renderbufferObjectID);
 		void GetViewportDimensions(int& _width, int& _height);
 		void AddMaterialToPipeline(std::string primitiveName, Material* mat);
-		void CreateVkPipelineForTriangle();
+		//void CreateVkPipelineForTriangle();
 		void AddCubemapMaterial(Material* cubeMapMat);
 		void GetDefaultMeshShader(Shader* defaultShader);
 		void SubmitCubeMapData(std::vector<TextureData*> cubemapData);
@@ -66,6 +68,7 @@ class GLSetup
 		void StartSDLWindow();		
 		void UpdateLightingCollection(std::string lightComponentName, Light* lightInfo);
 		void GetAllLightInfo(std::vector<Light>& _lightingInfo);
+		void TestVulkan3DRun();
 private:	
 	void GLFW_ErrorCallback(int error, const char* description);
 	void ScrollWheelCallback(int axisVal);
@@ -84,6 +87,7 @@ private:
 	// Viewport
 	WViewport* viewport;
 	int width = 1600, height = 900;
+	int cachedWidth = width, cachedHeight = height;
 	float nearClippingPlane = 0.1f;
 	float farClippingPlane = 100.0f;
 	SDL_Window* sdlWindow = nullptr;
@@ -118,7 +122,7 @@ private:
 	VkSwapchainKHR* VkSwapchain;
 	std::vector<VkFramebuffer> glFramebuffers;
 	VkBool32 currentRenderingFrame = 0;
-	
+	WindowResizeSignature windowResizeDelegate;
 };
 
 /// <summary>
