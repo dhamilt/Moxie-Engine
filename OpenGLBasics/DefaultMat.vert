@@ -5,14 +5,14 @@ layout(location = 1) in vec2 vertexTexCoord;
 layout(location = 2) in vec3 vertexNormal;
 
 
-layout(binding = 0)uniform mvpBufferObject
+layout(set = 0, binding = 0)uniform mvpBufferObject
 {
 	mat4 model; // Model matrix
 	mat4 view; // View matrix
 	mat4 projection; // Projection matrix
 } mvpBuffer;
 
-layout(binding = 1)uniform normalBuf
+layout(set = 0, binding = 1)uniform normalBuf
 { 
 	mat3 normalMatrix;
 } normalInfo;

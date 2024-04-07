@@ -27,11 +27,11 @@ inline void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAlloc
 		throw new std::runtime_error("Unable to reserve memory for buffer!");
 	}
 
-	// Retrieve memory requirements for setting up vertex buffer
+	// Retrieve memory requirements for setting up memory buffer
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
 
-	// find out if memory type is supported in vertex buffer
+	// find out if memory type is supported in memory buffer
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice,	&memoryProperties);
 	// Flags for allowing the device memory to be accessible and malleable to application code
@@ -50,7 +50,7 @@ inline void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAlloc
 		throw new std::runtime_error("Unable to access vulkan device memory!");
 	}
 
-	// Allocate device memory for vertex buffer
+	// Allocate device memory for memory buffer
 	VkMemoryAllocateInfo memoryAllocationInfo = {
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.allocationSize = memoryRequirements.size,
@@ -63,6 +63,6 @@ inline void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAlloc
 		throw new std::runtime_error("Unable to allocate device memory for buffer!");
 	}
 
-	// Bind device memory to vertex buffer
+	// Bind device memory to memory buffer
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }

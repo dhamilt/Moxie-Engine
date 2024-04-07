@@ -319,7 +319,7 @@ void GLSetup::TestVulkan3DRun()
 	pipeline->LoadVkShaderStages("MeshComponent", 2, shaderConfigs);
 	pipeline->CreatePipelineLayout("MeshComponent");
 	pipeline->SetViewportInfo("MeshComponent");
-	pipeline->SetVkPipelineDepthState("MeshComponent", VK_COMPARE_OP_LESS, VK_TRUE);
+	pipeline->SetVkPipelineDepthState("MeshComponent", VK_COMPARE_OP_LESS, VK_FALSE);
 }
 
 void GLSetup::Render()

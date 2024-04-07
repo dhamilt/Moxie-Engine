@@ -78,9 +78,9 @@ void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPi
             // dictate what shader stage is being created on the graphics pipeline
             .stage = (VkShaderStageFlagBits)shaderConfig.shaderFlag,
             // add the shader module associated with this shader stage
-                .module = shader,
-                // the entry point of the shader
-                    .pName = "main"
+            .module = shader,
+            // the entry point of the shader
+            .pName = "main"
         };
 
         params.shaderStages.push_back(shaderStageInfo);
@@ -218,10 +218,16 @@ void VkPipelineBuilder::LoadViewportInfo(VkPipelineBuilderParams& params, VkExte
 void VkPipelineBuilder::CreateMeshShaderPipeline(VkPipeline* pipeline,  VkPipelineBuilderParams& params)
 {
     auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-    vkCreateGraphicsPipelines(vkSettings->device, VK_NULL_HANDLE, 1, &pipelineInfo, vkSettings->allocationCallback, pipeline);
+    auto result  = vkCreateGraphicsPipelines(vkSettings->device, VK_NULL_HANDLE, 1, &pipelineInfo, vkSettings->allocationCallback, pipeline);
+    if (result != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to create graphics pipeline for mesh!");
+    }
 }
 
-void VkPipelineBuilder::BuildVertexInputState(VkPipelineBuilderParams& params)
+void VkPipelineBuilder::BuildVertexInputState(VkPipelineBuilderParams& params, VkPipelineVertexInputStateCreateInfo vertexInputInfo)
 {
+    params.vertexInputInfo = vertexInputInfo;
+   
     pipelineInfo.pVertexInputState = &params.vertexInputInfo;
 }

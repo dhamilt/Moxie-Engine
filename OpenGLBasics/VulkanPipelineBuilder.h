@@ -21,6 +21,7 @@ struct VkPipelineBuilderParams {
 	std::vector<VkRect2D>scissors;
 	std::vector<VkShaderStageConfigs> shaderStagingConfigs;
 	std::vector<VkShaderModule> shaders;
+	std::vector<VkPushConstantRange> pushConstants;
 	VkPipelineLayout pipelineLayout;
 };
 
@@ -109,7 +110,7 @@ public:
 	void LoadViewportInfo(VkPipelineBuilderParams& params, VkExtent2D screenResolution);
 	//void GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline);
 	void CreateMeshShaderPipeline(VkPipeline* pipeline, VkPipelineBuilderParams& params);
-	void BuildVertexInputState(VkPipelineBuilderParams& params);
+	void BuildVertexInputState(VkPipelineBuilderParams& params, VkPipelineVertexInputStateCreateInfo vertexInputInfo);
 	
 private:
 	VkShaderModule* fragModule, * vertModule;

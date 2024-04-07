@@ -143,42 +143,55 @@ void BRenderingPipeline::Import(std::string primitiveName, Mesh* mesh)
 
 void BRenderingPipeline::LoadVertexReadingFormatToVkPipeline(std::string primitiveName)
 {
-	auto params = primitives[primitiveName]->pipelineBuilderParams;
+	auto& params = primitives[primitiveName]->pipelineBuilderParams;
 	// Determines format on how to read vertex buffer
-	auto vertexInputBindings = primitives[primitiveName]->inputBindingDescriptions;
-	vertexInputBindings.resize(1);
-	vertexInputBindings[0].binding = 0;
-	vertexInputBindings[0].stride = sizeof(DVertex);
-	vertexInputBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	auto& vertexInputBindings = primitives[primitiveName]->inputBindingDescriptions;
+
+	VkVertexInputBindingDescription inputBinding = {
+		.binding = 0,
+		.stride = sizeof(DVertex),
+		.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+	};
+	vertexInputBindings.push_back(inputBinding);
 
 	// Determines the mapping of vertex buffer data
-	auto vertexInputAttributes = primitives[primitiveName]->inputAttributeDescriptions;
-	vertexInputAttributes.resize(3); 
-	vertexInputAttributes[0].binding = 0;
-	vertexInputAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	vertexInputAttributes[0].location = 0;
-	vertexInputAttributes[0].offset = offsetof(DVertex, DVertex::pos);
+	auto &vertexInputAttributes = primitives[primitiveName]->inputAttributeDescriptions;
+	VkVertexInputAttributeDescription attributes[3] = {
+		{
+			.location = 0,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32B32_SFLOAT,
+			.offset = offsetof(DVertex, DVertex::pos)
+		},
 
-	vertexInputAttributes[1].binding = 0;
-	vertexInputAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	vertexInputAttributes[1].location = 1;
-	vertexInputAttributes[1].offset = offsetof(DVertex, DVertex::texCoord);
+		{
+			.location = 1,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32_SFLOAT,
+			.offset = offsetof(DVertex, DVertex::texCoord)
+		},
 
-	vertexInputAttributes[2].binding = 0;
-	vertexInputAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-	vertexInputAttributes[2].location = 2;
-	vertexInputAttributes[2].offset = offsetof(DVertex, DVertex::normal);
-
-	params.vertexInputInfo = {
-		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-		VK_NULL_HANDLE,
-		0,
-		(VkBool32)vertexInputBindings.size(),
-		vertexInputBindings.data(),
-		(VkBool32)vertexInputAttributes.size(),
-		vertexInputAttributes.data()
+		{
+			.location = 2,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32B32_SFLOAT,
+			.offset = offsetof(DVertex, DVertex::normal)
+		}
 	};
-	vulkanPipelineBuilder->BuildVertexInputState(params);
+	for (VkBool32 attrIndex = 0; attrIndex < VkBool32(sizeof(attributes) / sizeof(VkVertexInputAttributeDescription)); attrIndex++)
+		vertexInputAttributes.push_back(attributes[attrIndex]);
+
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.pNext = VK_NULL_HANDLE,
+		.flags = 0,
+		.vertexBindingDescriptionCount = (VkBool32)vertexInputBindings.size(),
+		.pVertexBindingDescriptions = vertexInputBindings.data(),
+		.vertexAttributeDescriptionCount = (VkBool32)vertexInputAttributes.size(),
+		.pVertexAttributeDescriptions = vertexInputAttributes.data()
+	};
+
+	vulkanPipelineBuilder->BuildVertexInputState(params, vertexInputInfo);
 
 }
 
@@ -237,7 +250,7 @@ void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkDeviceSize deviceSizes[5] = {
+	VkDeviceSize uniformBufferSizes[5] = {
 		sizeof(RenderBufferData::mvpBuffer),
 		sizeof(RenderBufferData::normalBuffer),
 		sizeof(RenderBufferData::lightPropertyBuffer),
@@ -245,21 +258,21 @@ void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
 		sizeof(RenderBufferData::objectPropertyBuffer)
 	};
 
-	VkBool32 bindingCount = sizeof(deviceSizes) / sizeof(VkDeviceSize);
+	VkBool32 uniformBufferCount = sizeof(uniformBufferSizes) / sizeof(VkDeviceSize);
 
-	renderBufferData->uniformBuffersMemory.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
-	renderBufferData->uniformBuffersMapped.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
-	renderBufferData->uniformBuffersSize.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
-	renderBufferData->uniformBuffers.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * bindingCount);
+	renderBufferData->uniformBuffersMemory.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
+	renderBufferData->uniformBuffersMapped.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
+	renderBufferData->uniformBuffersSize.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
+	renderBufferData->uniformBuffers.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
 
 	for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
 	{
 		
-		for (VkBool32 j = 0; j < bindingCount; j++)
+		for (VkBool32 j = 0; j < uniformBufferCount; j++)
 		{
-			VkBool32 index = i * bindingCount + j;
+			VkBool32 index = i * uniformBufferCount + j;
 			// set uniform buffer sizes
-			renderBufferData->uniformBuffersSize[index] = deviceSizes[j];
+			renderBufferData->uniformBuffersSize[index] = uniformBufferSizes[j];
 			VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->uniformBuffersSize[index],
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->uniformBuffers[index], renderBufferData->uniformBuffersMemory[index]);
 
@@ -327,26 +340,65 @@ void BRenderingPipeline::FillVkUniformBuffers(std::string primitiveName)
 void BRenderingPipeline::SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
 {
 	auto renderData = primitives[primitiveName];
+	
 	renderData->descriptorLayoutBindings = descriptorLayoutBindings;
-
-	VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = 
+	std::vector<VkDescriptorSetLayoutCreateInfo> infoForDescriptorLayouts;
+	std::unordered_map<VkShaderStageFlags, std::vector<VkDescriptorSetLayoutBinding>>& bindingsPerShaderStage = renderData->bindingsPerShaderStage;
+	for (auto bindingPtr = descriptorLayoutBindings.begin(); bindingPtr != descriptorLayoutBindings.end(); bindingPtr++)
 	{
-		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.bindingCount = (VkBool32)renderData->descriptorLayoutBindings.size(),
-		.pBindings = renderData->descriptorLayoutBindings.data()
-	};
-
+		if (bindingsPerShaderStage.find(bindingPtr->stageFlags) == bindingsPerShaderStage.end())
+		{
+			std::vector<VkDescriptorSetLayoutBinding> bindings = { *bindingPtr };
+			bindingsPerShaderStage.insert({ bindingPtr->stageFlags, bindings });
+		}
+		else
+		{
+			bindingsPerShaderStage[bindingPtr->stageFlags].push_back(*bindingPtr);
+		}
+	}
+	for (auto bindingForShaderStagePtr = bindingsPerShaderStage.begin(); bindingForShaderStagePtr != bindingsPerShaderStage.end(); bindingForShaderStagePtr++)
+	{
+		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo =
+		{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.bindingCount = (VkBool32)bindingForShaderStagePtr->second.size(),
+			.pBindings = bindingForShaderStagePtr->second.data()
+		};
+		infoForDescriptorLayouts.push_back(descriptorLayoutInfo);
+	}
+	
+	renderData->descriptorSetLayouts.resize(infoForDescriptorLayouts.size());
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkResult result = vkCreateDescriptorSetLayout(vkSettings->device, &descriptorLayoutInfo, vkSettings->allocationCallback, &descriptorSetLayout);
-	renderData->descriptorSetLayouts.push_back(descriptorSetLayout);
-	if (result != VK_SUCCESS)
+	for (VkBool32 i = 0; i < (VkBool32)infoForDescriptorLayouts.size(); i++)
 	{
-		throw std::runtime_error("Unable to create descriptor set layout!");
+		VkResult result = vkCreateDescriptorSetLayout(vkSettings->device, &infoForDescriptorLayouts[i], vkSettings->allocationCallback, &renderData->descriptorSetLayouts[i]);		
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Unable to create descriptor set layout!");
+		}
 	}
 
+	// if there is more than 1 descriptor layout
+	if (renderData->descriptorSetLayouts.size() > 1)
+	{
+		// create push constant ranges for each shader stage
+		VkBool32 offset = 0;
+		for (auto layoutPerShaderStage : bindingsPerShaderStage)
+		{
+			VkBool32 sizeOfShaderStage = (VkBool32)layoutPerShaderStage.second.size();
+			VkBool32 sizeOfPushConstant = sizeOfShaderStage % 4 == 0 ? sizeOfShaderStage : sizeOfShaderStage + 4 - sizeOfShaderStage % 4;
+			VkPushConstantRange pushConstant = {
+				.stageFlags = layoutPerShaderStage.second.front().stageFlags,
+				.offset = offset,
+				.size = sizeOfPushConstant
+			};
+			offset += pushConstant.size;
+
+			renderData->pipelineBuilderParams.pushConstants.push_back(pushConstant);
+		}
+	}
 }
 
 void BRenderingPipeline::LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages)
@@ -390,20 +442,22 @@ void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
+	renderData->pipelineBuilderParams.layoutInfo = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
 		.setLayoutCount = (VkBool32)renderData->descriptorSetLayouts.size(),
-		.pSetLayouts = renderData->descriptorSetLayouts.data()
+		.pSetLayouts = renderData->descriptorSetLayouts.data(),
+		.pushConstantRangeCount = (VkBool32)renderData->pipelineBuilderParams.pushConstants.size(),
+		.pPushConstantRanges = renderData->pipelineBuilderParams.pushConstants.data()
 	};
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	//Create and load pipeline layout to graphics pipeline
-	VkResult result = vkCreatePipelineLayout(vkSettings->device, &pipelineLayoutInfo, vkSettings->allocationCallback, &renderData->pipelineBuilderParams.pipelineLayout);
+	VkResult result = vkCreatePipelineLayout(vkSettings->device, &renderData->pipelineBuilderParams.layoutInfo, vkSettings->allocationCallback, &renderData->pipelineBuilderParams.pipelineLayout);
 	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Unable to create pipeline layout from descriptor set layout!");
+		throw std::runtime_error("Unable to create pipeline layout from descriptor set layout(s)!");
 	}
 	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, renderData->pipelineBuilderParams.pipelineLayout);
 }

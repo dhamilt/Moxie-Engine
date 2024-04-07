@@ -16,7 +16,7 @@ layout(std140, set = 0, binding = 0)uniform mvpBuf
 	mat4 projection; // Projection matrix
 } mvpInfo;
 
-layout(std140, set = 1, binding = 0)uniform normalBuf
+layout(std140, set = 0, binding = 1)uniform normalBuf
 { 
 	mat3 normalMatrix;
 } normalInfo;

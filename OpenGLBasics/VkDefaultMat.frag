@@ -4,7 +4,7 @@
 
 // max number of lights to apply in shader
 const int maxLightCount = 10;
-layout(std140, set = 0,binding = 0)uniform LightProperties
+layout(std140, set = 1,binding = 0)uniform LightProperties
 {
 	bool isEnabled;
 	bool isLocal;
@@ -21,19 +21,19 @@ layout(std140, set = 0,binding = 0)uniform LightProperties
 	float quadraticAttenuation;
 } Lights[maxLightCount];
 
-layout(std140, set = 1, binding = 0)uniform lightBufInfo 
+layout(std140, set = 1, binding = 1)uniform lightBufInfo 
 {
 	int lightCount;
 } lightInfo;
 
-layout(std140, set = 2, binding = 0)uniform materialBufInfo
+layout(std140, set = 2, binding = 2)uniform materialBufInfo
 {
 	float shininess;
 	float strength;
 	vec4 objectColor;
 } materialInfo;
 
-layout(std140, set = 3, binding = 0)uniform cameraBufInfo
+layout(std140, set = 3, binding = 3)uniform cameraBufInfo
 {
 	vec4 eyeDir;
 } cameraInfo;
