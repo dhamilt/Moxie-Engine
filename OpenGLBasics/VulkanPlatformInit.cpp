@@ -121,7 +121,7 @@ bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
         currentVKSettings.layerCount++;
 
         // Enable debug report extension
-        currentVKSettings.extensions.push_back("VK_EXT_debug_report");
+        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         currentVKSettings.extensionCount++;
 
         
@@ -224,8 +224,8 @@ bool PVulkanPlatformInit::SetupDebugCallbacks()
 #if _DEBUG
 
     // Get the function pointer for extensions
-    auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(currentVKSettings.instance, "vkCreateDebugReportCallbackEXT");
-    assert(vkCreateDebugReportCallbackEXT != NULL);
+    auto vkCreateDebugUtilstCallbackEXT = (PFN_vkDebugUtilsMessengerCallbackEXT)vkGetInstanceProcAddr(currentVKSettings.instance, "vkDebugUtilsMessengerCallbackEXT");
+    assert(vkCreateDebugUtilstCallbackEXT != NULL);
 
     // Setup debug report callback
     VkDebugReportCallbackCreateInfoEXT debugReportExt_cb = {};
@@ -234,18 +234,30 @@ bool PVulkanPlatformInit::SetupDebugCallbacks()
     debugReportExt_cb.pfnCallback = (PFN_vkDebugReportCallbackEXT)DebugReportCallback;
     debugReportExt_cb.pUserData = NULL;
 
+    VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {};
+    debugUtilsMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugUtilsMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT|
+                                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+
+    debugUtilsMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
+                                                | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT 
+                                                | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT 
+                                                | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    debugUtilsMessengerCreateInfo.pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)DebugReportCallback;
 
     VkResult result = vkCreateDebugReportCallbackEXT(currentVKSettings.instance, &debugReportExt_cb, currentVKSettings.allocationCallback, &currentVKSettings.debugReportCallback);
 
     Moxie::VKErrorReporting(result);
     if (result != VK_SUCCESS)
     {
-        perror("Error! Unable to create Debug Report Callback!");
-        return false;
+        fprintf(stderr, "Unable to create debug callback! Error code:%d", result);
+        return VK_FALSE;
     }
 #endif
 
-    return true;
+    return VK_TRUE;
 }
 
 bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)

@@ -2,6 +2,7 @@
 #include "PlatformInit.h"
 #include <imgui_impl_vulkan.h>
 #include <SDL_vulkan.h>
+#include <iostream>
 
 
 #define VK_NUM_OF_SAMPLES VK_SAMPLE_COUNT_1_BIT
@@ -75,8 +76,10 @@ struct PVulkanPlatformInitInfo
 static VkBool32 const MAX_COMMAND_POOL_SIZE = 32;
 static VkBool32 const MAX_COMMAND_BUFFER_SIZE = 1024;
 
-static VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object,
-    size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, const char* pUserData);
+static VkBool32 DebugReportCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+                                    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                    void* pUserData);
 class PVulkanPlatformInit :
     public PPlatformInit
 {
@@ -119,17 +122,32 @@ private:
 };
 static PVulkanPlatformInit* instance;
 
-VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object,
-    size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, const char* pUserData)
+VkBool32 DebugReportCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
-    /*Ignored arguments*/
-    (void)flags; 
-    (void)object;
-    (void)location;
-    (void)messageCode;
-    (void)pUserData;
-    (void)pLayerPrefix;
+    std::string output = "";
+    // Message severities
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+        output += "[INFO] ";
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+        output += "[WARNING] ";
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+        output += "[ERROR] ";
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+        output += "[VERBOSE] ";
 
-    fprintf(stderr, "Vulkan Debug Report from ObjectType: %i \nMessage: %s\n\n", objectType, pMessage);
-    return VK_FALSE;
+    // Message types
+    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+        output += "[PERFORMANCE] ";
+    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+        output += "[VALIDATION] ";
+    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+        output += "[GENERAL] ";
+
+    // Print actual message
+    output += pCallbackData->pMessage;
+    output += " ";
+    output += "Message Id:" + std::to_string(pCallbackData->messageIdNumber);
+
+    std::cout << output << std::endl;
+    return VK_TRUE;
 }
