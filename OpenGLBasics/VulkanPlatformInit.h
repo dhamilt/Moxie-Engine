@@ -47,6 +47,9 @@ struct PVulkanPlatformInitInfo
     VkDescriptorPoolCreateInfo poolInfo;
     std::vector<VkDescriptorPoolSize> poolSizes;
 
+    VkDescriptorSetAllocateInfo descriptorInfo;
+    std::vector<VkDescriptorSet> descriptorSets;
+
     VkInstanceCreateFlags initFlags;
     VkInstanceCreateInfo initInfo;
     VkApplicationInfo appInfo;
@@ -124,30 +127,12 @@ static PVulkanPlatformInit* instance;
 
 VkBool32 DebugReportCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
-    std::string output = "";
-    // Message severities
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
-        output += "[INFO] ";
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-        output += "[WARNING] ";
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-        output += "[ERROR] ";
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
-        output += "[VERBOSE] ";
+    /*Ignored arguments*/
+    (void)flags; 
+    (void)object;
+    (void)pUserData;
+    (void)pLayerPrefix;
 
-    // Message types
-    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-        output += "[PERFORMANCE] ";
-    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-        output += "[VALIDATION] ";
-    if (messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
-        output += "[GENERAL] ";
-
-    // Print actual message
-    output += pCallbackData->pMessage;
-    output += " ";
-    output += "Message Id:" + std::to_string(pCallbackData->messageIdNumber);
-
-    std::cout << output << std::endl;
-    return VK_TRUE;
+    fprintf(stderr, "Vulkan Debug Report from ObjectType: %i \nMessage: %s\nLocation: %lld\nCode: %i\n\n", objectType, pMessage, location, messageCode);
+    return VK_FALSE;
 }

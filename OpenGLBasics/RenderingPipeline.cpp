@@ -5,6 +5,7 @@
 #include "Mesh.h"
 #include "Cubemaps.h"
 #include "VulkanFunctionLibrary.h"
+#include "VulkanPlatformInit.h"
 
 extern GLSetup* GGLSPtr;
 const int BRenderingPipeline::MAX_LIGHT_COUNT = 10;
@@ -347,14 +348,9 @@ void BRenderingPipeline::SetVkDescriptorsForUniformBuffers(std::string primitive
 	for (auto bindingPtr = descriptorLayoutBindings.begin(); bindingPtr != descriptorLayoutBindings.end(); bindingPtr++)
 	{
 		if (bindingsPerShaderStage.find(bindingPtr->stageFlags) == bindingsPerShaderStage.end())
-		{
-			std::vector<VkDescriptorSetLayoutBinding> bindings = { *bindingPtr };
-			bindingsPerShaderStage.insert({ bindingPtr->stageFlags, bindings });
-		}
+			bindingsPerShaderStage.insert({ bindingPtr->stageFlags, { *bindingPtr } });
 		else
-		{
 			bindingsPerShaderStage[bindingPtr->stageFlags].push_back(*bindingPtr);
-		}
 	}
 	for (auto bindingForShaderStagePtr = bindingsPerShaderStage.begin(); bindingForShaderStagePtr != bindingsPerShaderStage.end(); bindingForShaderStagePtr++)
 	{
@@ -364,7 +360,7 @@ void BRenderingPipeline::SetVkDescriptorsForUniformBuffers(std::string primitive
 			.pNext = nullptr,
 			.flags = 0,
 			.bindingCount = (VkBool32)bindingForShaderStagePtr->second.size(),
-			.pBindings = bindingForShaderStagePtr->second.data()
+			.pBindings = bindingForShaderStagePtr->second.data(),
 		};
 		infoForDescriptorLayouts.push_back(descriptorLayoutInfo);
 	}
@@ -441,25 +437,35 @@ void BRenderingPipeline::SetVkPipelineStencilState(std::string primitiveName, Vk
 void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
-
-	renderData->pipelineBuilderParams.layoutInfo = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.setLayoutCount = (VkBool32)renderData->descriptorSetLayouts.size(),
-		.pSetLayouts = renderData->descriptorSetLayouts.data(),
-		.pushConstantRangeCount = (VkBool32)renderData->pipelineBuilderParams.pushConstants.size(),
-		.pPushConstantRanges = renderData->pipelineBuilderParams.pushConstants.data()
+	//for (VkBool32 descriptorSetIndex = 0; descriptorSetIndex < (VkBool32)renderData->descriptorSetLayouts.size(); descriptorSetIndex++) {
+	//	
+	//	
+	//}
+	VkPipelineLayoutCreateInfo layoutInfo = {
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.setLayoutCount = (VkBool32)renderData->descriptorSetLayouts.size(), /** TODO make this dynamic for non - static layout bindings*/
+			.pSetLayouts = renderData->descriptorSetLayouts.data(),
+			.pushConstantRangeCount = (VkBool32)renderData->pipelineBuilderParams.pushConstants.size(),
+			.pPushConstantRanges = renderData->pipelineBuilderParams.pushConstants.data()
 	};
 
+	renderData->pipelineBuilderParams.layoutInfo.push_back(layoutInfo);
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	size_t pipelineLayoutCount = renderData->pipelineBuilderParams.layoutInfo.size();
+	renderData->pipelineBuilderParams.pipelineLayouts.resize(pipelineLayoutCount);
 	//Create and load pipeline layout to graphics pipeline
-	VkResult result = vkCreatePipelineLayout(vkSettings->device, &renderData->pipelineBuilderParams.layoutInfo, vkSettings->allocationCallback, &renderData->pipelineBuilderParams.pipelineLayout);
+	/*for (VkBool32 pipelineLayoutIndex = 0; pipelineLayoutIndex < (VkBool32)pipelineLayoutCount; pipelineLayoutIndex++) {
+		
+	}*/
+
+	VkResult result = vkCreatePipelineLayout(vkSettings->device, &renderData->pipelineBuilderParams.layoutInfo[0], vkSettings->allocationCallback, &renderData->pipelineBuilderParams.pipelineLayouts[0]);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Unable to create pipeline layout from descriptor set layout(s)!");
 	}
-	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, renderData->pipelineBuilderParams.pipelineLayout);
+	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, renderData->pipelineBuilderParams.pipelineLayouts);
 }
 
 void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextureData)
@@ -920,6 +926,7 @@ void BRenderingPipeline::DrawVk(VkCommandBuffer cmdBuffer)
 
 void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 {
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	for (auto it = primitives.begin(); it != primitives.end(); it++)
 	{
 		auto renderData = it->second;
@@ -927,6 +934,12 @@ void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 		UpdateTransformMatrix(it->first);
 		if(renderData->graphicsPipeline == NULL)
 			vulkanPipelineBuilder->CreateMeshShaderPipeline(&renderData->graphicsPipeline, renderData->pipelineBuilderParams);
+		// Set the order of the pipeline descriptors 
+		//for (int i = 0; i < (int)renderData->descriptorSetLayouts.size(); i++)
+		if(!vkSettings->descriptorSets.empty())
+			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			renderData->pipelineBuilderParams.pipelineLayouts[0], 0,
+			vkSettings->descriptorSets.size(), &vkSettings->descriptorSets[0], 0, 0);
 		// tell vulkan to use the graphics pipeline attached to current primitive
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderData->graphicsPipeline);
 

@@ -96,10 +96,10 @@ void VkPipelineBuilder::LoadDepthStencilState(VkPipelineBuilderParams& params, V
     pipelineInfo.pDepthStencilState = &params.depthStencilInfo;
 }
 
-void VkPipelineBuilder::LoadPipelineLayout(VkPipelineBuilderParams& params, VkPipelineLayout pipelineLayout)
+void VkPipelineBuilder::LoadPipelineLayout(VkPipelineBuilderParams& params, std::vector<VkPipelineLayout> pipelineLayouts)
 {
-    params.pipelineLayout = pipelineLayout;
-    pipelineInfo.layout = pipelineLayout;
+    params.pipelineLayouts = pipelineLayouts;
+    pipelineInfo.layout = pipelineLayouts[0];
 }
 
 void VkPipelineBuilder::LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo)
