@@ -46,6 +46,9 @@ struct PVulkanPlatformInitInfo
     VkDescriptorPoolCreateInfo poolInfo;
     std::vector<VkDescriptorPoolSize> poolSizes;
 
+    VkDescriptorSetAllocateInfo descriptorInfo;
+    std::vector<VkDescriptorSet> descriptorSets;
+
     VkInstanceCreateFlags initFlags;
     VkInstanceCreateInfo initInfo;
     VkApplicationInfo appInfo;
@@ -125,11 +128,9 @@ VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTyp
     /*Ignored arguments*/
     (void)flags; 
     (void)object;
-    (void)location;
-    (void)messageCode;
     (void)pUserData;
     (void)pLayerPrefix;
 
-    fprintf(stderr, "Vulkan Debug Report from ObjectType: %i \nMessage: %s\n\n", objectType, pMessage);
+    fprintf(stderr, "Vulkan Debug Report from ObjectType: %i \nMessage: %s\nLocation: %lld\nCode: %i\n\n", objectType, pMessage, location, messageCode);
     return VK_FALSE;
 }

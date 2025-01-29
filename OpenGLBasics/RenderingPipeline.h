@@ -92,7 +92,7 @@ struct RenderBufferData
 static VkDescriptorSetLayoutBinding defaultVertexMVPDescriptorLayout = {
 	.binding = 0,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	.descriptorCount = 1,
+	.descriptorCount = 3,
 	.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
 	.pImmutableSamplers = nullptr
 };
@@ -106,6 +106,14 @@ static VkDescriptorSetLayoutBinding defaultVertexNormalsDescriptorLayout = {
 };
 
 static VkDescriptorSetLayoutBinding defaultFragmentLightDescriptorLayout = {
+	.binding = 2,
+	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	.descriptorCount = 4,
+	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+	.pImmutableSamplers = nullptr
+};
+
+static VkDescriptorSetLayoutBinding defaultFragmentViewDescriptorLayout = {
 	.binding = 3,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	.descriptorCount = 1,
@@ -113,16 +121,8 @@ static VkDescriptorSetLayoutBinding defaultFragmentLightDescriptorLayout = {
 	.pImmutableSamplers = nullptr
 };
 
-static VkDescriptorSetLayoutBinding defaultFragmentViewDescriptorLayout = {
-	.binding = 4,
-	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	.descriptorCount = 1,
-	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-	.pImmutableSamplers = nullptr
-};
-
 static VkDescriptorSetLayoutBinding defaultFragmentObjectDescriptorLayout = {
-	.binding = 5,
+	.binding = 4,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	.descriptorCount = 1,
 	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,

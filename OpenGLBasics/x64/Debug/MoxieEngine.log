@@ -1,69 +1,8 @@
-﻿  AssetImportLibrary.cpp
-  AudioClass.cpp
-  AudioCommand.cpp
-  AudioEQComponent.cpp
-  AudioSource.cpp
-  AxisCommand.cpp
-  BaseObject.cpp
-  ButtonCommand.cpp
-  Command.cpp
-  Cubemaps.cpp
-  EntityComponent.cpp
-  Camera.cpp
-  Entity.cpp
-  EventHandler.cpp
-  GameLoop.cpp
-  GLErrorReporting.cpp
-  GLSetup.cpp
-  GLWindow.cpp
-  Graphic.cpp
-  GUI_Base.cpp
-  InputHandler.cpp
-  Light.cpp
-  LightComponent.cpp
-  LineRenderComponent.cpp
-  LineRenderer.cpp
-  LineShaperComponent.cpp
-  Log.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\Log.cpp(55): warning C5082: second argument to 'va_start' is not the last named parameter
-  MActor.cpp
-  MainMenu.cpp
-  Material.cpp
-  Mesh.cpp
-  MeshComponent.cpp
-  MouseCapture.cpp
-  MoxieEvents.cpp
-  MViewport.cpp
-C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\MViewport.cpp(69,16): warning C4312: 'type cast': conversion from 'GLuint' to 'ImTextureID' of greater size
-  MyLightComponent.cpp
-  PlatformInit.cpp
-  VulkanErrorReporting.cpp
-  VulkanPlatformInit.cpp
-  RenderingPipeline.cpp
-  RotatingLightComponent.cpp
-  ShapeTransformationLibrary.cpp
-  SoundEngine.cpp
-  StandaloneWindow.cpp
-  Texture.cpp
-  VulkanPipelineBuilder.cpp
-  WavReader.cpp
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_impl_opengl3.cpp
-  imgui_impl_sdl.cpp
-  imgui_impl_sdlrenderer.cpp
-  imgui_impl_vulkan.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  implot.cpp
-  implot_demo.cpp
-  implot_items.cpp
-  Generating Code...
-  MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
-  0 File(s) copied
-  C:\WINDOWS\SysWOW64\opengl32.dll
-  1 File(s) copied
+﻿  RenderingPipeline.cpp
+C:\Users\dnlha\Documents\VisualStudioProjects\MoxieEngine\Moxie-Engine\OpenGLBasics\RenderingPipeline.cpp(942,35): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+  MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VisualStudioProjects\MoxieEngine\Moxie-Engine\x64\Debug\Moxie.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
   0 File(s) copied
   0 File(s) copied
   0 File(s) copied
@@ -76,5 +15,6 @@ C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\MViewport.cpp(69,
   0 File(s) copied
   0 File(s) copied
   0 File(s) copied
-  C:\Windows\System32\vulkan-1.dll
-  1 File(s) copied
+  0 File(s) copied
+  0 File(s) copied
+  0 File(s) copied

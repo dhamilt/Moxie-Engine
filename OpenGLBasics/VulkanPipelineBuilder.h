@@ -14,7 +14,7 @@ struct VkPipelineBuilderParams {
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo;
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo; // optional
-	VkPipelineLayoutCreateInfo layoutInfo;
+	std::vector<VkPipelineLayoutCreateInfo> layoutInfo;
 	VkRenderPass* renderPassPtr;
 	
 	std::vector<VkViewport> viewports;
@@ -22,7 +22,7 @@ struct VkPipelineBuilderParams {
 	std::vector<VkShaderStageConfigs> shaderStagingConfigs;
 	std::vector<VkShaderModule> shaders;
 	std::vector<VkPushConstantRange> pushConstants;
-	VkPipelineLayout pipelineLayout;
+	std::vector<VkPipelineLayout> pipelineLayouts;
 };
 
 static VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState = {
@@ -102,7 +102,7 @@ public:
 	void SetInputAssembly(VkPipelineBuilderParams& params,VkPrimitiveTopology topology, bool primitiveRestart = true);
 	void LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params);
 	void LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo);
-	void LoadPipelineLayout(VkPipelineBuilderParams& params, VkPipelineLayout pipelineLayout);
+	void LoadPipelineLayout(VkPipelineBuilderParams& params, std::vector<VkPipelineLayout> pipelineLayouts);
 	void LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo);
 	void LoadMultispamplingState(VkPipelineBuilderParams& params, VkPipelineMultisampleStateCreateInfo multisampleInfo);
 	// TODO: overload with method that only accepts window's extents
