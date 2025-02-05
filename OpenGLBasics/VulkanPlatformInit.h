@@ -79,10 +79,8 @@ struct PVulkanPlatformInitInfo
 static VkBool32 const MAX_COMMAND_POOL_SIZE = 32;
 static VkBool32 const MAX_COMMAND_BUFFER_SIZE = 1024;
 
-static VkBool32 DebugReportCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-                                    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                    void* pUserData);
+static VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object,
+	size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, const char* pUserData);
 class PVulkanPlatformInit :
     public PPlatformInit
 {
@@ -125,7 +123,8 @@ private:
 };
 static PVulkanPlatformInit* instance;
 
-VkBool32 DebugReportCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object,
+    size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, const char * pUserData)
 {
     /*Ignored arguments*/
     (void)flags; 

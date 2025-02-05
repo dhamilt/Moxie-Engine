@@ -1,8 +1,7 @@
-  RenderingPipeline.cpp
-C:\Users\dnlha\Documents\VisualStudioProjects\MoxieEngine\Moxie-Engine\OpenGLBasics\RenderingPipeline.cpp(942,35): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
-  MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VisualStudioProjects\MoxieEngine\Moxie-Engine\x64\Debug\Moxie.exe
-  'pwsh.exe' is not recognized as an internal or external command,
-  operable program or batch file.
+﻿  RenderingPipeline.cpp
+C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\RenderingPipeline.cpp(331,11): warning C4101: 'result': unreferenced local variable
+C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\OpenGLBasics\RenderingPipeline.cpp(470,32): warning C4267: 'initializing': conversion from 'size_t' to 'uint16_t', possible loss of data
+  MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
   0 File(s) copied
   0 File(s) copied
   0 File(s) copied

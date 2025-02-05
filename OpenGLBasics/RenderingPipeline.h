@@ -26,7 +26,7 @@ struct NormalBuffer
 	DMat3x3 normalMat;
 };
 
-struct LightPropertyBuffer
+struct LightBuffer
 {
 	bool isEnabled;
 	bool isLocal;
@@ -43,7 +43,7 @@ struct LightPropertyBuffer
 	float quadraticAttenuation;
 };
 
-struct ViewPropertyBuffer
+struct ViewBuffer
 {
 	DVector3 lookDir;
 };
@@ -51,6 +51,29 @@ struct ViewPropertyBuffer
 struct ObjectPropertyBuffer
 {
 	DVector4 color;
+};
+
+struct UniformBufferParams
+{
+	UniformBufferParams(uint16_t _count) :count(_count)
+	{
+		deviceMemory = (VkDeviceMemory*)malloc(sizeof(VkDeviceMemory) * count);
+		buffers	= (VkBuffer*)malloc(sizeof(VkBuffer) * count);
+	}
+	~UniformBufferParams()
+	{
+		if (deviceMemory)
+			free(deviceMemory);
+		if (buffers)
+			free(buffers);
+		/*if (data)
+			free(data);*/
+	}
+	uint16_t count;
+	VkDeviceSize offset = 0;
+	VkDeviceMemory* deviceMemory;
+	VkBuffer* buffers;
+	void* data;
 };
 
 struct RenderBufferData
@@ -76,16 +99,24 @@ struct RenderBufferData
 	std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+	std::vector<VkDescriptorSet> descriptorSets;
 	std::unordered_map<VkShaderStageFlags, std::vector<VkDescriptorSetLayoutBinding>> bindingsPerShaderStage;
-	std::vector<VkBuffer> uniformBuffers;
+	std::unordered_map<uint16_t, uint16_t> uniformBufferMemoryOffsets;
+	std::vector<VkBuffer> vertexUniformBuffers;
+	std::vector<VkBuffer> fragmentUniformBuffers;
 	std::vector<VkDeviceSize> uniformBuffersSize;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
 	MVPBuffer mvpBuffer;
+	UniformBufferParams* mvpParams;
 	NormalBuffer normalBuffer;
-	LightPropertyBuffer lightPropertyBuffer;
-	ViewPropertyBuffer viewPropertyBuffer;
-	ObjectPropertyBuffer objectPropertyBuffer;
+	UniformBufferParams* normalParams;
+	LightBuffer LightBuffer;
+	UniformBufferParams* lightParams;
+	ViewBuffer viewBuffer;
+	UniformBufferParams* viewParams;	
+	UniformBufferParams* objParams;
+	ObjectPropertyBuffer objectBuffer;	
 	VkPipeline graphicsPipeline;
 };
 
@@ -165,7 +196,7 @@ class BRenderingPipeline final
 	// Fills uniform buffers with binding data
 	void FillVkUniformBuffers(std::string primitiveName);
 	// Sets the descriptor layouts for the uniform buffers on shaders
-	void SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
+	void SetVkDescriptorForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
 	// Adds shader stage file(s) to be used and read by the graphics pipeline
 	void LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages);
 	// Sets the depth info for the depth/stencil state of the current graphics pipeline

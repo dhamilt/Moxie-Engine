@@ -25,3 +25,5 @@ x64/Debug/Moxie.exe
 *.vsidx
 
 *.recipe
+
+x64/

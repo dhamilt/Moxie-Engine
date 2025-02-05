@@ -24,18 +24,36 @@ void BRenderingPipeline::CleanupRenderingPipeline()
 #if USE_VULKAN
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 #endif
+	auto device = vkSettings->device;
+	auto allocationCallback = vkSettings->allocationCallback;
 	// Free primitive rendering data
 	for (auto it = primitives.begin(); it != primitives.end(); it++) {
 
 #if USE_VULKAN
 		auto renderData = it->second;
-		vkDestroyBuffer(vkSettings->device, renderData->vertexBuffer, vkSettings->allocationCallback);
-		vkFreeMemory(vkSettings->device, renderData->vertexBufferMemory, vkSettings->allocationCallback);
+		vkDestroyBuffer(device, renderData->vertexBuffer, allocationCallback);
+		vkFreeMemory(device, renderData->vertexBufferMemory, allocationCallback);
 
-		vkDestroyBuffer(vkSettings->device, renderData->indexBuffer, vkSettings->allocationCallback);
-		vkFreeMemory(vkSettings->device, renderData->indexBufferMemory, vkSettings->allocationCallback);
-		for(auto descriptorSetPtr = renderData->descriptorSetLayouts.begin(); descriptorSetPtr != renderData->descriptorSetLayouts.end(); descriptorSetPtr++)
-			vkDestroyDescriptorSetLayout(vkSettings->device, *descriptorSetPtr, vkSettings->allocationCallback);
+		vkDestroyBuffer(device, renderData->indexBuffer, allocationCallback);
+		vkFreeMemory(device, renderData->indexBufferMemory, allocationCallback);
+		for (uint16_t i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; ++i)
+		{
+			vkDestroyBuffer(device, renderData->mvpParams->buffers[i], allocationCallback);
+			vkDestroyBuffer(device, renderData->normalParams->buffers[i], allocationCallback);
+			vkDestroyBuffer(device, renderData->lightParams->buffers[i], allocationCallback);
+			vkDestroyBuffer(device, renderData->viewParams->buffers[i], allocationCallback);
+			vkDestroyBuffer(device, renderData->objParams->buffers[i], allocationCallback);
+
+			vkFreeMemory(device, renderData->mvpParams->deviceMemory[i], allocationCallback);
+			vkFreeMemory(device, renderData->normalParams->deviceMemory[i], allocationCallback);
+			vkFreeMemory(device, renderData->lightParams->deviceMemory[i], allocationCallback);
+			vkFreeMemory(device, renderData->viewParams->deviceMemory[i], allocationCallback);
+			vkFreeMemory(device, renderData->objParams->deviceMemory[i], allocationCallback);
+		}
+
+
+		for(uint16_t j = 0; j < (uint16_t)renderData->descriptorSetLayouts.size(); ++j)
+		vkDestroyDescriptorSetLayout(vkSettings->device, renderData->descriptorSetLayouts[j], allocationCallback);
 #endif
 		delete it->second;
 	}
@@ -86,14 +104,14 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 			vkFreeMemory(vkSettings->device, data->indexBufferMemory, vkSettings->allocationCallback);
 		}
 		// destroy uniform buffers and release memory associated
-		for (auto uniformBufferPtr = data->uniformBuffers.begin(); uniformBufferPtr != data->uniformBuffers.end(); uniformBufferPtr++)
+		for (auto uniformBufferPtr = data->vertexUniformBuffers.begin(); uniformBufferPtr != data->vertexUniformBuffers.end(); uniformBufferPtr++)
 			vkDestroyBuffer(vkSettings->device, *uniformBufferPtr, vkSettings->allocationCallback);
 		for (auto uniformBufferMemoryPtr = data->uniformBuffersMemory.begin(); uniformBufferMemoryPtr != data->uniformBuffersMemory.end(); uniformBufferMemoryPtr++)
 			vkFreeMemory(vkSettings->device, *uniformBufferMemoryPtr, vkSettings->allocationCallback);
 		
 		// destroy descriptor layout bindings
-		for (auto descriptorLayoutPtr = data->descriptorSetLayouts.begin(); descriptorLayoutPtr != data->descriptorSetLayouts.end(); descriptorLayoutPtr++)
-			vkDestroyDescriptorSetLayout(vkSettings->device, *descriptorLayoutPtr, vkSettings->allocationCallback);
+		for(int i = 0; i < (int)data->descriptorSetLayouts.size(); ++i)
+			vkDestroyDescriptorSetLayout(vkSettings->device, data->descriptorSetLayouts[i], vkSettings->allocationCallback);
 #endif
 		data->vertices	= _vertices;
 		data->indices = _indices;
@@ -122,7 +140,7 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 	CreateVkUniformBuffers(primitiveName);
 
 	// Create Descriptor Layouts for uniform buffers in shader(s)
-	SetVkDescriptorsForUniformBuffers(primitiveName);
+	SetVkDescriptorForUniformBuffers(primitiveName);
 
 	// Fill vertex buffer with data
 	FillVkVertexBuffer(primitiveName);
@@ -242,43 +260,39 @@ void BRenderingPipeline::CreateVkIndexBuffer(std::string primitiveName)
 void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
 {
 	auto renderBufferData = primitives[primitiveName];
-	auto uniformBuffers = &renderBufferData->uniformBuffers;
-
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = renderBufferData->indexBufferSize;
-	bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	auto vertexUniformBuffers = &renderBufferData->vertexUniformBuffers;
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkDeviceSize uniformBufferSizes[5] = {
-		sizeof(RenderBufferData::mvpBuffer),
-		sizeof(RenderBufferData::normalBuffer),
-		sizeof(RenderBufferData::lightPropertyBuffer),
-		sizeof(RenderBufferData::viewPropertyBuffer),
-		sizeof(RenderBufferData::objectPropertyBuffer)
-	};
 
-	VkBool32 uniformBufferCount = sizeof(uniformBufferSizes) / sizeof(VkDeviceSize);
+	renderBufferData->mvpParams		= new UniformBufferParams(MAX_VULKAN_FRAMES_IN_FLIGHT);
+	renderBufferData->normalParams	= new UniformBufferParams(MAX_VULKAN_FRAMES_IN_FLIGHT);
+	renderBufferData->lightParams	= new UniformBufferParams(MAX_VULKAN_FRAMES_IN_FLIGHT);
+	renderBufferData->viewParams	= new UniformBufferParams(MAX_VULKAN_FRAMES_IN_FLIGHT);
+	renderBufferData->objParams		= new UniformBufferParams(MAX_VULKAN_FRAMES_IN_FLIGHT);
 
-	renderBufferData->uniformBuffersMemory.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
-	renderBufferData->uniformBuffersMapped.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
-	renderBufferData->uniformBuffersSize.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
-	renderBufferData->uniformBuffers.resize(MAX_VULKAN_FRAMES_IN_FLIGHT * uniformBufferCount);
+	auto mvp = renderBufferData->mvpParams;
+	auto normal = renderBufferData->normalParams;
+	auto lightBuf = renderBufferData->lightParams;
+	auto viewBuf = renderBufferData->viewParams;
+	auto objectBuf = renderBufferData->objParams;
 
 	for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
-	{
+	{		
 		
-		for (VkBool32 j = 0; j < uniformBufferCount; j++)
-		{
-			VkBool32 index = i * uniformBufferCount + j;
-			// set uniform buffer sizes
-			renderBufferData->uniformBuffersSize[index] = uniformBufferSizes[j];
-			VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->uniformBuffersSize[index],
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->uniformBuffers[index], renderBufferData->uniformBuffersMemory[index]);
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(RenderBufferData::mvpBuffer),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, mvp->buffers[i], mvp->deviceMemory[i]);
 
-			
-		}
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(RenderBufferData::normalBuffer),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, normal->buffers[i], normal->deviceMemory[i]);
+
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(RenderBufferData::LightBuffer),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, lightBuf->buffers[i], lightBuf->deviceMemory[i]);
+
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(RenderBufferData::viewBuffer),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, viewBuf->buffers[i], viewBuf->deviceMemory[i]);
+
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(RenderBufferData::objectBuffer),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, objectBuf->buffers[i], objectBuf->deviceMemory[i]);
 	}
 }
 
@@ -304,97 +318,210 @@ void BRenderingPipeline::FillVkIndexBuffer(std::string primitiveName)
 
 void BRenderingPipeline::FillVkUniformBuffers(std::string primitiveName)
 {
-	auto renderData = primitives[primitiveName];
+	auto renderBufferData = primitives[primitiveName];
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 
-	VkDeviceSize deviceSizes[5] = {
-		sizeof(RenderBufferData::mvpBuffer),
-		sizeof(RenderBufferData::normalBuffer),
-		sizeof(RenderBufferData::lightPropertyBuffer),
-		sizeof(RenderBufferData::viewPropertyBuffer),
-		sizeof(RenderBufferData::objectPropertyBuffer)
-	};
+	auto device = vkSettings->device;
+	auto mvp = renderBufferData->mvpParams;
+	auto normal = renderBufferData->normalParams;
+	auto lightBuf = renderBufferData->lightParams;
+	auto viewBuf = renderBufferData->viewParams;
+	auto objectBuf = renderBufferData->objParams;
 
-	void* destinations[5] = {
-		&renderData->mvpBuffer,
-		&renderData->normalBuffer,
-		&renderData->lightPropertyBuffer,
-		&renderData->viewPropertyBuffer,
-		&renderData->objectPropertyBuffer
-	};
-
+	VkResult result;
 	for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
 	{
-		VkBool32 bindingCount = sizeof(deviceSizes) / sizeof(VkDeviceSize);
-		for (VkBool32 j = 0; j < bindingCount; j++)
-		{
-			VkBool32 index = i * bindingCount + j;
+			// Fill MVP buffer
+			vkMapMemory(device, mvp->deviceMemory[i], mvp->offset, sizeof(MVPBuffer), 0, &mvp->data);
+			memcpy(mvp->data, mvp->buffers[i], sizeof(MVPBuffer));
+			vkUnmapMemory(device, mvp->deviceMemory[i]);
+			mvp->offset += sizeof(MVPBuffer);
 
-			vkMapMemory(vkSettings->device, renderData->uniformBuffersMemory[index], 0, renderData->uniformBuffersSize[index], 0, &renderData->uniformBuffersMapped[index]);
-			memcpy(renderData->uniformBuffersMapped[index], destinations[j], (size_t)renderData->uniformBuffersSize[index]);
-			vkUnmapMemory(vkSettings->device, renderData->uniformBuffersMemory[index]);
-			
-		}
+			// Fill Normals buffer
+			vkMapMemory(device, normal->deviceMemory[i], normal->offset, sizeof(NormalBuffer), 0, &normal->data);
+			memcpy(normal->data, normal->buffers[i], sizeof(NormalBuffer));
+			vkUnmapMemory(device, normal->deviceMemory[i]);
+			normal->offset += sizeof(NormalBuffer);
+
+			// Fill light buffer
+			vkMapMemory(device, lightBuf->deviceMemory[i], lightBuf->offset, sizeof(LightBuffer), 0, &lightBuf->data);
+			memcpy(lightBuf->data, lightBuf->buffers[i], sizeof(LightBuffer));
+			vkUnmapMemory(device, lightBuf->deviceMemory[i]);
+			lightBuf->offset += sizeof(LightBuffer);
+
+			// Fill view buffer
+			vkMapMemory(device, viewBuf->deviceMemory[i], viewBuf->offset, sizeof(ViewBuffer), 0, &viewBuf->data);
+			memcpy(viewBuf->data, viewBuf->buffers[i], sizeof(ViewBuffer));
+			vkUnmapMemory(device, viewBuf->deviceMemory[i]);
+			viewBuf->offset += sizeof(ViewBuffer);
+
+			// Fill object buffer
+			vkMapMemory(device, objectBuf->deviceMemory[i], objectBuf->offset, sizeof(ObjectPropertyBuffer), 0, &objectBuf->data);
+			memcpy(objectBuf->data, objectBuf->buffers[i], sizeof(ObjectPropertyBuffer));
+			vkUnmapMemory(device, objectBuf->deviceMemory[i]);
+			objectBuf->offset += sizeof(ObjectPropertyBuffer);
 	}
 }
 
-void BRenderingPipeline::SetVkDescriptorsForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
+void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
 {
 	auto renderData = primitives[primitiveName];
 	
 	renderData->descriptorLayoutBindings = descriptorLayoutBindings;
-	std::vector<VkDescriptorSetLayoutCreateInfo> infoForDescriptorLayouts;
-	std::unordered_map<VkShaderStageFlags, std::vector<VkDescriptorSetLayoutBinding>>& bindingsPerShaderStage = renderData->bindingsPerShaderStage;
-	for (auto bindingPtr = descriptorLayoutBindings.begin(); bindingPtr != descriptorLayoutBindings.end(); bindingPtr++)
+	uint16_t descriptorSetCount = 0, bindingCount = 0;
+	std::vector<VkDescriptorSetLayoutBinding>::iterator dlbIT = descriptorLayoutBindings.begin(), shaderStageStart = dlbIT, shaderStageEnd;
+	VkShaderStageFlags shaderStage = dlbIT->stageFlags;
+	std::vector<VkDescriptorSetLayoutCreateInfo> infoForDescriptorSetLayouts;
+	int index = 0;
+	// for every descriptor layout binding
+	for (; dlbIT != descriptorLayoutBindings.end(); ++dlbIT)
 	{
-		if (bindingsPerShaderStage.find(bindingPtr->stageFlags) == bindingsPerShaderStage.end())
-			bindingsPerShaderStage.insert({ bindingPtr->stageFlags, { *bindingPtr } });
-		else
-			bindingsPerShaderStage[bindingPtr->stageFlags].push_back(*bindingPtr);
-	}
-	for (auto bindingForShaderStagePtr = bindingsPerShaderStage.begin(); bindingForShaderStagePtr != bindingsPerShaderStage.end(); bindingForShaderStagePtr++)
-	{
-		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo =
+		// once we are looking at a binding for a different shader stage
+		if (dlbIT->stageFlags != shaderStage || dlbIT+1 == descriptorLayoutBindings.end())
 		{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.pNext = nullptr,
-			.flags = 0,
-			.bindingCount = (VkBool32)bindingForShaderStagePtr->second.size(),
-			.pBindings = bindingForShaderStagePtr->second.data(),
-		};
-		infoForDescriptorLayouts.push_back(descriptorLayoutInfo);
+			// grab the bindings for the previous shader stage
+			if (dlbIT + 1 == descriptorLayoutBindings.end())
+			{
+				bindingCount++;
+				shaderStageEnd = dlbIT + 1;
+				index -= (bindingCount - 1);
+			}
+			else
+				shaderStageEnd = dlbIT;
+			
+			// And save them to be created into their own descriptor set layout
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo =
+			{
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+				.pNext = VK_NULL_HANDLE,
+				.flags = 0,
+				.bindingCount = bindingCount,
+				.pBindings = &descriptorLayoutBindings[index]
+			};
+			infoForDescriptorSetLayouts.push_back(descriptorSetLayoutInfo);
+
+			++descriptorSetCount;
+			shaderStage = dlbIT->stageFlags;
+			shaderStageStart = dlbIT;
+			bindingCount = 1;
+		}
+		else
+			++bindingCount;
+
+		++index;
 	}
-	
-	renderData->descriptorSetLayouts.resize(infoForDescriptorLayouts.size());
+
+
+
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	for (VkBool32 i = 0; i < (VkBool32)infoForDescriptorLayouts.size(); i++)
+	renderData->descriptorSetLayouts.resize(infoForDescriptorSetLayouts.size());
+	for (int i = 0; i < infoForDescriptorSetLayouts.size(); ++i)
 	{
-		VkResult result = vkCreateDescriptorSetLayout(vkSettings->device, &infoForDescriptorLayouts[i], vkSettings->allocationCallback, &renderData->descriptorSetLayouts[i]);		
+		VkResult result = vkCreateDescriptorSetLayout(vkSettings->device, &infoForDescriptorSetLayouts[i], vkSettings->allocationCallback, &renderData->descriptorSetLayouts[i]);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Unable to create descriptor set layout!");
 		}
 	}
 
-	// if there is more than 1 descriptor layout
-	if (renderData->descriptorSetLayouts.size() > 1)
-	{
-		// create push constant ranges for each shader stage
-		VkBool32 offset = 0;
-		for (auto layoutPerShaderStage : bindingsPerShaderStage)
-		{
-			VkBool32 sizeOfShaderStage = (VkBool32)layoutPerShaderStage.second.size();
-			VkBool32 sizeOfPushConstant = sizeOfShaderStage % 4 == 0 ? sizeOfShaderStage : sizeOfShaderStage + 4 - sizeOfShaderStage % 4;
-			VkPushConstantRange pushConstant = {
-				.stageFlags = layoutPerShaderStage.second.front().stageFlags,
-				.offset = offset,
-				.size = sizeOfPushConstant
-			};
-			offset += pushConstant.size;
+	std::vector<VkDescriptorSet> & descriptorSets = renderData->descriptorSets;
+	descriptorSets.resize(descriptorSetCount);
 
-			renderData->pipelineBuilderParams.pushConstants.push_back(pushConstant);
-		}
+	auto descriptorSetAllocInfo = &vkSettings->descriptorInfo;
+	descriptorSetAllocInfo->descriptorPool = vkSettings->descriptorPool;
+	descriptorSetAllocInfo->descriptorSetCount = descriptorSetCount;
+	descriptorSetAllocInfo->pSetLayouts = renderData->descriptorSetLayouts.data();
+	descriptorSetAllocInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	vkAllocateDescriptorSets(vkSettings->device, &vkSettings->descriptorInfo, descriptorSets.data());
+	renderData->vertexUniformBuffers = {
+		*renderData->mvpParams->buffers,
+		*renderData->normalParams->buffers,
+
+	};
+
+	renderData->fragmentUniformBuffers = {
+		*renderData->lightParams->buffers,
+		*renderData->objParams->buffers,
+		*renderData->viewParams->buffers
+	};
+
+	std::vector<VkDescriptorBufferInfo> bufferInformationForDescriptorSet;
+	// buffer info for vertex shader stage
+	for (VkBuffer buffer : renderData->vertexUniformBuffers)
+	{
+		VkDescriptorBufferInfo bufferInfo = {
+		bufferInfo.buffer = buffer,
+		bufferInfo.offset = 0,
+		bufferInfo.range = VK_WHOLE_SIZE
+		};
+		bufferInformationForDescriptorSet.push_back(bufferInfo);
 	}
+	
+	// buffer info for fragment shader stage
+	for (VkBuffer buffer : renderData->fragmentUniformBuffers)
+	{
+		VkDescriptorBufferInfo bufferInfo = {
+		bufferInfo.buffer = buffer,
+		bufferInfo.offset = 0,
+		bufferInfo.range = VK_WHOLE_SIZE
+		};
+		bufferInformationForDescriptorSet.push_back(bufferInfo);
+	}
+	uint16_t fragmentBufferOffset = renderData->vertexUniformBuffers.size();
+
+	VkWriteDescriptorSet writeVertexDescriptorSet =
+	{
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.pNext = VK_NULL_HANDLE,
+		.dstSet = renderData->descriptorSets[0],
+		.dstBinding = 1,
+		.descriptorCount = (VkBool32)renderData->vertexUniformBuffers.size(),
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.pImageInfo = VK_NULL_HANDLE,
+		.pBufferInfo = bufferInformationForDescriptorSet.data(),
+		.pTexelBufferView = VK_NULL_HANDLE
+	};
+
+	VkWriteDescriptorSet writeFragmentDescriptorSet =
+	{
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.pNext = VK_NULL_HANDLE,
+		.dstSet = renderData->descriptorSets[1],
+		.dstBinding = 3,
+		.descriptorCount = (VkBool32)renderData->fragmentUniformBuffers.size(),
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.pImageInfo = VK_NULL_HANDLE,
+		.pBufferInfo = &bufferInformationForDescriptorSet[fragmentBufferOffset],
+		.pTexelBufferView = VK_NULL_HANDLE
+	};
+
+	std::vector<VkWriteDescriptorSet> writeDescriptorSets = { writeVertexDescriptorSet, writeFragmentDescriptorSet };
+	vkUpdateDescriptorSets(vkSettings->device, 2, writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
+	// if there is more than 1 descriptor layout
+	//if (renderData->descriptorSetLayouts.size() > 1)
+	//{
+	//	// create push constant ranges for each shader stage
+	//	VkBool32 offset = 0;
+	//	for (auto layoutPerShaderStage : bindingsPerShaderStage)
+	//	{
+	//		VkBool32 sizeOfShaderStage = (VkBool32)layoutPerShaderStage.second.size();
+	//		VkBool32 sizeOfPushConstant = sizeOfShaderStage % 4 == 0 ? sizeOfShaderStage : sizeOfShaderStage + 4 - sizeOfShaderStage % 4;
+	//		VkPushConstantRange pushConstant = {
+	//			.stageFlags = layoutPerShaderStage.second.front().stageFlags,
+	//			.offset = offset,
+	//			.size = sizeOfPushConstant
+	//		};
+	//		offset += pushConstant.size;
+
+	//		renderData->pipelineBuilderParams.pushConstants.push_back(pushConstant);
+	//	}
+	//}
+	//
+
+	//size_t descriptorCount = vkSettings->descriptorSets.size();
+	//vkSettings->descriptorSets.resize(descriptorCount + renderData->descriptorSetLayouts.size());
+	
+
 }
 
 void BRenderingPipeline::LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages)
@@ -932,14 +1059,14 @@ void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 		auto renderData = it->second;
 		// update mvp for model
 		UpdateTransformMatrix(it->first);
+		// TODO: Use Pipeline builder to dynamically create graphics pipeline for mesh
 		if(renderData->graphicsPipeline == NULL)
 			vulkanPipelineBuilder->CreateMeshShaderPipeline(&renderData->graphicsPipeline, renderData->pipelineBuilderParams);
-		// Set the order of the pipeline descriptors 
-		//for (int i = 0; i < (int)renderData->descriptorSetLayouts.size(); i++)
-		if(!vkSettings->descriptorSets.empty())
-			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+		// TODO: bind the specified descriptor sets that have the mesh's rendering data for the shaders
+
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
 			renderData->pipelineBuilderParams.pipelineLayouts[0], 0,
-			vkSettings->descriptorSets.size(), &vkSettings->descriptorSets[0], 0, 0);
+			(VkBool32)renderData->descriptorSets.size(), renderData->descriptorSets.data(), 0, 0);
 		// tell vulkan to use the graphics pipeline attached to current primitive
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderData->graphicsPipeline);
 

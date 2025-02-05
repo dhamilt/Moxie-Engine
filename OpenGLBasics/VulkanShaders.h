@@ -431,20 +431,20 @@ inline void VkShaderUtil::BindParams()
 	descriptorPoolInfo.pPoolSizes = &descriptorPoolSizes[0];
 	descriptorPoolInfo.maxSets = MAX_DESCRIPTOR_POOL_SIZE;
 
-	VkDescriptorPool descriptorPool;
-	result = vkCreateDescriptorPool(vkSettings->device, &descriptorPoolInfo, vkSettings->allocationCallback, &vkSettings->descriptorPool);
-	assert(result == VK_SUCCESS);
-
-	// Allocate the pool with Descriptor sets
-	auto descriptorAllocationInfo = &vkSettings->descriptorInfo;
-	descriptorAllocationInfo->descriptorPool = descriptorPool;
-	descriptorAllocationInfo->descriptorSetCount = bindingCount;
-	descriptorAllocationInfo->pNext = VK_NULL_HANDLE;
-	descriptorAllocationInfo->pSetLayouts = &shaderDescriptorLayout;
-	descriptorAllocationInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-;
-	vkSettings->descriptorSets.resize(bindingCount);
-
-	vkAllocateDescriptorSets(vkSettings->device, &vkSettings->descriptorInfo, &vkSettings->descriptorSets[0]);
+//	VkDescriptorPool descriptorPool;
+//	result = vkCreateDescriptorPool(vkSettings->device, &descriptorPoolInfo, vkSettings->allocationCallback, &vkSettings->descriptorPool);
+//	assert(result == VK_SUCCESS);
+//
+//	// Allocate the pool with Descriptor sets
+//	auto descriptorAllocationInfo = &vkSettings->descriptorInfo;
+//	descriptorAllocationInfo->descriptorPool = descriptorPool;
+//	descriptorAllocationInfo->descriptorSetCount = bindingCount;
+//	descriptorAllocationInfo->pNext = VK_NULL_HANDLE;
+//	descriptorAllocationInfo->pSetLayouts = &shaderDescriptorLayout;
+//	descriptorAllocationInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+//;
+//	vkSettings->descriptorSets.resize(bindingCount);
+//
+//	vkAllocateDescriptorSets(vkSettings->device, &vkSettings->descriptorInfo, &vkSettings->descriptorSets[0]);
 
 }
