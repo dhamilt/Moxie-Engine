@@ -14,6 +14,8 @@ class Material;
 class Mesh;
 struct CubemapData;
 
+#define MAX_LIGHT_COUNT 10
+
 struct MVPBuffer
 {
 	DMat4x4 model;
@@ -26,8 +28,8 @@ struct NormalBuffer
 	DMat3x3 normalMat;
 };
 
-struct LightBuffer
-{
+
+struct LightProperties {
 	bool isEnabled;
 	bool isLocal;
 	bool isSpot;
@@ -42,6 +44,13 @@ struct LightBuffer
 	float linearAttenuation;
 	float quadraticAttenuation;
 };
+struct LightBuffer
+{
+	LightProperties lights[MAX_LIGHT_COUNT];
+	int lightCount = MAX_LIGHT_COUNT;
+	float shininess;
+	float strength;	
+};
 
 struct ViewBuffer
 {
@@ -55,25 +64,19 @@ struct ObjectPropertyBuffer
 
 struct UniformBufferParams
 {
-	UniformBufferParams(uint16_t _count) :count(_count)
-	{
-		deviceMemory = (VkDeviceMemory*)malloc(sizeof(VkDeviceMemory) * count);
-		buffers	= (VkBuffer*)malloc(sizeof(VkBuffer) * count);
-	}
 	~UniformBufferParams()
 	{
-		if (deviceMemory)
-			free(deviceMemory);
-		if (buffers)
-			free(buffers);
-		/*if (data)
-			free(data);*/
+		auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+		vkFreeMemory(vkSettings->device, deviceMemory, vkSettings->allocationCallback);
+		vkDestroyBuffer(vkSettings->device, buffer, vkSettings->allocationCallback);
+		if (data)
+			free(data);
 	}
-	uint16_t count;
-	VkDeviceSize offset = 0;
-	VkDeviceMemory* deviceMemory;
-	VkBuffer* buffers;
-	void* data;
+
+	VkDeviceSize bufferSize = 0;
+	VkDeviceMemory deviceMemory;
+	VkBuffer buffer;
+	void* data = nullptr;
 };
 
 struct RenderBufferData
@@ -92,9 +95,11 @@ struct RenderBufferData
 	VkDeviceMemory vertexBufferMemory;
 	VkDeviceSize vertexBufferSize = 0;
 	VkDeviceSize vertexBufferOffset = 0;
+	char* vertexBufferData;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 	VkDeviceSize indexBufferSize = 0;
+	char* indexBufferData;
 	std::vector<VkVertexInputBindingDescription>inputBindingDescriptions;
 	std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
@@ -102,28 +107,29 @@ struct RenderBufferData
 	std::vector<VkDescriptorSet> descriptorSets;
 	std::unordered_map<VkShaderStageFlags, std::vector<VkDescriptorSetLayoutBinding>> bindingsPerShaderStage;
 	std::unordered_map<uint16_t, uint16_t> uniformBufferMemoryOffsets;
-	std::vector<VkBuffer> vertexUniformBuffers;
-	std::vector<VkBuffer> fragmentUniformBuffers;
+	std::vector<UniformBufferParams> uniformBufferParamsForShader;
 	std::vector<VkDeviceSize> uniformBuffersSize;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
 	MVPBuffer mvpBuffer;
-	UniformBufferParams* mvpParams;
 	NormalBuffer normalBuffer;
-	UniformBufferParams* normalParams;
-	LightBuffer LightBuffer;
-	UniformBufferParams* lightParams;
+	LightBuffer lightBuffer;
 	ViewBuffer viewBuffer;
-	UniformBufferParams* viewParams;	
-	UniformBufferParams* objParams;
-	ObjectPropertyBuffer objectBuffer;	
+	ObjectPropertyBuffer objectBuffer;
+
+	UniformBufferParams mvpParams;
+	UniformBufferParams normalParams;
+	UniformBufferParams lightParams;
+	UniformBufferParams viewParams;	
+	UniformBufferParams objParams;
+
 	VkPipeline graphicsPipeline;
 };
 
 static VkDescriptorSetLayoutBinding defaultVertexMVPDescriptorLayout = {
 	.binding = 0,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	.descriptorCount = 3,
+	.descriptorCount = 1,
 	.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
 	.pImmutableSamplers = nullptr
 };
@@ -139,7 +145,7 @@ static VkDescriptorSetLayoutBinding defaultVertexNormalsDescriptorLayout = {
 static VkDescriptorSetLayoutBinding defaultFragmentLightDescriptorLayout = {
 	.binding = 2,
 	.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	.descriptorCount = 4,
+	.descriptorCount = 1,
 	.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
 	.pImmutableSamplers = nullptr
 };
@@ -268,8 +274,6 @@ class BRenderingPipeline final
 	// Draw function for rendering cubemaps
 	void DrawCubeMap();
 
-public:
-	static const int MAX_LIGHT_COUNT;
 private:
 	// TODO: Create a class/struct that instructs the pipeline 
 	// what the intended usage of the framebuffer is

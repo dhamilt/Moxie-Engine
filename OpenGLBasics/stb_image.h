@@ -5267,7 +5267,7 @@ static int stbi__shiftsigned(unsigned int v, int shift, int bits)
 
 typedef struct
 {
-   int bpp, offset, hsz;
+   int bpp, size, hsz;
    unsigned int mr,mg,mb,ma, all_a;
    int extra_read;
 } stbi__bmp_data;
@@ -5279,12 +5279,12 @@ static void *stbi__bmp_parse_header(stbi__context *s, stbi__bmp_data *info)
    stbi__get32le(s); // discard filesize
    stbi__get16le(s); // discard reserved
    stbi__get16le(s); // discard reserved
-   info->offset = stbi__get32le(s);
+   info->size = stbi__get32le(s);
    info->hsz = hsz = stbi__get32le(s);
    info->mr = info->mg = info->mb = info->ma = 0;
    info->extra_read = 14;
 
-   if (info->offset < 0) return stbi__errpuc("bad BMP", "bad BMP");
+   if (info->size < 0) return stbi__errpuc("bad BMP", "bad BMP");
 
    if (hsz != 12 && hsz != 40 && hsz != 56 && hsz != 108 && hsz != 124) return stbi__errpuc("unknown BMP", "BMP type not supported: unknown");
    if (hsz == 12) {
@@ -5388,14 +5388,14 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
 
    if (info.hsz == 12) {
       if (info.bpp < 24)
-         psize = (info.offset - info.extra_read - 24) / 3;
+         psize = (info.size - info.extra_read - 24) / 3;
    } else {
       if (info.bpp < 16)
-         psize = (info.offset - info.extra_read - info.hsz) >> 2;
+         psize = (info.size - info.extra_read - info.hsz) >> 2;
    }
    if (psize == 0) {
-      STBI_ASSERT(info.offset == s->callback_already_read + (int) (s->img_buffer - s->img_buffer_original));
-      if (info.offset != s->callback_already_read + (s->img_buffer - s->buffer_start)) {
+      STBI_ASSERT(info.size == s->callback_already_read + (int) (s->img_buffer - s->img_buffer_original));
+      if (info.size != s->callback_already_read + (s->img_buffer - s->buffer_start)) {
         return stbi__errpuc("bad offset", "Corrupt BMP");
       }
    }
@@ -5425,7 +5425,7 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
          if (info.hsz != 12) stbi__get8(s);
          pal[i][3] = 255;
       }
-      stbi__skip(s, info.offset - info.extra_read - info.hsz - psize * (info.hsz == 12 ? 3 : 4));
+      stbi__skip(s, info.size - info.extra_read - info.hsz - psize * (info.hsz == 12 ? 3 : 4));
       if (info.bpp == 1) width = (s->img_x + 7) >> 3;
       else if (info.bpp == 4) width = (s->img_x + 1) >> 1;
       else if (info.bpp == 8) width = s->img_x;
@@ -5474,7 +5474,7 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
       int rshift=0,gshift=0,bshift=0,ashift=0,rcount=0,gcount=0,bcount=0,acount=0;
       int z = 0;
       int easy=0;
-      stbi__skip(s, info.offset - info.extra_read - info.hsz);
+      stbi__skip(s, info.size - info.extra_read - info.hsz);
       if (info.bpp == 24) width = 3 * s->img_x;
       else if (info.bpp == 16) width = 2*s->img_x;
       else /* bpp = 32 and pad = 0 */ width=0;

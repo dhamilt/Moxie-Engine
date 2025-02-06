@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "VulkanPlatformInit.h"
 #include "VulkanPipelineBuilder.h"
+//#include "VulkanErrorReporting.h"
 
 
 
@@ -145,6 +146,9 @@ void GLSetup::StartSDLWindow()
 	// Ensure that the debug callbacks were created
 	assert(platformInstance->SetupDebugCallbacks());
 
+	// Ensure that the allocation callback(s) were created
+	assert(platformInstance->SetupAllocationCallbacks());
+
 	// Ensure that the discrete gpu is being used
 	assert(platformInstance->GetPhysicalDevices());
 
@@ -233,7 +237,25 @@ void GLSetup::StartSDLWindow()
 	// Make sure that imgui is setup correctly on the SDL2 Window
 	assert(platformInstance->ImGuiVkSetup(sdlWindow));
 	ImGui_ImplSDL2_InitForVulkan(sdlWindow);
-	ImGui_ImplVulkan_Init(&platformInfo->imGuiInitInfo, platformInstance->GetInfo()->renderPass);
+
+	// Setup ImGui for vulkan
+	auto initInfo = &platformInfo->imGuiInitInfo;
+	initInfo->Instance = vkSettings->instance;
+	initInfo->PhysicalDevice = vkSettings->physicalDevices[vkSettings->discreteGPUIndex];
+	initInfo->Device = vkSettings->device;
+	initInfo->QueueFamily = vkSettings->queueFamilies[0];
+	initInfo->Queue = vkSettings->queue;
+	initInfo->PipelineCache = vkSettings->pipelineCache;
+	initInfo->DescriptorPool = vkSettings->descriptorPool;
+	initInfo->RenderPass = vkSettings->renderPass;
+	initInfo->Subpass = 0;
+	initInfo->MinImageCount = vkSettings->minImageCount;
+	initInfo->ImageCount = vkSettings->swapchainImageCount;
+	initInfo->MSAASamples = VK_NUM_OF_SAMPLES;
+	initInfo->Allocator = vkSettings->allocationCallback;
+	initInfo->CheckVkResultFn = Moxie::VKErrorReporting;
+
+	ImGui_ImplVulkan_Init(initInfo);
 
 	// Create clear values for Vulkan screen
 	clearValues = new VkClearValue[2];
@@ -646,7 +668,6 @@ DMat4x4 GLSetup::GetProjection()
 void GLSetup::AddRenderObject(Graphic* ptr)
 {
 	renderObjs.push_back(ptr);
-	printf("There are currently %d objects in the render queue.\n", (int)renderObjs.size());
 }
 
 // Remove render object if found in queue
@@ -683,7 +704,6 @@ void GLSetup::ScrollWheelCallback(int axisVal)
 void GLSetup::AddUIElement(GUI_Base* ptr)
 {
 	uiElements.push_back(ptr);
-	fprintf(stderr, "There are %d ui elements being drawn.", (int)uiElements.size());
 }
 
 void GLSetup::RemoveUIElement(GUI_Base* ptr)

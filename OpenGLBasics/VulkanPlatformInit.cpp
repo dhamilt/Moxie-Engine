@@ -1,11 +1,17 @@
 #include "glPCH.h"
 #include "VulkanPlatformInit.h"
 #include "GLSetup.h"
+
 #if __APPLE__
 bool isSupported = false;
 #else
 bool isSupported = true;
 #endif
+
+
+
+ 
+
 PVulkanPlatformInit::PVulkanPlatformInit()
 {
 }
@@ -121,9 +127,19 @@ bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
         // Initialize Vulkan Validation Layers
         currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
         currentVKSettings.layerCount++;
+  //      auto query = std::find(supportedExtensions.begin(), supportedExtensions.end(), [](std::string str) { return str.compare("VK_EXT_layer_settings") == 0; });
+		//if (query != supportedExtensions.end())
+		//{
+		//	currentVKSettings.extensions.push_back("VK_EXT_layer_settings");
+  //          currentVKSettings.extensionCount++;
+  //      }
+
+        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
+        supportedExtensions.resize(supportedExtensionCount);
+        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
 
         // Enable debug report extension
-        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         currentVKSettings.extensionCount++;
 
         
@@ -226,31 +242,31 @@ bool PVulkanPlatformInit::SetupDebugCallbacks()
 #if _DEBUG
 
     // Get the function pointer for extensions
-    auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(currentVKSettings.instance, "vkCreateDebugReportCallbackEXT");
-    assert(vkCreateDebugReportCallbackEXT != NULL);
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr(currentVKSettings.instance, "vkCreateDebugUtilsMessengerEXT"));
+    assert(vkCreateDebugUtilsMessengerEXT != NULL);
 
-    // Setup debug report callback
-    VkDebugReportCallbackCreateInfoEXT debugReportExt_cb = {};
-    debugReportExt_cb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    debugReportExt_cb.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
-        VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-    debugReportExt_cb.pfnCallback = (PFN_vkDebugReportCallbackEXT)DebugReportCallback;
-    debugReportExt_cb.pUserData = NULL;
+    //VkDebugReportCallbackCreateInfoEXT debugReportExt_cb = {};
+    //debugReportExt_cb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    //debugReportExt_cb.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
+    //    VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+    //debugReportExt_cb.pfnCallback = (PFN_vkDebugReportCallbackEXT)DebugReportCallback;
+    //debugReportExt_cb.pUserData = NULL;
 
-  /*  VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {};
+    VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {};
     debugUtilsMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugUtilsMessengerCreateInfo.pNext = VK_NULL_HANDLE;
     debugUtilsMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT|
                                                     VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
                                                     VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
                                                     VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-
+    debugUtilsMessengerCreateInfo.flags = 0;
     debugUtilsMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
                                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT 
                                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT 
                                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debugUtilsMessengerCreateInfo.pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)DebugReportCallback;*/
+    debugUtilsMessengerCreateInfo.pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)DebugUtilsMessengerCallback;
 
-    VkResult result = vkCreateDebugReportCallbackEXT(currentVKSettings.instance, &debugReportExt_cb, currentVKSettings.allocationCallback, &currentVKSettings.debugReportCallback);
+    VkResult result = vkCreateDebugUtilsMessengerEXT(currentVKSettings.instance, &debugUtilsMessengerCreateInfo, currentVKSettings.allocationCallback, &currentVKSettings.debugMessengerCallback);
 
     Moxie::VKErrorReporting(result);
     if (result != VK_SUCCESS)
@@ -259,6 +275,14 @@ bool PVulkanPlatformInit::SetupDebugCallbacks()
         return VK_FALSE;
     }
 #endif
+
+    return VK_TRUE;
+}
+
+bool PVulkanPlatformInit::SetupAllocationCallbacks()
+{
+    /*currentVKSettings.allocationCallback = new VkAllocationCallbacks();
+    currentVKSettings.allocationCallback->pfnAllocation = (PFN_vkAllocationFunction)AllocationCallback;*/
 
     return VK_TRUE;
 }

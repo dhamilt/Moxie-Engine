@@ -150,7 +150,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)SDL\lib\x64;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64;$(SolutionDir)OpenGL\glew-2.1.0\lib\Release\x64;$(SolutionDir)OpenGL\glfw-3.3.2.bin.WIN64\lib-vc2019;$(SolutionDir)assimp\lib\Debug;$(SolutionDir)Profiling\NVIDIA\lib\x64\NvPerfUtil;$(SolutionDir)Profiling\RapidYAML\lib;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)OpenGL\glew-2.1.0\lib\Release\x64;$(SolutionDir)OpenGL\glfw-3.3.2.bin.WIN64\lib-vc2019;$(SolutionDir)assimp\lib\Debug;$(SolutionDir)Profiling\NVIDIA\lib\x64\NvPerfUtil;$(SolutionDir)Profiling\RapidYAML\lib;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>EFX-Util.lib;LowLevel_static_64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;OpenAL32.lib;PhysX_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib;opengl32.Lib;glfw3.lib;glfw3dll.lib;glew32.lib;glew32s.lib;assimp-vc142-mtd.lib;IrrXMLd.lib;zlibd.lib;SDL2.lib;SDL2main.lib;nvperf_grfx_host.lib;ryml.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
@@ -239,9 +239,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="imgui\imgui_impl_sdl.cpp">
-      <DeploymentContent>true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
+    <ClCompile Include="imgui\imgui_impl_sdl2.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="imgui\imgui_impl_sdlrenderer.cpp">
@@ -357,10 +355,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     </ClInclude>
     <ClInclude Include="imgui\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="imgui\imgui_impl_osx.h" />
-    <ClInclude Include="imgui\imgui_impl_sdl.h">
-      <DeploymentContent>true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
-    </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_sdl2.h" />
     <ClInclude Include="imgui\imgui_impl_sdlrenderer.h" />
     <ClInclude Include="imgui\imgui_impl_vulkan.h" />
     <ClInclude Include="imgui\imgui_internal.h">

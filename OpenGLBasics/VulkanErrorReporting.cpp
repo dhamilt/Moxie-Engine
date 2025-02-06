@@ -6,7 +6,6 @@ void Moxie::VKErrorReporting(VkResult result)
 	switch (result)
 	{
 	case VK_SUCCESS:
-		printf("No error found.");
 		break;
 
 	case VK_NOT_READY:
@@ -138,7 +137,6 @@ void Moxie::VKErrorReporting(VkResult result)
 		break;
 
 	default:
-		printf("No error found.");
 		break;
 
 	}
