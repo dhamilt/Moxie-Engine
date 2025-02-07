@@ -34,11 +34,11 @@ void BRenderingPipeline::CleanupRenderingPipeline()
 
 #if USE_VULKAN
 		auto renderData = it->second;
-		vkDestroyBuffer(device, renderData->vertexBuffer, allocationCallback);
+		/*vkDestroyBuffer(device, renderData->vertexBufParams.buffer, allocationCallback);
 		vkFreeMemory(device, renderData->vertexBufferMemory, allocationCallback);
 
 		vkDestroyBuffer(device, renderData->indexBuffer, allocationCallback);
-		vkFreeMemory(device, renderData->indexBufferMemory, allocationCallback);
+		vkFreeMemory(device, renderData->indexBufferMemory, allocationCallback);*/
 		//for (uint16_t i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; ++i)
 		//{
 		//	vkDestroyBuffer(device, renderData->mvpParams.buffers[i], allocationCallback);
@@ -98,13 +98,13 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 		auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 		if (!data->vertices.empty())
 		{
-			vkDestroyBuffer(vkSettings->device, data->vertexBuffer, vkSettings->allocationCallback);
-			vkFreeMemory(vkSettings->device, data->vertexBufferMemory, vkSettings->allocationCallback);
+			vkDestroyBuffer(vkSettings->device, data->vertexBufParams.buffer, vkSettings->allocationCallback);
+			vkFreeMemory(vkSettings->device, data->vertexBufParams.deviceMemory, vkSettings->allocationCallback);
 		}
 		if (!data->indices.empty())
 		{
-			vkDestroyBuffer(vkSettings->device, data->indexBuffer, vkSettings->allocationCallback);
-			vkFreeMemory(vkSettings->device, data->indexBufferMemory, vkSettings->allocationCallback);
+			vkDestroyBuffer(vkSettings->device, data->indexBufParams.buffer, vkSettings->allocationCallback);
+			vkFreeMemory(vkSettings->device, data->indexBufParams.deviceMemory, vkSettings->allocationCallback);
 		}
 		// destroy uniform buffers and release memory associated
 		/*for (auto uniformBufferPtr = data->vertexUniformBuffers.begin(); uniformBufferPtr != data->vertexUniformBuffers.end(); uniformBufferPtr++)
@@ -152,7 +152,7 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 	FillVkIndexBuffer(primitiveName);
 
 	// Fill uniform buffers with data
-	FillVkUniformBuffers(primitiveName);
+	//FillVkUniformBuffers(primitiveName);
 #endif
 
 }
@@ -221,22 +221,18 @@ void BRenderingPipeline::CreateVkVertexBuffer(std::string primitiveName)
 {
 	// Reserve memory for vertex buffer
 	auto renderBufferData = primitives[primitiveName];
-	auto vertexBuffer = &renderBufferData->vertexBuffer;
+	UniformBufferParams& vertexBufParams = renderBufferData->vertexBufParams;
 	
 	
 	// set vertex buffer size
-	renderBufferData->vertexBufferSize = sizeof(renderBufferData->vertices[0]) * renderBufferData->vertices.size();
-
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = renderBufferData->vertexBufferSize;
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
+	vertexBufParams.bufferSize = sizeof(DVertex) * renderBufferData->vertices.size();
+	// Point to the data buffer should have
+	vertexBufParams.data = renderBufferData->vertices.data();
+	
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 
-	VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->vertexBufferSize,
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->vertexBuffer, renderBufferData->vertexBufferMemory, &vertexBuffer);
+	VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], 
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBufParams);
 
 }
 
@@ -244,20 +240,16 @@ void BRenderingPipeline::CreateVkIndexBuffer(std::string primitiveName)
 {
 	// Reserve memory for vertex buffer
 	auto renderBufferData = primitives[primitiveName];
-	auto indexBuffer = &renderBufferData->indexBuffer;
+	UniformBufferParams& indexBufParams = renderBufferData->indexBufParams;
 
 	// set index buffer size
-	renderBufferData->indexBufferSize = sizeof(renderBufferData->indices[0]) * renderBufferData->indices.size();
-
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = renderBufferData->indexBufferSize;
-	bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	indexBufParams.bufferSize = sizeof(uint16_t) * renderBufferData->indices.size();	
+	indexBufParams.data = renderBufferData->indices.data();
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], renderBufferData->indexBufferSize,
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, renderBufferData->indexBuffer, renderBufferData->indexBufferMemory, &indexBuffer);
+
+	VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex],
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBufParams);
 }
 
 void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
@@ -267,40 +259,40 @@ void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 
-	/*renderData->mvpParams = UniformBufferParams{};
-	renderData->normalParams = UniformBufferParams{};
-	renderData->lightParams = UniformBufferParams{};
-	renderData->viewParams = UniformBufferParams{};
-	renderData->objParams = UniformBufferParams{};*/
 
-	UniformBufferParams& mvp = renderData->mvpParams;
-	UniformBufferParams& normal = renderData->normalParams;
-	UniformBufferParams& lightBuf = renderData->lightParams;
-	UniformBufferParams& viewBuf = renderData->viewParams;
-	UniformBufferParams& objectBuf = renderData->objParams;
+	UniformBufferParams* mvp = &renderData->mvpParams;
+	mvp->bufferSize = sizeof(MVPBuffer);
+	mvp->data = &renderData->mvpBuffer;
+
+	UniformBufferParams* normal = &renderData->normalParams;
+	normal->bufferSize = sizeof(NormalBuffer);
+	normal->data = &renderData->normalBuffer;
+
+	UniformBufferParams* lightBuf = &renderData->lightParams;
+	lightBuf->bufferSize = sizeof(LightBuffer);
+	lightBuf->data = &renderData->lightBuffer;
+
+	UniformBufferParams* viewBuf = &renderData->viewParams;
+	viewBuf->bufferSize = sizeof(ViewBuffer);
+	viewBuf->data = &renderData->viewBuffer;
+
+	UniformBufferParams* objectBuf = &renderData->objParams;
+	objectBuf->bufferSize = sizeof(ObjectPropertyBuffer);
+	objectBuf->data = &renderData->objectBuffer;
 
 	/*for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
 	{		*/
+		VkPhysicalDevice gpu = vkSettings->physicalDevices[vkSettings->discreteGPUIndex];
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, gpu, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *mvp);
+
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, gpu, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *normal);
 		
-		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(MVPBuffer),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mvp.buffer, mvp.deviceMemory, &renderData->mvpBuffer);
-		mvp.bufferSize = sizeof(MVPBuffer);
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, gpu,	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *lightBuf);		
 
-		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(NormalBuffer),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, normal.buffer, normal.deviceMemory, &renderData->normalBuffer);
-		normal.bufferSize = sizeof(NormalBuffer);
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, gpu, 	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *viewBuf);
 
-		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(LightBuffer),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, lightBuf.buffer, lightBuf.deviceMemory, &renderData->lightBuffer);
-		lightBuf.bufferSize = sizeof(LightBuffer);
-
-		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(ViewBuffer),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, viewBuf.buffer, viewBuf.deviceMemory, &renderData->viewBuffer);
-		viewBuf.bufferSize = sizeof(ViewBuffer);
-
-		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, vkSettings->physicalDevices[vkSettings->discreteGPUIndex], sizeof(ObjectPropertyBuffer),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, objectBuf.buffer, objectBuf.deviceMemory, &renderData->objectBuffer);
-		objectBuf.bufferSize = sizeof(ObjectPropertyBuffer);
+		VulkanFunctionLibrary::CreateVkBuffer(vkSettings->device, vkSettings->allocationCallback, gpu,	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *objectBuf);
+		
 	//}
 }
 
@@ -308,20 +300,25 @@ void BRenderingPipeline::FillVkVertexBuffer(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	void* data;
-	vkMapMemory(vkSettings->device, renderData->vertexBufferMemory, 0, renderData->vertexBufferSize, 0, &data);
-	memcpy(data, renderData->vertices.data(), renderData->vertexBufferSize);
-	vkUnmapMemory(vkSettings->device, renderData->vertexBufferMemory);
+	
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->vertexBufParams);
+
+	//void* data;
+	//vkMapMemory(vkSettings->device, vertBufParams.deviceMemory, 0, vertBufParams.bufferSize, 0, &data);
+	//memcpy(data, renderData->vertices.data(), vertBufParams.bufferSize);
+	//vkUnmapMemory(vkSettings->device, vertBufParams.deviceMemory);
 }
 
 void BRenderingPipeline::FillVkIndexBuffer(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	void* data;
-	vkMapMemory(vkSettings->device, renderData->indexBufferMemory, 0, renderData->indexBufferSize, 0, &data);
-	memcpy(data, renderData->indices.data(), (size_t)renderData->indexBufferSize);
-	vkUnmapMemory(vkSettings->device, renderData->indexBufferMemory);
+
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->indexBufParams);
+	/*void* data;
+	vkMapMemory(vkSettings->device, indexBufParams.deviceMemory, 0, indexBufParams.bufferSize, 0, &data);
+	memcpy(data, renderData->indices.data(), indexBufParams.bufferSize);
+	vkUnmapMemory(vkSettings->device, indexBufParams.deviceMemory);*/
 }
 
 void BRenderingPipeline::FillVkUniformBuffers(std::string primitiveName)
@@ -406,14 +403,23 @@ void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveN
 	vkAllocateDescriptorSets(vkSettings->device, &vkSettings->descriptorInfo, &descriptorSet);
 	renderData->descriptorSets.push_back(descriptorSet);
 
-	renderData->uniformBufferParamsForShader = {
-		renderData->mvpParams,
-		renderData->normalParams,
-		renderData->lightParams,
-		renderData->viewParams,
-		renderData->objParams
+	// Fill each uniform buffer with its initial data for descriptor set	
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->mvpParams);
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->normalParams);
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->lightParams);
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->viewParams);
+	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->objParams);
+
+
+
+	std::vector<UniformBufferParams*> uniformBufferParams
+	{
+		&renderData->mvpParams,
+		&renderData->normalParams,
+		&renderData->lightParams,
+		&renderData->viewParams,
+		&renderData->objParams
 	};
-	const std::vector<UniformBufferParams>& uniformBufferParams = renderData->uniformBufferParamsForShader;
 	std::vector<VkDescriptorBufferInfo> bufferInformationForDescriptorSet;
 
 	// Create mapping between descriptor layout bindings and buffer info associated
@@ -426,65 +432,77 @@ void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveN
 	};
 	int bindingIndex = 0;
 	// buffer info for shader stages and mapping
-	
-	const UniformBufferParams* param = &uniformBufferParams[bindingIndex];
-	// mvp buffer info
-	VkDescriptorBufferInfo mvpBufInfo =
+	for (const UniformBufferParams* params : uniformBufferParams)
 	{
-		.buffer = uniformBufferParams[0].buffer,
-		.offset = 0,
-		.range = sizeof(MVPBuffer)
-	};
+		VkDescriptorBufferInfo info =
+		{
+			.buffer = params->buffer,
+			.offset = 0,
+			.range = params->bufferSize
+		};
+		layoutBindingToBufferMapping[bindingIndex] = info;
+		bindingIndex++;
+	}
 
-	layoutBindingToBufferMapping[bindingIndex] = mvpBufInfo;
 
-	++param;
-	++bindingIndex;
+	//const UniformBufferParams** param = uniformBufferParams.data();
+	//// mvp buffer info
+	//VkDescriptorBufferInfo mvpBufInfo =
+	//{
+	//	.buffer = (*param)->buffer,
+	//	.offset = 0,
+	//	.range = sizeof(MVPBuffer)
+	//};
 
-	// normal buffer info
-	VkDescriptorBufferInfo normalInfo =
-	{
-		.buffer = param->buffer,
-		.offset = 0,
-		.range = sizeof(NormalBuffer)
-	};
-	layoutBindingToBufferMapping[bindingIndex] = normalInfo;
+	//layoutBindingToBufferMapping[bindingIndex] = mvpBufInfo;
 
-	++param;
-	++bindingIndex;
+	//++param;
+	//++bindingIndex;
 
-	// light buffer info
-	VkDescriptorBufferInfo lightBufInfo =
-	{
-		.buffer = param->buffer,
-		.offset = 0,
-		.range = sizeof(LightBuffer)
-	};
-	layoutBindingToBufferMapping[bindingIndex] = lightBufInfo;
-	
+	//// normal buffer info
+	//VkDescriptorBufferInfo normalInfo =
+	//{
+	//	.buffer = param->buffer,
+	//	.offset = 0,
+	//	.range = sizeof(NormalBuffer)
+	//};
+	//layoutBindingToBufferMapping[bindingIndex] = normalInfo;
 
-	++param;
-	++bindingIndex;
+	//++param;
+	//++bindingIndex;
 
-	// view property buffer info
-	VkDescriptorBufferInfo viewInfo =
-	{
-		.buffer = param->buffer,
-		.offset = 0,
-		.range = sizeof(ViewBuffer)
-	};
-	layoutBindingToBufferMapping[bindingIndex] = viewInfo;
+	//// light buffer info
+	//VkDescriptorBufferInfo lightBufInfo =
+	//{
+	//	.buffer = param->buffer,
+	//	.offset = 0,
+	//	.range = sizeof(LightBuffer)
+	//};
+	//layoutBindingToBufferMapping[bindingIndex] = lightBufInfo;
+	//
 
-	++param;
-	++bindingIndex;
-	// object property buffer info
-	VkDescriptorBufferInfo objBufInfo =
-	{
-		.buffer = param->buffer,
-		.offset = 0,
-		.range = sizeof(ObjectPropertyBuffer)
-	};
-	layoutBindingToBufferMapping[bindingIndex] = objBufInfo
+	//++param;
+	//++bindingIndex;
+
+	//// view property buffer info
+	//VkDescriptorBufferInfo viewInfo =
+	//{
+	//	.buffer = param->buffer,
+	//	.offset = 0,
+	//	.range = sizeof(ViewBuffer)
+	//};
+	//layoutBindingToBufferMapping[bindingIndex] = viewInfo;
+
+	//++param;
+	//++bindingIndex;
+	//// object property buffer info
+	//VkDescriptorBufferInfo objBufInfo =
+	//{
+	//	.buffer = param->buffer,
+	//	.offset = 0,
+	//	.range = sizeof(ObjectPropertyBuffer)
+	//};
+	//layoutBindingToBufferMapping[bindingIndex] = objBufInfo
 		;
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 	for (const VkDescriptorSetLayoutBinding& binding : descriptorLayoutBindings)
@@ -1023,8 +1041,8 @@ void BRenderingPipeline::DrawVk(VkCommandBuffer cmdBuffer)
 	auto it = primitives.begin();
 	for (;it != primitives.end(); it++)
 	{
-		vertexBuffers.push_back(it->second->vertexBuffer);
-		offsets.push_back(it->second->vertexBufferOffset);
+		vertexBuffers.push_back(it->second->vertexBufParams.buffer);
+		offsets.push_back(it->second->vertexBufParams.bufferSize);
 	}
 
 	vkCmdBindVertexBuffers(cmdBuffer, 0, (VkBool32)vertexBuffers.size(),
@@ -1058,9 +1076,9 @@ void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderData->graphicsPipeline);
 
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1,
-			&renderData->vertexBuffer, &renderData->vertexBufferOffset);
+			&renderData->vertexBufParams.buffer, &renderData->vertexBufParams.bufferSize);
 
-		vkCmdBindIndexBuffer(cmdBuffer, renderData->indexBuffer, 0,
+		vkCmdBindIndexBuffer(cmdBuffer, renderData->indexBufParams.buffer, 0,
 			VK_INDEX_TYPE_UINT16);
 
 		vkCmdDrawIndexed(cmdBuffer, (VkBool32)renderData->indices.size(),

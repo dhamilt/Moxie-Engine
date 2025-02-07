@@ -7,82 +7,47 @@
       "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\RenderingPipeline.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPlatformInit.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPlatformInit.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\include\\__msvc_string_view.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\GLSetup.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanErrorReporting.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanErrorReporting.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanFunctionLibrary.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPipelineBuilder.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPipelineBuilder.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\RenderingPipeline.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\RenderingPipeline.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.h||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\GLSetup.h||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanFunctionLibrary.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPipelineBuilder.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPipelineBuilder.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files (x86)\\Windows Kits\\10\\Source\\10.0.26100.0\\ucrt\\heap\\debug_heap.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\core\\buffer.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanFunctionLibrary.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\MeshComponent.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\MeshComponent.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPlatformInit.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\PlatformInit.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\PlatformInit.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPlatformInit.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLWindow.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\GLWindow.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanErrorReporting.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanErrorReporting.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\GLSetup.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_vulkan.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\imgui_impl_vulkan.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_vulkan.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\imgui_impl_vulkan.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_sdl2.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\imgui_impl_sdl2.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\implot.h||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\implot.h||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_tables.cpp||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\imgui_tables.cpp||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_demo.cpp||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\imgui_demo.cpp||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_opengl3.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\imgui\\imgui_impl_opengl3.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.h||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\GLSetup.h||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui.cpp||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -91,9 +56,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPipelineBuilder.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\VulkanPipelineBuilder.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\api_vulkan_sample.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\vertex.shader||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -136,23 +98,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\EventHandler.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{19C200E4-5A23-4FE0-A943-5DB7BCD03309}|OpenGLBasics\\MoxieEngine.vcxproj|solutionrelative:OpenGLBasics\\EventHandler.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\DefaultMat.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:OpenGLBasics\\DefaultMat.frag||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\DefaultMat.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:OpenGLBasics\\DefaultMat.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\common\\vk_initializers.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\samples\\api\\instancing\\instancing.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\samples\\api\\instancing\\instancing.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -166,16 +111,17 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 2,
               "Title": "RenderingPipeline.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\RenderingPipeline.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\RenderingPipeline.h",
               "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\RenderingPipeline.h",
               "RelativeToolTip": "OpenGLBasics\\RenderingPipeline.h",
-              "ViewState": "AgIAAE0AAAAAAAAAAAAAAE0AAAARAAAAAAAAAA==",
+              "ViewState": "AgIAADMAAAAAAAAAAAAAAEcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2023-10-16T19:46:48.971Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -185,7 +131,7 @@
               "RelativeDocumentMoniker": "OpenGLBasics\\RenderingPipeline.cpp",
               "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\RenderingPipeline.cpp",
               "RelativeToolTip": "OpenGLBasics\\RenderingPipeline.cpp",
-              "ViewState": "AgIAANoBAAAAAAAAAAAIwO8BAAAwAAAAAAAAAA==",
+              "ViewState": "AgIAAFwAAAAAAAAAAAAAAEgBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2023-09-11T05:46:42.029Z",
               "IsPinned": true,
@@ -193,7 +139,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 1,
               "Title": "VulkanPipelineBuilder.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPipelineBuilder.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\VulkanPipelineBuilder.h",
@@ -202,11 +148,12 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2023-10-17T01:36:24.444Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 13,
               "Title": "VulkanPipelineBuilder.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPipelineBuilder.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\VulkanPipelineBuilder.cpp",
@@ -219,7 +166,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 11,
               "Title": "GLSetup.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\GLSetup.h",
@@ -232,13 +179,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 10,
               "Title": "GLSetup.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\GLSetup.cpp",
               "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLSetup.cpp",
               "RelativeToolTip": "OpenGLBasics\\GLSetup.cpp",
-              "ViewState": "AgIAAHoCAAAAAAAAAAAswJ4CAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAIwDgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2023-09-09T03:04:01.464Z",
               "IsPinned": true,
@@ -246,7 +193,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 24,
+              "DocumentIndex": 14,
               "Title": "vertex.shader",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\vertex.shader",
               "RelativeDocumentMoniker": "OpenGLBasics\\vertex.shader",
@@ -259,7 +206,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 25,
+              "DocumentIndex": 15,
               "Title": "fragment.shader",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\fragment.shader",
               "RelativeDocumentMoniker": "OpenGLBasics\\fragment.shader",
@@ -276,143 +223,98 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "__msvc_string_view.hpp",
-              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\include\\__msvc_string_view.hpp",
-              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\include\\__msvc_string_view.hpp",
-              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\include\\__msvc_string_view.hpp",
-              "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\include\\__msvc_string_view.hpp",
-              "ViewState": "AgIAAGIBAAAAAAAAAAAIwHgBAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-06T17:21:53.962Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "VulkanErrorReporting.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanErrorReporting.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\VulkanErrorReporting.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanErrorReporting.cpp",
-              "RelativeToolTip": "OpenGLBasics\\VulkanErrorReporting.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAhAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "debug_heap.cpp",
+              "DocumentMoniker": "C:\\Program Files (x86)\\Windows Kits\\10\\Source\\10.0.26100.0\\ucrt\\heap\\debug_heap.cpp",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files (x86)\\Windows Kits\\10\\Source\\10.0.26100.0\\ucrt\\heap\\debug_heap.cpp",
+              "ToolTip": "C:\\Program Files (x86)\\Windows Kits\\10\\Source\\10.0.26100.0\\ucrt\\heap\\debug_heap.cpp",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files (x86)\\Windows Kits\\10\\Source\\10.0.26100.0\\ucrt\\heap\\debug_heap.cpp",
+              "ViewState": "AgIAAFwFAAAAAAAAAAAEwH4FAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-06T16:55:45.005Z",
+              "WhenOpened": "2025-02-07T01:42:15.086Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "VulkanPlatformInit.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.h",
-              "RelativeDocumentMoniker": "OpenGLBasics\\VulkanPlatformInit.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.h",
-              "RelativeToolTip": "OpenGLBasics\\VulkanPlatformInit.h",
-              "ViewState": "AgIAAA4BAAAAAAAAAAAIwC4BAAAYAAAAAAAAAA==",
+              "DocumentIndex": 7,
+              "Title": "PlatformInit.h",
+              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\PlatformInit.h",
+              "RelativeDocumentMoniker": "OpenGLBasics\\PlatformInit.h",
+              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\PlatformInit.h",
+              "RelativeToolTip": "OpenGLBasics\\PlatformInit.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2023-09-09T16:35:01.528Z",
+              "WhenOpened": "2025-02-06T22:19:11.476Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
+              "Title": "VulkanFunctionLibrary.cpp",
+              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.cpp",
+              "RelativeDocumentMoniker": "OpenGLBasics\\VulkanFunctionLibrary.cpp",
+              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.cpp",
+              "RelativeToolTip": "OpenGLBasics\\VulkanFunctionLibrary.cpp",
+              "ViewState": "AgIAABsAAAAAAAAAAAAWwD4AAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-06T20:16:34.748Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
               "Title": "VulkanPlatformInit.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\VulkanPlatformInit.cpp",
               "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.cpp",
               "RelativeToolTip": "OpenGLBasics\\VulkanPlatformInit.cpp",
-              "ViewState": "AgIAAN4AAAAAAAAAAAAIwPgAAAAcAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2023-09-09T03:25:56.115Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "implot.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\implot.h",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\implot.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\implot.h",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\implot.h",
-              "ViewState": "AgIAAAcCAAAAAAAAAAAWwCICAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T17:02:03.201Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "imgui_tables.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_tables.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui_tables.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_tables.cpp",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\imgui_tables.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAhAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T17:02:03.117Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 9,
               "Title": "GLWindow.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLWindow.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\GLWindow.cpp",
               "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GLWindow.cpp",
               "RelativeToolTip": "OpenGLBasics\\GLWindow.cpp",
-              "ViewState": "AgIAAG8AAAAAAAAAAAAhwIYAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAF8AAAAAAAAAAAAIwIYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2023-10-16T20:07:28.158Z"
+              "WhenOpened": "2023-10-16T20:07:28.158Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 5,
               "Title": "VulkanFunctionLibrary.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\VulkanFunctionLibrary.h",
               "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanFunctionLibrary.h",
               "RelativeToolTip": "OpenGLBasics\\VulkanFunctionLibrary.h",
-              "ViewState": "AgIAAGIAAAAAAAAAAAAmwIYAAAAKAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2023-10-18T00:36:17.908Z"
+              "WhenOpened": "2023-10-18T00:36:17.908Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "MeshComponent.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\MeshComponent.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\MeshComponent.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\MeshComponent.cpp",
-              "RelativeToolTip": "OpenGLBasics\\MeshComponent.cpp",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAhwBUAAAAYAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T23:44:54.678Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "buffer.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\core\\buffer.h",
-              "RelativeDocumentMoniker": "..\\Vulkan-Samples\\framework\\core\\buffer.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\core\\buffer.h",
-              "RelativeToolTip": "..\\Vulkan-Samples\\framework\\core\\buffer.h",
-              "ViewState": "AgIAAGwAAAAAAAAAAAAEwJAAAAAWAAAAAAAAAA==",
+              "DocumentIndex": 6,
+              "Title": "VulkanPlatformInit.h",
+              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.h",
+              "RelativeDocumentMoniker": "OpenGLBasics\\VulkanPlatformInit.h",
+              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanPlatformInit.h",
+              "RelativeToolTip": "OpenGLBasics\\VulkanPlatformInit.h",
+              "ViewState": "AgIAADgAAAAAAAAAAAAWwFAAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T04:32:12.298Z"
+              "WhenOpened": "2023-09-09T16:35:01.528Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
-              "Title": "imgui_demo.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_demo.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui_demo.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_demo.cpp",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\imgui_demo.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAmwOEpAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T17:02:03Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 12,
               "Title": "imgui.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui.cpp",
@@ -424,139 +326,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "imgui_impl_vulkan.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_vulkan.h",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui_impl_vulkan.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_vulkan.h",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\imgui_impl_vulkan.h",
-              "ViewState": "AgIAAEYAAAAAAAAAAAAWwGkAAAA1AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T18:22:28.893Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "imgui_impl_vulkan.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_vulkan.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui_impl_vulkan.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_vulkan.cpp",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\imgui_impl_vulkan.cpp",
-              "ViewState": "AgIAAFEEAAAAAAAAAAAWwHQEAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T18:57:00.801Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "VulkanErrorReporting.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanErrorReporting.h",
-              "RelativeDocumentMoniker": "OpenGLBasics\\VulkanErrorReporting.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\VulkanErrorReporting.h",
-              "RelativeToolTip": "OpenGLBasics\\VulkanErrorReporting.h",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T19:22:11.108Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "imgui_impl_opengl3.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_opengl3.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui_impl_opengl3.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_opengl3.cpp",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\imgui_impl_opengl3.cpp",
-              "ViewState": "AgIAABsCAAAAAAAAAAAWwCACAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T18:08:58.891Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "imgui_impl_sdl2.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_sdl2.cpp",
-              "RelativeDocumentMoniker": "OpenGLBasics\\imgui\\imgui_impl_sdl2.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\imgui\\imgui_impl_sdl2.cpp",
-              "RelativeToolTip": "OpenGLBasics\\imgui\\imgui_impl_sdl2.cpp",
-              "ViewState": "AgIAAJMEAAAAAAAAAAAWwLYEAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T18:38:50.293Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 35,
-              "Title": "DefaultMat.frag",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\DefaultMat.frag",
-              "RelativeDocumentMoniker": "OpenGLBasics\\DefaultMat.frag",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\DefaultMat.frag",
-              "RelativeToolTip": "OpenGLBasics\\DefaultMat.frag",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAA1AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2025-02-05T15:43:46.816Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 36,
-              "Title": "DefaultMat.vert",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\DefaultMat.vert",
-              "RelativeDocumentMoniker": "OpenGLBasics\\DefaultMat.vert",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\DefaultMat.vert",
-              "RelativeToolTip": "OpenGLBasics\\DefaultMat.vert",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAbAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2025-02-05T15:43:23.545Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 37,
-              "Title": "vk_initializers.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\common\\vk_initializers.h",
-              "RelativeDocumentMoniker": "..\\Vulkan-Samples\\framework\\common\\vk_initializers.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\common\\vk_initializers.h",
-              "RelativeToolTip": "..\\Vulkan-Samples\\framework\\common\\vk_initializers.h",
-              "ViewState": "AgIAAFUBAAAAAAAAAAAawHYBAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T12:03:43.286Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
-              "Title": "api_vulkan_sample.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\api_vulkan_sample.h",
-              "RelativeDocumentMoniker": "..\\Vulkan-Samples\\framework\\api_vulkan_sample.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\framework\\api_vulkan_sample.h",
-              "RelativeToolTip": "..\\Vulkan-Samples\\framework\\api_vulkan_sample.h",
-              "ViewState": "AgIAAFcAAAAAAAAAAADwv20AAAAVAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T04:31:49.038Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 38,
-              "Title": "instancing.h",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\samples\\api\\instancing\\instancing.h",
-              "RelativeDocumentMoniker": "..\\Vulkan-Samples\\samples\\api\\instancing\\instancing.h",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\samples\\api\\instancing\\instancing.h",
-              "RelativeToolTip": "..\\Vulkan-Samples\\samples\\api\\instancing\\instancing.h",
-              "ViewState": "AgIAAEEAAAAAAAAAAADwv1kAAAASAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-05T04:28:37.417Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 39,
-              "Title": "instancing.cpp",
-              "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\samples\\api\\instancing\\instancing.cpp",
-              "RelativeDocumentMoniker": "..\\Vulkan-Samples\\samples\\api\\instancing\\instancing.cpp",
-              "ToolTip": "C:\\Users\\dnlha\\Documents\\VS Projects\\Vulkan-Samples\\samples\\api\\instancing\\instancing.cpp",
-              "RelativeToolTip": "..\\Vulkan-Samples\\samples\\api\\instancing\\instancing.cpp",
-              "ViewState": "AgIAALkAAAAAAAAAAAAAANMAAADBAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-05T04:28:37.274Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 27,
+              "DocumentIndex": 17,
               "Title": "Renderer.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\MultithreadedProjects\\AudioVisualVulkan\\Renderer.h",
               "RelativeDocumentMoniker": "..\\MultithreadedProjects\\AudioVisualVulkan\\Renderer.h",
@@ -568,7 +338,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 26,
+              "DocumentIndex": 16,
               "Title": "Renderer.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\MultithreadedProjects\\AudioVisualVulkan\\Renderer.cpp",
               "RelativeDocumentMoniker": "..\\MultithreadedProjects\\AudioVisualVulkan\\Renderer.cpp",
@@ -580,7 +350,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 31,
+              "DocumentIndex": 21,
               "Title": "BaseObject.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\BaseObject.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\BaseObject.h",
@@ -592,7 +362,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 29,
+              "DocumentIndex": 19,
               "Title": "BaseObject.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\BaseObject.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\BaseObject.cpp",
@@ -604,7 +374,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 30,
+              "DocumentIndex": 20,
               "Title": "GameLoop.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GameLoop.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\GameLoop.h",
@@ -616,7 +386,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 28,
+              "DocumentIndex": 18,
               "Title": "GameLoop.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\GameLoop.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\GameLoop.cpp",
@@ -628,7 +398,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 34,
+              "DocumentIndex": 24,
               "Title": "EventHandler.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\EventHandler.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\EventHandler.h",
@@ -640,7 +410,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 33,
+              "DocumentIndex": 23,
               "Title": "MouseCapture.cpp",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\MouseCapture.cpp",
               "RelativeDocumentMoniker": "OpenGLBasics\\MouseCapture.cpp",
@@ -652,7 +422,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 32,
+              "DocumentIndex": 22,
               "Title": "MouseCapture.h",
               "DocumentMoniker": "C:\\Users\\dnlha\\Documents\\VS Projects\\Moxie-Engine\\OpenGLBasics\\MouseCapture.h",
               "RelativeDocumentMoniker": "OpenGLBasics\\MouseCapture.h",

@@ -68,9 +68,7 @@ struct UniformBufferParams
 	{
 		auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 		vkFreeMemory(vkSettings->device, deviceMemory, vkSettings->allocationCallback);
-		vkDestroyBuffer(vkSettings->device, buffer, vkSettings->allocationCallback);
-		if (data)
-			free(data);
+		vkDestroyBuffer(vkSettings->device, buffer, vkSettings->allocationCallback);		
 	}
 
 	VkDeviceSize bufferSize = 0;
@@ -91,7 +89,7 @@ struct RenderBufferData
 	std::shared_ptr<Shader> shader;
 	std::vector<VkShaderStageConfigs> vkShaderStageFiles;
 	VkPipelineBuilderParams pipelineBuilderParams;
-	VkBuffer vertexBuffer;
+	/*VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 	VkDeviceSize vertexBufferSize = 0;
 	VkDeviceSize vertexBufferOffset = 0;
@@ -99,7 +97,7 @@ struct RenderBufferData
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 	VkDeviceSize indexBufferSize = 0;
-	char* indexBufferData;
+	char* indexBufferData;*/
 	std::vector<VkVertexInputBindingDescription>inputBindingDescriptions;
 	std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
@@ -110,7 +108,9 @@ struct RenderBufferData
 	std::vector<UniformBufferParams> uniformBufferParamsForShader;
 	std::vector<VkDeviceSize> uniformBuffersSize;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
-	std::vector<void*> uniformBuffersMapped;
+	UniformBufferParams vertexBufParams;
+	UniformBufferParams indexBufParams;
+
 	MVPBuffer mvpBuffer;
 	NormalBuffer normalBuffer;
 	LightBuffer lightBuffer;
