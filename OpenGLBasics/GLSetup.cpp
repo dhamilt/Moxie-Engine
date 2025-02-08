@@ -364,8 +364,12 @@ void GLSetup::Render()
 		view = mainCamera->GetViewMatrix();
 		pipeline->UpdateViewMatrix(view);
 
-		// get projection matrix
+		// update the projection matrix
 		pipeline->UpdateProjectionMatrix(fov, (float)width, (float)height, nearClippingPlane, farClippingPlane);
+
+		// update the transform data for all primitives in scene
+		pipeline->UpdateTransforms();
+
 
 #if USE_OPENGL
 		pipeline->LoadCurrentFramebuffer();

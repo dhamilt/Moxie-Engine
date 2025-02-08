@@ -44,6 +44,7 @@ bool Cubemaps::IsValid()
 
 void Cubemaps::AddToBuffer()
 {
+#if USE_OPENGL
 	// Generate the buffers for the vertex array and
 	// the vertex buffer objects for the cubemap
 	glGenVertexArrays(1, &vao);
@@ -65,6 +66,9 @@ void Cubemaps::AddToBuffer()
 		(void*)0
 		
 	);	
+#elif USE_VULKAN
+
+#endif
 
 }
 

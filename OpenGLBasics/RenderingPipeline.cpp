@@ -770,11 +770,33 @@ void BRenderingPipeline::UpdateViewMatrix(DMat4x4 _view)
 void BRenderingPipeline::UpdateTransformMatrix(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
-	renderData->mvpBuffer = {
-		.model = renderData->transform,
-		.view = viewMatrix,
-		.projection = projectionMatrix,
-	};
+	if (renderData)
+	{
+		renderData->mvpBuffer.model = renderData->transform;
+		renderData->mvpBuffer.view = viewMatrix;
+		renderData->mvpBuffer.projection = projectionMatrix;		
+	}
+}
+
+void BRenderingPipeline::UpdateTransforms()
+{
+	for (auto it = primitives.begin(); it != primitives.end(); ++it)
+	{
+		UpdateTransformMatrix(it->first);
+		UpdateTransformOnGpu(it->first);
+	}
+}
+
+void BRenderingPipeline::UpdateTransformOnGpu(std::string primitive)
+{
+	auto renderData = primitives[primitive];
+	VulkanFunctionLibrary::FillVkBuffer(PVulkanPlatformInit::Get()->GetInfo()->device, renderData->mvpParams);
+}
+
+void BRenderingPipeline::UpdateAllTransformsOnGpu()
+{
+	for (auto it = primitives.begin(); it != primitives.end(); ++it)
+		UpdateTransformOnGpu(it->first);
 }
 
 void BRenderingPipeline::CreateDefaultShader()

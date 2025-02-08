@@ -227,6 +227,12 @@ class BRenderingPipeline final
 	void UpdateViewMatrix(DMat4x4 _view);
 	// Updates MVP matrix of primitive
 	void UpdateTransformMatrix(std::string primitiveName);
+	// Updates the MVP matrices of all primitives in the scene
+	void UpdateTransforms();
+	// Send mvp data to shader(s) tied to primitive
+	void UpdateTransformOnGpu(std::string primitive);
+	// Send mvp data to shader(s) tied to all primitives in scene
+	void UpdateAllTransformsOnGpu();
 	/** Vertex Shading Functions */
 	// Create default mesh shader
 	void CreateDefaultShader();
