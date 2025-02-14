@@ -1,20 +1,4 @@
-﻿  Camera.cpp
-  Cubemaps.cpp
-  EntityComponent.cpp
-  GLSetup.cpp
-  GLWindow.cpp
-  GUI_Base.cpp
-  GameLoop.cpp
-  Graphic.cpp
-  InputHandler.cpp
-  LightComponent.cpp
-  MViewport.cpp
-  Mesh.cpp
-  MeshComponent.cpp
-  MouseCapture.cpp
-  RenderingPipeline.cpp
-  VulkanFunctionLibrary.cpp
-  VulkanPlatformInit.cpp
+﻿  GLSetup.cpp
   MoxieEngine.vcxproj -> C:\Users\dnlha\Documents\VS Projects\Moxie-Engine\x64\Debug\Moxie.exe
   0 File(s) copied
   0 File(s) copied

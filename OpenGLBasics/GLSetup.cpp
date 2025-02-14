@@ -333,15 +333,14 @@ void GLSetup::TestVulkan3DRun()
 	// TEMP FUNCTION CALLS (For testing only)
 	// Add depth stencil info to pipeline for mesh
 	pipeline->SetVkPipelineDepthState("MeshComponent", VK_COMPARE_OP_LESS, true);
-	// Add shaders for mesh
-	VkShaderStageConfigs shaderConfigs[2] = {
-		{ "DefaultMatVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-		{ "DefaultMatFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT }
-	};
-	pipeline->LoadVkShaderStages("MeshComponent", 2, shaderConfigs);
+	// Add shaders for mesh	
+	shaderConfigs.AddFileForShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "DefaultMatVert.spv");
+	shaderConfigs.AddFileForShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "DefaultMatFrag.spv");
+
+	pipeline->LoadVkShaderStages("MeshComponent", shaderConfigs);
 	pipeline->CreatePipelineLayout("MeshComponent");
-	pipeline->SetViewportInfo("MeshComponent");
 	pipeline->SetVkPipelineDepthState("MeshComponent", VK_COMPARE_OP_LESS, VK_FALSE);
+	//pipeline->CreateDefaultGraphicsPipeline("MeshComponent");
 }
 
 void GLSetup::Render()
@@ -450,16 +449,16 @@ void GLSetup::Render()
 #elif USE_VULKAN
 		auto platformInstance = PVulkanPlatformInit::Get();
 		auto vkSettings = platformInstance->GetInfo();
+		
+		// Wait for GPU to finish rendering the previous frame before drawing the current frame
+		// set timeout period to 1 second
+		assert(vkWaitForFences(*currentVkDevice, 1, &inFlightFences[currentRenderingFrame], VK_TRUE, 1000000000) == VK_SUCCESS);
+		assert(vkResetFences(*currentVkDevice, 1, &inFlightFences[currentRenderingFrame]) == VK_SUCCESS);
 
 		// Get the index of the requested swapchain index being rendered on
 		// set timeout period to 1 second
 		VkBool32 swapchainImgIndex;
 		assert(vkAcquireNextImageKHR(*currentVkDevice, *VkSwapchain, 1000000000, imageAvailableSemaphores[currentRenderingFrame], VK_NULL_HANDLE, &swapchainImgIndex) == VK_SUCCESS);
-
-		// Wait for GPU to finish rendering the previous frame before drawing the current frame
-		// set timeout period to 1 second
-		assert(vkWaitForFences(*currentVkDevice, 1, &inFlightFences[currentRenderingFrame], VK_TRUE, 1000000000) == VK_SUCCESS);
-		assert(vkResetFences(*currentVkDevice, 1, &inFlightFences[currentRenderingFrame]) == VK_SUCCESS);
 
 
 		// Restart the command buffer to be ready to record draw commands for the current frame
@@ -492,8 +491,16 @@ void GLSetup::Render()
 		// ensures that the subpass contents is passed into the main command buffer (for now, at least)
 		vkCmdBeginRenderPass(cmdBuffers[currentRenderingFrame], &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+		// Bind viewport and scissor states to command buffer
+		pipeline->SetViewportInfo(cmdBuffers[currentRenderingFrame]);
+
+		for (auto it = pipeline->primitives.begin(); it != pipeline->primitives.end(); ++it)
+			if (it->second->graphicsPipeline == NULL)
+				pipeline->CreateDefaultGraphicsPipeline(it->first);
+		
 		// RUN DRAW COMMANDS HERE
 		//vkCmdBindPipeline(cmdBuffers[currentRenderingFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, triangleShaderPipeline[0]);
+		
 
 		pipeline->DrawVkIndexed(cmdBuffers[currentRenderingFrame]);
 
@@ -621,12 +628,10 @@ void GLSetup::GetDefaultMeshShader(Shader* defaultShader)
 
 void GLSetup::SubmitCubeMapData(std::vector<TextureData*> cubemapData)
 {
-#if USE_OPENGL
+
 	if (pipeline)
 		pipeline->GenerateCubemap(cubemapData);
-#elif USE_VULKAN
 
-#endif
 }
 
 void GLSetup::ImportMesh(std::string name, Mesh* mesh)

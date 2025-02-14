@@ -34,59 +34,71 @@ void VkPipelineBuilder::SetInputAssembly(VkPipelineBuilderParams& params, VkPrim
     pipelineInfo.pInputAssemblyState = &params.inputAssemblyInfo;
 }
 
-void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params)
+void VkPipelineBuilder::SetInputAssembly(VkPipelineBuilderParams& params, VkPipelineInputAssemblyStateCreateInfo inputAssemInfo)
 {
-    VkShaderModule shader;
-    if (!VkShaderUtil::LoadShaderModule(shaderConfig, shader))
+    params.inputAssemblyInfo = inputAssemInfo;
+    pipelineInfo.pInputAssemblyState = &params.inputAssemblyInfo;
+}
+
+void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params)
+{    
+    if (!VkShaderUtil::LoadShaderModules(shaderConfig))
     {
         std::string shaderStageType = "";
-
-        auto shaderStage = shaderConfig.shaderFlag;
-
-        switch (shaderStage)
+        for (auto it = shaderConfig.shaderStageToFileMapping.begin(); it != shaderConfig.shaderStageToFileMapping.end(); ++it)
         {
-        case VK_SHADER_STAGE_VERTEX_BIT:
-            shaderStageType = "vertex";
-            break;
-        case VK_SHADER_STAGE_FRAGMENT_BIT:
-            shaderStageType = "fragment";
-            break;
-        case VK_SHADER_STAGE_GEOMETRY_BIT:
-            shaderStageType = "geometry";
-            break;
-        case VK_SHADER_STAGE_COMPUTE_BIT:
-            shaderStageType = "compute";
-            break;
-        case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-            shaderStageType = "tessellation control";
-            break;
-        case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-            shaderStageType = "tessellation evaluation";
-            break;
-        default:
-            shaderStageType = "default vertex";
-            break;
-        }
+            auto shaderStage = it->first;
 
-        printf("Unable to load %s shader stage of module!", shaderStageType.c_str());
+            switch (shaderStage)
+            {
+            case VK_SHADER_STAGE_VERTEX_BIT:
+                shaderStageType = "vertex";
+                break;
+            case VK_SHADER_STAGE_FRAGMENT_BIT:
+                shaderStageType = "fragment";
+                break;
+            case VK_SHADER_STAGE_GEOMETRY_BIT:
+                shaderStageType = "geometry";
+                break;
+            case VK_SHADER_STAGE_COMPUTE_BIT:
+                shaderStageType = "compute";
+                break;
+            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+                shaderStageType = "tessellation control";
+                break;
+            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+                shaderStageType = "tessellation evaluation";
+                break;
+            default:
+                shaderStageType = "default vertex";
+                break;
+            }
+
+            printf("Unable to load %s shader stage of module!", shaderStageType.c_str());
+            shaderStageType = "";
+        }
     }
     else
     {
-        VkPipelineShaderStageCreateInfo shaderStageInfo = {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .pNext = VK_NULL_HANDLE,
-            // dictate what shader stage is being created on the graphics pipeline
-            .stage = (VkShaderStageFlagBits)shaderConfig.shaderFlag,
-            // add the shader module associated with this shader stage
-            .module = shader,
-            // the entry point of the shader
-            .pName = "main"
-        };
-
-        params.shaderStages.push_back(shaderStageInfo);
-        pipelineInfo.stageCount = (VkBool32)params.shaderStages.size();
-        pipelineInfo.pStages = params.shaderStages.data();        
-        params.shaders.push_back(shader);
+        for (auto shaderMapPtr = shaderConfig.shaderStageToFileMapping.begin(); shaderMapPtr != shaderConfig.shaderStageToFileMapping.end(); ++shaderMapPtr)
+        {
+            auto shaderStage = shaderMapPtr->first;
+            auto shaderFile = shaderMapPtr->second;
+            auto shaderModule = shaderConfig.shaderFileToModuleMapping[shaderFile];
+            VkPipelineShaderStageCreateInfo shaderStageInfo = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .pNext = VK_NULL_HANDLE,
+                // dictate what shader stage is being created on the graphics pipeline
+                .stage = (VkShaderStageFlagBits)shaderMapPtr->first,
+                // add the shader module associated with this shader stage
+                .module = shaderModule,
+                // the entry point of the shader
+                .pName = "main"
+            };
+            params.shaderStages.push_back(shaderStageInfo);
+            params.shaders.push_back(shaderModule);
+        }
+       
     }
 }
 

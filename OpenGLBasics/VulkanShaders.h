@@ -19,8 +19,15 @@ struct VkShaderParams
 
 struct VkShaderStageConfigs
 {
-	std::string shaderFile;
-	VkShaderStageFlags shaderFlag;
+	void AddFileForShaderStage(VkFlags shaderStage, std::string shaderFile)
+	{
+		if (shaderStageToFileMapping.find(shaderStage) == shaderStageToFileMapping.end())
+			shaderStageToFileMapping.insert({ shaderStage, shaderFile });
+		else
+			shaderStageToFileMapping[shaderStage] = shaderFile;
+	}
+	std::unordered_map<VkFlags, std::string> shaderStageToFileMapping;
+	std::unordered_map<std::string, VkShaderModule> shaderFileToModuleMapping;
 };
 
 class VkShaderUtil
@@ -28,7 +35,7 @@ class VkShaderUtil
 public:
 	void LoadShaderStage(const VkShaderStageConfigs& shaderConfig);
 	void LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs);
-	static bool LoadShaderModule(const VkShaderStageConfigs shaderConfig, VkShaderModule& shaderModule);
+	static bool LoadShaderModules(VkShaderStageConfigs& shaderConfig);
 
 	VkShaderUtil() {};
 	VkShaderUtil(VkShaderStageConfigs shaderConfig) { LoadShaderStage(shaderConfig); }
@@ -60,9 +67,12 @@ private:
 
 inline void VkShaderUtil::LoadShaderStage(const VkShaderStageConfigs& shaderConfig)
 {
-	if(~(shaderConfig.shaderFlag & shaderStagingMask))
-	shaderStagingMask |= shaderConfig.shaderFlag;
-	shaderFiles.push_back(shaderConfig.shaderFile);
+	for (auto it = shaderConfig.shaderStageToFileMapping.begin(); it != shaderConfig.shaderStageToFileMapping.end(); ++it)
+	{
+		if (~(it->first & shaderStagingMask))
+			shaderStagingMask |= it->first;
+		shaderFiles.push_back(it->second);
+	}
 }
 
 inline void VkShaderUtil::LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs)
@@ -71,40 +81,46 @@ inline void VkShaderUtil::LoadShaderStages(const std::vector<VkShaderStageConfig
 		LoadShaderStage(config);
 }
 
-inline bool VkShaderUtil::LoadShaderModule(const VkShaderStageConfigs shaderConfig, VkShaderModule& shaderModule)
+inline bool VkShaderUtil::LoadShaderModules(VkShaderStageConfigs& shaderConfig)
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	std::vector<char> fileBuf;
-	std::ifstream file (shaderConfig.shaderFile, std::ios::ate | std::ifstream::binary);
-	size_t fileSize = 0;
-	// pass shader file data into buffer
-	if (file)
+	for (auto it = shaderConfig.shaderStageToFileMapping.begin(); it != shaderConfig.shaderStageToFileMapping.end(); ++it)
 	{
-		fileSize = file.tellg();
-		fileBuf.resize(fileSize);
-		file.seekg(0);
-		file.read(fileBuf.data(), fileSize);
+		std::vector<char> fileBuf;
+		auto shaderStr = it->second;		
+		std::ifstream file(it->second, std::ios::ate | std::ifstream::binary);
+		size_t fileSize = 0;
+		// pass shader file data into buffer
+		if (file)
+		{
+			fileSize = file.tellg();
+			fileBuf.resize(fileSize);
+			file.seekg(0);
+			file.read(fileBuf.data(), fileSize);
 
-		file.close();
+			file.close();
+		}
+		else
+			return false;
+		auto code = reinterpret_cast<const uint32_t*>(fileBuf.data());
+		// feed it into shader module
+		VkShaderModule shaderModule;
+		VkShaderModuleCreateInfo shaderModuleInfo = {};
+		shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shaderModuleInfo.pNext = VK_NULL_HANDLE;
+		shaderModuleInfo.pCode = code;
+		shaderModuleInfo.codeSize = fileSize;
+		shaderModuleInfo.flags = 0;
+		VkResult result = vkCreateShaderModule(vkSettings->device, &shaderModuleInfo, vkSettings->allocationCallback, &shaderModule);
+		if (result != VK_SUCCESS)
+			return false;
+		if (shaderConfig.shaderFileToModuleMapping.find(shaderStr) == shaderConfig.shaderFileToModuleMapping.end())
+			shaderConfig.shaderFileToModuleMapping.insert({ shaderStr, shaderModule });
+		else
+			shaderConfig.shaderFileToModuleMapping[shaderStr] = shaderModule;
 	}
-	else
-		return false;
-	auto code = reinterpret_cast<const uint32_t*>(fileBuf.data());
-	// feed it into shader module
-	VkShaderModuleCreateInfo shaderModuleInfo = {};
-	shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	shaderModuleInfo.pNext = VK_NULL_HANDLE;
-	shaderModuleInfo.pCode = code;
-	shaderModuleInfo.codeSize = fileSize;
-	shaderModuleInfo.flags = 0;
-	VkResult result = vkCreateShaderModule(vkSettings->device, &shaderModuleInfo, vkSettings->allocationCallback, &shaderModule);
-	if (result != VK_SUCCESS)
-		return false;
-
 
 	return true;
-		
-
 }
 
 /// <summary>

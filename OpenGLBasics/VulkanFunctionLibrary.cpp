@@ -5,10 +5,14 @@
 void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAllocationCallbacks* allocationCallback, VkPhysicalDevice physicalDevice,
 	VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, UniformBufferParams& params, VkBool32 bufferCreateFlags)
 {
+	VkDeviceSize totalSize = 0;	
+	
+	totalSize = params.bufferSize * params.instanceCount;
+
 	VkBufferCreateInfo bufferInfo = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.flags = bufferCreateFlags,
-		.size = params.bufferSize,
+		.size = totalSize,
 		.usage = bufferUsageFlags,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE
 	};
@@ -21,8 +25,7 @@ void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAllocationCa
 	}
 
 	// Retrieve memory requirements for setting up memory buffer
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(device, params.buffer, &memoryRequirements);
+	vkGetBufferMemoryRequirements(device, params.buffer, &params.memoryReqs);
 	
 	// find out if memory type is supported in memory buffer
 	VkPhysicalDeviceMemoryProperties memoryProperties;
@@ -31,7 +34,7 @@ void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAllocationCa
 	VkBool32 memoryFlagIndex = -1;
 	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
 	{
-		if (memoryRequirements.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
+		if (params.memoryReqs.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
 		{
 			memoryFlagIndex = i;
 			break;
@@ -46,17 +49,18 @@ void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAllocationCa
 	// Allocate device memory for memory buffer
 	VkMemoryAllocateInfo memoryAllocationInfo = {
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = memoryRequirements.size,
+		.allocationSize = params.memoryReqs.size,
 		.memoryTypeIndex = memoryFlagIndex
 	};
 
+	
 	result = vkAllocateMemory(device, &memoryAllocationInfo, allocationCallback, &params.deviceMemory);
 	if (result != VK_SUCCESS)
 	{
 		throw new std::runtime_error("Unable to allocate device memory for buffer!");
 	}
-
-	// Bind device memory to memory buffer
+	
+	// Bind device memory to buffer
 	vkBindBufferMemory(device, params.buffer, params.deviceMemory, 0);
 }
 
@@ -64,11 +68,18 @@ void VulkanFunctionLibrary::FillVkBuffer(VkDevice device, UniformBufferParams& p
 {
 	// Map buffer memory
 	void* data;
-	VkResult result = vkMapMemory(device, params.deviceMemory, 0, params.bufferSize, 0, &data);
+	VkDeviceSize memoryOffset = 0;
+	VkResult result = vkMapMemory(device, params.deviceMemory, 0, params.memoryReqs.size, 0, &data);
 	if (result != VK_SUCCESS)
 	{
 		throw new std::runtime_error("Unable to map memory to buffer handle!");
 	}
-	memcpy(data, params.data, params.bufferSize);
+	for (VkBool32 i = 0; i < params.instanceCount; ++i)
+	{	
+		
+		memcpy((char*)data + memoryOffset, params.data[i], params.bufferSize);
+	
+		memoryOffset += params.bufferSize;
+	}
 	vkUnmapMemory(device, params.deviceMemory);
 }

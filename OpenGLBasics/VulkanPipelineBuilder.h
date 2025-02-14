@@ -13,7 +13,7 @@ struct VkPipelineBuilderParams {
 	VkPipelineMultisampleStateCreateInfo multisamplingInfo;
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo;
-	VkPipelineDynamicStateCreateInfo dynamicStateInfo; // optional
+	VkPipelineDynamicStateCreateInfo dynamicStateInfo; 
 	std::vector<VkPipelineLayoutCreateInfo> layoutInfo;
 	VkRenderPass* renderPassPtr;
 	
@@ -31,6 +31,15 @@ static VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState = {
 	.flags = 0,
 	.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
 	.primitiveRestartEnable = VK_TRUE
+};
+
+static const VkDynamicState defaultPipelineDynamicStates[2]{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+static VkPipelineDynamicStateCreateInfo defaultDynamicState = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+	.pNext = VK_NULL_HANDLE,
+	.dynamicStateCount = 2,
+	.pDynamicStates = defaultPipelineDynamicStates
 };
 
 // default multisampling state 
@@ -88,10 +97,55 @@ static VkPipelineLayoutCreateInfo defaultPipelineLayoutInfo = {
 	.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 	.pNext = VK_NULL_HANDLE,
 	.flags = 0,
-	.setLayoutCount = 0,
+	.setLayoutCount = 2,
 	.pSetLayouts = VK_NULL_HANDLE,
-	.pushConstantRangeCount = 0,
+	.pushConstantRangeCount = 1,
 	.pPushConstantRanges = VK_NULL_HANDLE
+};
+static VkVertexInputBindingDescription defaultVertexInputBindingInfo = {
+	.binding = 0,
+	.stride = sizeof(DVertex),
+	.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+static VkVertexInputAttributeDescription defaultVertexPosAttr = {
+	.location = 0,
+	.binding = 0,
+	.format = VK_FORMAT_R32G32B32_SFLOAT,
+	.offset = offsetof(DVertex, DVertex::pos)
+};
+
+static VkVertexInputAttributeDescription defaultVertexTexCoordAttr = {
+	.location = 1,
+	.binding = 0,
+	.format = VK_FORMAT_R32G32_SFLOAT,
+	.offset = offsetof(DVertex, DVertex::texCoord)
+};
+
+static VkVertexInputAttributeDescription defaultVertexNormalAttr = {
+	.location = 2,
+	.binding = 0,
+	.format = VK_FORMAT_R32G32B32_SFLOAT,
+	.offset = offsetof(DVertex, DVertex::normal)
+};
+
+static VkVertexInputAttributeDescription defaultVertexAttrDescriptions[3] = { defaultVertexPosAttr, defaultVertexTexCoordAttr, defaultVertexNormalAttr };
+
+static VkPipelineVertexInputStateCreateInfo defaultPipelineVertexInputStateCreateInfo = {
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+	.pNext = VK_NULL_HANDLE,
+	.flags = 0,
+	.vertexBindingDescriptionCount = 1,
+	.pVertexBindingDescriptions = &defaultVertexInputBindingInfo,
+	.vertexAttributeDescriptionCount = 3,
+	.pVertexAttributeDescriptions = defaultVertexAttrDescriptions
+};
+
+static VkPipelineViewportStateCreateInfo defaultViewportStateInfo =
+{
+	.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+	.pNext = VK_NULL_HANDLE,
+	.flags = 0
 };
 
 class VkPipelineBuilder
@@ -99,12 +153,13 @@ class VkPipelineBuilder
 public:
 	VkPipelineBuilder();
 	~VkPipelineBuilder() { }
-	void SetInputAssembly(VkPipelineBuilderParams& params,VkPrimitiveTopology topology, bool primitiveRestart = true);
+	void SetInputAssembly(VkPipelineBuilderParams& params, VkPrimitiveTopology topology, bool primitiveRestart = true);
+	void SetInputAssembly(VkPipelineBuilderParams& params, VkPipelineInputAssemblyStateCreateInfo inputAssemInfo = defaultInputAssemblyState);
 	void LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params);
-	void LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo);
+	void LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo = defaultDepthStencilState);
 	void LoadPipelineLayout(VkPipelineBuilderParams& params, std::vector<VkPipelineLayout> pipelineLayouts);
-	void LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo);
-	void LoadMultispamplingState(VkPipelineBuilderParams& params, VkPipelineMultisampleStateCreateInfo multisampleInfo);
+	void LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo = defaultColorBlendState);
+	void LoadMultispamplingState(VkPipelineBuilderParams& params, VkPipelineMultisampleStateCreateInfo multisampleInfo = defaultMultisamplingState);
 	// TODO: overload with method that only accepts window's extents
 	void LoadViewportInfo(VkPipelineBuilderParams& params, VkBool32 viewportCount, VkViewport* viewports, VkBool32 scissorCount, VkRect2D* scissors);
 	void LoadViewportInfo(VkPipelineBuilderParams& params, VkExtent2D screenResolution);

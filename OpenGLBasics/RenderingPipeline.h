@@ -63,18 +63,34 @@ struct ObjectPropertyBuffer
 };
 
 struct UniformBufferParams
-{
+{		
+
 	~UniformBufferParams()
 	{
-		auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+		auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();		
 		vkFreeMemory(vkSettings->device, deviceMemory, vkSettings->allocationCallback);
-		vkDestroyBuffer(vkSettings->device, buffer, vkSettings->allocationCallback);		
+		vkDestroyBuffer(vkSettings->device, buffer, vkSettings->allocationCallback);
 	}
 
+	VkMemoryRequirements memoryReqs;
 	VkDeviceSize bufferSize = 0;
+	VkBool32 instanceCount = 1;
 	VkDeviceMemory deviceMemory;
 	VkBuffer buffer;
-	void* data = nullptr;
+	std::vector<void*> data;
+};
+
+struct CubemapParams
+{
+	VkPipeline pipeline;
+	VkShaderModule shaderModule;
+	VkImage img;
+	VkImageView imgView;
+	VkBuffer stagingBuffer;
+	VkDeviceSize stagingBufferSize, layerSize;
+	void* stagingData;
+	std::vector<TextureData*> images;
+	VkDeviceMemory imageMemory, stagingMemory;
 };
 
 struct RenderBufferData
@@ -84,20 +100,13 @@ struct RenderBufferData
 	Color color;
 	GLuint vao, vbo, ebo;
 	std::vector<DVertex> vertices;
+	std::vector<VkDeviceSize> vertexOffsets{ 0 };
 	std::vector<uint16_t> indices;
 	DMat4x4 transform;
 	std::shared_ptr<Shader> shader;
-	std::vector<VkShaderStageConfigs> vkShaderStageFiles;
+	VkShaderStageConfigs shaderConfigurations;
 	VkPipelineBuilderParams pipelineBuilderParams;
-	/*VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkDeviceSize vertexBufferSize = 0;
-	VkDeviceSize vertexBufferOffset = 0;
-	char* vertexBufferData;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
-	VkDeviceSize indexBufferSize = 0;
-	char* indexBufferData;*/
+
 	std::vector<VkVertexInputBindingDescription>inputBindingDescriptions;
 	std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings;
@@ -108,6 +117,7 @@ struct RenderBufferData
 	std::vector<UniformBufferParams> uniformBufferParamsForShader;
 	std::vector<VkDeviceSize> uniformBuffersSize;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	UniformBufferParams vertDataBufParams;
 	UniformBufferParams vertexBufParams;
 	UniformBufferParams indexBufParams;
 
@@ -124,6 +134,7 @@ struct RenderBufferData
 	UniformBufferParams objParams;
 
 	VkPipeline graphicsPipeline;
+	VkPipelineCache pipelineCache;
 };
 
 static VkDescriptorSetLayoutBinding defaultVertexMVPDescriptorLayout = {
@@ -190,8 +201,7 @@ class BRenderingPipeline final
 	void LoadVertexReadingFormatToVkPipeline(std::string primitiveName);
 	// Allocates memory on application to allow mesh vertex data to fed to pipeline
 	void CreateVkVertexBuffer(std::string primitiveName);
-	// Allocates memory on application to allow index data for drawing
-	//  mesh to be fed to the graphics pipeline
+	// Allocates memory on application to allow mesh index buffer data to fed to pipeline
 	void CreateVkIndexBuffer(std::string primitiveName);
 	// Allocates memory for uniform buffers
 	void CreateVkUniformBuffers(std::string primitiveName);
@@ -204,14 +214,19 @@ class BRenderingPipeline final
 	// Sets the descriptor layouts for the uniform buffers on shaders
 	void SetVkDescriptorForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
 	// Adds shader stage file(s) to be used and read by the graphics pipeline
-	void LoadVkShaderStages(std::string primitiveName, VkBool32 shaderStageFileCount, VkShaderStageConfigs* shaderStages);
+	void LoadVkShaderStages(std::string primitiveName, VkShaderStageConfigs& shaderStages);
 	// Sets the depth info for the depth/stencil state of the current graphics pipeline
 	void SetVkPipelineDepthState(std::string primitiveName, VkCompareOp comparisonOperation, bool isDepthBoundsEnabled, float minDepthBounds = 0.0f, float maxDepthBounds = 1.0f);
 	// Sets the stencil info for depth/stencil state of the current graphics pipeline
 	void SetVkPipelineStencilState(std::string primitiveName, VkStencilOpState frontStencilState, VkStencilOpState backStencilState);
 	// Creates pipeline layout from descriptor set layout(s)
 	void CreatePipelineLayout(std::string primitiveName);
+	// Creates a vulkan rendering pipeline from start to finish
+	void CreateDefaultGraphicsPipeline(std::string primitiveName);
+	// Creates a cubemap from texture data
 	void GenerateCubemap(std::vector<TextureData*>cubemapTextureData);
+	// Create pipeline for cubemap
+	void CreateCubemapPipeline();
 	// Feeds mesh data to rendering platform
 	void RequestForMeshVertexData(std::string primitiveName);
 	// Feeds vertex data from skybox to rendering platform
@@ -258,7 +273,7 @@ class BRenderingPipeline final
 	// Generates a Vulkan framebuffer
 	void GenerateVkFrameBuffers();
 	// Sends viewport info to graphics pipeline based on screen resolution
-	void SetViewportInfo(std::string primitiveName);
+	void SetViewportInfo(VkCommandBuffer cmdBuffer);
 	// Adds vertex buffers to command buffer 
 	void DrawVk(VkCommandBuffer cmdBuffer);
 	// Adds draw commands to command buffer with indexed vertex buffer data
@@ -284,7 +299,12 @@ private:
 	// TODO: Create a class/struct that instructs the pipeline 
 	// what the intended usage of the framebuffer is
 	GLuint defaultFramebuffer, currentFramebuffer, renderbuffer;
+	std::vector<VkViewport> viewports;
+	std::vector<VkRect2D> scissors;
+	CubemapParams vk_cubemapParams;
 	CubemapData* cubemapParams;
+	VkImageView cubemapView;
+	VkImage cubemap;
 	Shader* cubemapShader;
 	GLuint defaultFrameBufferTextureID;
 	VkExtent2D screenResolution;

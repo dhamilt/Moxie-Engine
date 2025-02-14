@@ -117,6 +117,7 @@ private:
 	std::vector<VkPipeline> triangleShaderPipeline;
 	std::vector<VkSemaphore> imageAvailableSemaphores, renderFinishedSemaphores;
 	VkResult renderingResult;
+	VkShaderStageConfigs shaderConfigs;
 	std::vector<VkFence> inFlightFences;
 	VkDevice* currentVkDevice;
 	VkSwapchainKHR* VkSwapchain;

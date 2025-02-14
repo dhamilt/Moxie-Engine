@@ -100,15 +100,15 @@ int main(int argc, char* argv[])
 	//double time = 0.0f;
 	//	
 
-	//// Add a skybox to the scene
-	//std::vector<std::string> faceFilePaths = { "../cubemaps/Yokohama3/posx.jpg",
-	//										"../cubemaps/Yokohama3/negx.jpg",
-	//										"../cubemaps/Yokohama3/posy.jpg",  
-	//										"../cubemaps/Yokohama3/negy.jpg",
-	//										"../cubemaps/Yokohama3/posz.jpg",
-	//										"../cubemaps/Yokohama3/negz.jpg" };
+	// Add a skybox to the scene
+	std::vector<std::string> faceFilePaths = { "../cubemaps/Yokohama3/posx.jpg",
+											"../cubemaps/Yokohama3/negx.jpg",
+											"../cubemaps/Yokohama3/posy.jpg",  
+											"../cubemaps/Yokohama3/negy.jpg",
+											"../cubemaps/Yokohama3/posz.jpg",
+											"../cubemaps/Yokohama3/negz.jpg" };
 
-	//Cubemaps* skybox = new Cubemaps(faceFilePaths);	
+	Cubemaps* skybox = new Cubemaps(faceFilePaths);	
 
 	//// Load a OBJ file to use as a 3d model
 	std::vector<DVertex> vertices;
