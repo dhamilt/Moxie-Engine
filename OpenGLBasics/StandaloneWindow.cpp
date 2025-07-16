@@ -7,5 +7,5 @@ void StandaloneWindow::Paint()
 	ImGui::Begin(windowType.c_str(), &isOpen);
 	// Fill the inner ui of the standalone window
 	FillWindow();
-
+	ImGui::End();
 }

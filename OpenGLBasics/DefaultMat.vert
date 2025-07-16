@@ -25,7 +25,7 @@ void main()
 {	
 	// Transform normal without perspective (projection matrix) added
 	// and normalize it
-	normal = normalize(normalInfo.normalMatrix * vertexNormal);
+	// normal = normalize(normalInfo.normalMatrix * vertexNormal);
 	position = mvpBuffer.view * mvpBuffer.model * vec4(vertexPosition, 1.0);
 	texCoord = vertexTexCoord;
 	gl_Position = mvpBuffer.projection * mvpBuffer.view * mvpBuffer.model * vec4(vertexPosition, 1.0);

@@ -152,7 +152,7 @@ void BRenderingPipeline::Import(std::string primitiveName, std::vector<DVertex> 
 	FillVkIndexBuffer(primitiveName);
 
 	// Fill uniform buffers with data
-	//FillVkUniformBuffers(primitiveName);
+	FillVkUniformBuffers(primitiveName);
 #endif
 
 }
@@ -265,7 +265,7 @@ void BRenderingPipeline::CreateVkUniformBuffers(std::string primitiveName)
 
 	UniformBufferParams* normal = &renderData->normalParams;
 	normal->bufferSize = sizeof(NormalBuffer);
-	normal->instanceCount = MAX_VULKAN_FRAMES_IN_FLIGHT;
+	normal->instanceCount = 1;
 	
 
 	UniformBufferParams* lightBuf = &renderData->lightParams;
@@ -319,50 +319,16 @@ void BRenderingPipeline::FillVkIndexBuffer(std::string primitiveName)
 	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->indexBufParams);	
 }
 
-void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
+void BRenderingPipeline::FillVkUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
 {
 	auto renderData = primitives[primitiveName];
-	
-	renderData->descriptorLayoutBindings = descriptorLayoutBindings;
-
-
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-		.pNext = VK_NULL_HANDLE,
-		.flags = 0,
-		.bindingCount = descriptorLayoutBindings.back().binding + 1,
-		.pBindings = descriptorLayoutBindings.data()
-	};
 
-	VkDescriptorSetLayout descriptorSetLayout;
-
-	VkResult result = vkCreateDescriptorSetLayout(vkSettings->device, &descriptorSetLayoutInfo, vkSettings->allocationCallback, &descriptorSetLayout);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Unable to create descriptor set layout!");
-	}
-	renderData->descriptorSetLayouts.push_back(descriptorSetLayout);
-
-	VkDescriptorSet descriptorSet;
-
-	auto descriptorSetAllocInfo = &vkSettings->descriptorInfo;
-	descriptorSetAllocInfo->descriptorPool = vkSettings->descriptorPool;
-	descriptorSetAllocInfo->descriptorSetCount = (VkBool32)renderData->descriptorSetLayouts.size();
-	descriptorSetAllocInfo->pSetLayouts = renderData->descriptorSetLayouts.data();
-	descriptorSetAllocInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	vkAllocateDescriptorSets(vkSettings->device, &vkSettings->descriptorInfo, &descriptorSet);
-	renderData->descriptorSets.push_back(descriptorSet);
-
-	// Fill each uniform buffer with its initial data for descriptor set	
 	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->mvpParams);
 	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->normalParams);
 	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->lightParams);
 	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->viewParams);
 	VulkanFunctionLibrary::FillVkBuffer(vkSettings->device, renderData->objParams);
-
-
 
 	std::vector<UniformBufferParams*> uniformBufferParams
 	{
@@ -397,7 +363,7 @@ void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveN
 	}
 
 
-	
+
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 	for (const VkDescriptorSetLayoutBinding& binding : descriptorLayoutBindings)
 	{
@@ -419,8 +385,46 @@ void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveN
 	}
 
 	vkUpdateDescriptorSets(vkSettings->device, (VkBool32)writeDescriptorSets.size(), writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
+}
 
+void BRenderingPipeline::SetVkDescriptorForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings)
+{
+	auto renderData = primitives[primitiveName];
 	
+	renderData->descriptorLayoutBindings = descriptorLayoutBindings;
+
+
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo =
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.pNext = VK_NULL_HANDLE,
+		.flags = 0,
+		.bindingCount = static_cast<VkBool32>(descriptorLayoutBindings.size()),
+		.pBindings = descriptorLayoutBindings.data()
+	};
+
+	VkDescriptorSetLayout descriptorSetLayout;
+
+	VkResult result = vkCreateDescriptorSetLayout(vkSettings->device, &descriptorSetLayoutInfo, vkSettings->allocationCallback, &descriptorSetLayout);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Unable to create descriptor set layout!");
+	}
+	renderData->descriptorSetLayouts.push_back(descriptorSetLayout);
+
+	VkDescriptorSet descriptorSet;
+
+	auto descriptorSetAllocInfo = &vkSettings->descriptorInfo;
+	descriptorSetAllocInfo->descriptorPool = vkSettings->descriptorPool;
+	descriptorSetAllocInfo->descriptorSetCount = (VkBool32)renderData->descriptorSetLayouts.size();
+	descriptorSetAllocInfo->pSetLayouts = renderData->descriptorSetLayouts.data();
+	descriptorSetAllocInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	vkAllocateDescriptorSets(vkSettings->device, &vkSettings->descriptorInfo, &descriptorSet);
+	renderData->descriptorSets.push_back(descriptorSet);
+
+	// Fill each uniform buffer with its initial data for descriptor set	
+	FillVkUniformBuffers(primitiveName);
 }
 
 void BRenderingPipeline::LoadVkShaderStages(std::string primitiveName, VkShaderStageConfigs& shaderConfigs)
@@ -625,7 +629,7 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 	VkMemoryRequirements imgMemReqs;
 
 	vkGetImageMemoryRequirements(vkSettings->device, params.img, &imgMemReqs);
-	VkMemoryPropertyFlags imgMemPropertiesFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ;
+	VkMemoryPropertyFlags imgMemPropertiesFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
 	// find out if memory type is supported in memory buffer
 	VkPhysicalDeviceMemoryProperties memoryProperties;
@@ -1154,7 +1158,7 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 	for (uint32_t i = 0; i < vkSettings->swapchainImageCount; i++)
 	{
 		std::vector<VkImageView> attachments;
-		attachments.push_back(vkSettings->imageBuffers[i].imageView);
+		attachments.push_back(vkSettings->swapChainImgBufs[i].imageView);
 		attachments.push_back(vkSettings->depthBuffer.imageView);
 		framebufferInfo.pAttachments = &attachments[0];
 		framebufferInfo.pNext = VK_NULL_HANDLE;
@@ -1179,8 +1183,8 @@ void BRenderingPipeline::SetViewportInfo(VkCommandBuffer cmdBuffer)
 	VkViewport viewport = {};
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	viewport.width = swapChainExtent.width;
-	viewport.height = swapChainExtent.height;
+	viewport.width = static_cast<float>(swapChainExtent.width);
+	viewport.height = static_cast<float>(swapChainExtent.height);
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
 	viewports.push_back(viewport);
@@ -1195,9 +1199,9 @@ void BRenderingPipeline::SetViewportInfo(VkCommandBuffer cmdBuffer)
 	vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
 	// Load viewport and scissor info into graphics pipeline
-	defaultViewportStateInfo.viewportCount = viewports.size();
+	defaultViewportStateInfo.viewportCount = static_cast<VkBool32>(viewports.size());
 	defaultViewportStateInfo.pViewports = viewports.data();
-	defaultViewportStateInfo.scissorCount = scissors.size();
+	defaultViewportStateInfo.scissorCount = static_cast<VkBool32>(scissors.size());
 	defaultViewportStateInfo.pScissors = scissors.data();
 }
 
@@ -1242,7 +1246,7 @@ void BRenderingPipeline::DrawVkIndexed(VkCommandBuffer cmdBuffer)
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1,
 			&renderData->vertexBufParams.buffer, /*&renderData->vertexBufParams.bufferSizes[0]*/renderData->vertexOffsets.data());
 
-		vkCmdBindIndexBuffer(cmdBuffer, renderData->vertexBufParams.buffer, 0,
+		vkCmdBindIndexBuffer(cmdBuffer, renderData->indexBufParams.buffer, 0,
 			VK_INDEX_TYPE_UINT16);
 
 		vkCmdDrawIndexed(cmdBuffer, (VkBool32)renderData->indices.size(),

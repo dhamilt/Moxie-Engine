@@ -1,6 +1,8 @@
 #include "glPCH.h"
 #include "VulkanPlatformInit.h"
+#include "VulkanFunctionLibrary.h"
 #include "GLSetup.h"
+#include "VkSetup.h"
 
 #if __APPLE__
 bool isSupported = false;
@@ -90,91 +92,95 @@ void PVulkanPlatformInit::GetWindowExtent(VkExtent2D& windowExtent)
 
 bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
 {
-    if (InitializePlatform())
-    {
-        VkResult result;
-        
-        
-        // TODO: Create a flagging system to dynamically add all required extensions for instance
-        // Retrieve the number of extensions for SDL to work
-  // with Vulkan
-        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, NULL))
-        {
-            perror("Error! Unable to find the required amount of Vulkan extensions!");
-            return false;
-        }
-
-        // Load in the extensions
-        currentVKSettings.extensions = std::vector<const char*>(currentVKSettings.extensionCount);
-        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, currentVKSettings.extensions.data()))
-        {
-            perror("Error! Unable to load Vulkan extensions!");
-            return false;
-        }
-
-        VkBool32 supportedExtensionCount;
-        std::vector<VkExtensionProperties> supportedExtensions;
-        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, VK_NULL_HANDLE);
-        supportedExtensions = std::vector<VkExtensionProperties>(supportedExtensionCount);
-        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, &supportedExtensions[0]);
-
-        // Add Display mode extension
-        currentVKSettings.extensions.push_back("VK_KHR_display");
-        currentVKSettings.extensionCount++;
-
-        // if deploying a debug build of engine
-#if _DEBUG
-        // Initialize Vulkan Validation Layers
-        currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
-        currentVKSettings.layerCount++;
-  //      auto query = std::find(supportedExtensions.begin(), supportedExtensions.end(), [](std::string str) { return str.compare("VK_EXT_layer_settings") == 0; });
-		//if (query != supportedExtensions.end())
-		//{
-		//	currentVKSettings.extensions.push_back("VK_EXT_layer_settings");
-  //          currentVKSettings.extensionCount++;
-  //      }
-
-        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
-        supportedExtensions.resize(supportedExtensionCount);
-        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
-
-        // Enable debug report extension
-        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        currentVKSettings.extensionCount++;
-
-        
-#endif // DEBUG
-
-        // Setup application info
-        auto _appInfo = &currentVKSettings.appInfo;
-        _appInfo->pApplicationName = "Moxie Engine";
-        _appInfo->applicationVersion = 1;
-        _appInfo->pEngineName = "LunarG SDK";
-        _appInfo->engineVersion = 1;
-        _appInfo->apiVersion = VK_HEADER_VERSION_COMPLETE;
-
-        // Setup instance creation info
-        auto _initInfo = &currentVKSettings.initInfo;
-        _initInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        _initInfo->flags = currentVKSettings.initFlags;
-        _initInfo->pApplicationInfo = _appInfo;
-        _initInfo->enabledExtensionCount = currentVKSettings.extensionCount;
-        _initInfo->ppEnabledExtensionNames = currentVKSettings.extensions.data();
-        _initInfo->enabledLayerCount = currentVKSettings.layerCount;
-        _initInfo->ppEnabledLayerNames = currentVKSettings.layers.data();
- 
-
-        // Create vulkan instance
-        result = vkCreateInstance(&currentVKSettings.initInfo, currentVKSettings.allocationCallback, &currentVKSettings.instance);
-
-        //// Initialize ImGui window
-        //currentVKSettings.window = ImGui_ImplVulkanH_Window();
-
-       
-
-        assert(result == VK_SUCCESS);
-        return true;
-    }
+    auto framework = new Spunk::VkSetup();
+    if (framework->IsPlatformSupported())
+        return framework->CreateInstance(window);
+//    if (InitializePlatform())
+//    {
+//        VkResult result;
+//        
+//        
+//        // TODO: Create a flagging system to dynamically add all required extensions for instance
+//        // Retrieve the number of extensions for SDL to work
+//  // with Vulkan
+//        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, NULL))
+//        {
+//            perror("Error! Unable to find the required amount of Vulkan extensions!");
+//            return false;
+//        }
+//
+//        // Load in the extensions
+//        currentVKSettings.extensions = std::vector<const char*>(currentVKSettings.extensionCount);
+//        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, currentVKSettings.extensions.data()))
+//        {
+//            perror("Error! Unable to load Vulkan extensions!");
+//            return false;
+//        }
+//
+//        VkBool32 supportedExtensionCount;
+//        std::vector<VkExtensionProperties> supportedExtensions;
+//        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, VK_NULL_HANDLE);
+//        supportedExtensions = std::vector<VkExtensionProperties>(supportedExtensionCount);
+//        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, &supportedExtensions[0]);
+//
+//        // Add Display mode extension
+//        currentVKSettings.extensions.push_back("VK_KHR_display");
+//        currentVKSettings.extensionCount++;
+//
+//        // if deploying a debug build of engine
+//#if _DEBUG
+//        // Initialize Vulkan Validation Layers
+//        currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
+//        currentVKSettings.layerCount++;
+//  //      auto query = std::find(supportedExtensions.begin(), supportedExtensions.end(), [](std::string str) { return str.compare("VK_EXT_layer_settings") == 0; });
+//		//if (query != supportedExtensions.end())
+//		//{
+//		//	currentVKSettings.extensions.push_back("VK_EXT_layer_settings");
+//  //          currentVKSettings.extensionCount++;
+//  //      }
+//
+//        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
+//        supportedExtensions.resize(supportedExtensionCount);
+//        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
+//
+//        // Enable debug report extension
+//        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+//        currentVKSettings.extensionCount++;
+//
+//        
+//#endif // DEBUG
+//
+//        // Setup application info
+//        auto _appInfo = &currentVKSettings.appInfo;
+//        _appInfo->pApplicationName = "Moxie Engine";
+//        _appInfo->applicationVersion = 1;
+//        _appInfo->pEngineName = "LunarG SDK";
+//        _appInfo->engineVersion = 1;
+//        _appInfo->apiVersion = VK_HEADER_VERSION_COMPLETE;
+//
+//        // Setup instance creation info
+//        auto _initInfo = &currentVKSettings.initInfo;
+//        _initInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+//        _initInfo->flags = currentVKSettings.initFlags;
+//        _initInfo->pApplicationInfo = _appInfo;
+//        _initInfo->enabledExtensionCount = currentVKSettings.extensionCount;
+//        _initInfo->ppEnabledExtensionNames = currentVKSettings.extensions.data();
+//        _initInfo->enabledLayerCount = currentVKSettings.layerCount;
+//        _initInfo->ppEnabledLayerNames = currentVKSettings.layers.data();
+// 
+//
+//        // Create vulkan instance
+//        result = vkCreateInstance(&currentVKSettings.initInfo, currentVKSettings.allocationCallback, &currentVKSettings.instance);
+//
+//        //// Initialize ImGui window
+//        //currentVKSettings.window = ImGui_ImplVulkanH_Window();
+//
+//       
+//
+//        assert(result == VK_SUCCESS);
+//        return true;
+//    }
+//    return false;
     return false;
 }
 
@@ -245,14 +251,7 @@ bool PVulkanPlatformInit::SetupDebugCallbacks()
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr(currentVKSettings.instance, "vkCreateDebugUtilsMessengerEXT"));
     assert(vkCreateDebugUtilsMessengerEXT != NULL);
 
-    //VkDebugReportCallbackCreateInfoEXT debugReportExt_cb = {};
-    //debugReportExt_cb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    //debugReportExt_cb.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
-    //    VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-    //debugReportExt_cb.pfnCallback = (PFN_vkDebugReportCallbackEXT)DebugReportCallback;
-    //debugReportExt_cb.pUserData = NULL;
-
-    VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {};
+     VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {};
     debugUtilsMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     debugUtilsMessengerCreateInfo.pNext = VK_NULL_HANDLE;
     debugUtilsMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT|
@@ -302,7 +301,7 @@ bool PVulkanPlatformInit::ImGuiVkSetup(SDL_Window* window)
     imInitInfo->MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     imInitInfo->Queue = currentVKSettings.queue;
     imInitInfo->QueueFamily = currentVKSettings.queueFamilies[0];
-    imInitInfo->ImageCount = (VkBool32)currentVKSettings.imageBuffers.size();
+    imInitInfo->ImageCount = (VkBool32)currentVKSettings.swapChainImgBufs.size();
     imInitInfo->PipelineCache = currentVKSettings.pipelineCache;
     imInitInfo->Subpass = 0;
 
@@ -389,6 +388,7 @@ void PVulkanPlatformInit::TransitionImageLayout(VkImageLayout oldLayout, VkImage
 // Create a Logical Device using 1 queue
 bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
 {
+    
     currentVKSettings.deviceExtensions.push_back("VK_KHR_swapchain");
     currentVKSettings.deviceExtensions.push_back("VK_EXT_depth_range_unrestricted");
     auto queueInfo = &currentVKSettings.queueInfo;
@@ -400,8 +400,9 @@ bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
     _queue.queueCount = 1;
     _queue.pQueuePriorities = &currentVKSettings.queuePriority;
     queueInfo->push_back(_queue);
-
+        
     deviceInfo->sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceInfo->pNext = VK_NULL_HANDLE;
     deviceInfo->queueCreateInfoCount = (uint32_t)queueInfo->size();
     deviceInfo->pQueueCreateInfos = queueInfo->data();
     deviceInfo->enabledExtensionCount = (VkBool32)currentVKSettings.deviceExtensions.size();
@@ -491,17 +492,22 @@ bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer* commandBuffers)
 
     // Allocate for only command buffers that have been requested
     currentVKSettings.commandBuffers = std::vector<VkCommandBuffer>(MAX_VULKAN_FRAMES_IN_FLIGHT);
-    for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
-    {
-        result = vkAllocateCommandBuffers(device, &bufferInfo, &currentVKSettings.commandBuffers[i]);
+    result = vkAllocateCommandBuffers(device, &bufferInfo, commandBuffers);
 
-        if (result != VK_SUCCESS)
-        {
-            throw std::runtime_error("Unable to allocate for command buffer #" + std::to_string(i) + "!");
-            return false;
-        }
+    if (result != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to allocate for command buffer(s)!");
+        return false;
     }
-    memcpy(commandBuffers, currentVKSettings.commandBuffers.data(), MAX_VULKAN_FRAMES_IN_FLIGHT * sizeof(currentVKSettings.commandBuffers[0]));
+    //memcpy(commandBuffers, currentVKSettings.commandBuffers.data(), MAX_VULKAN_FRAMES_IN_FLIGHT * sizeof(currentVKSettings.commandBuffers[0]));
+    // Set the image layout for all of the swapchain images
+    for (VkBool32 i = 0; i < currentVKSettings.swapChainImgBufs.size(); ++i)
+    {
+		VulkanFunctionLibrary::TransitionImageLayout(currentVKSettings.swapChainImgBufs[i].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    }
+    // Set the image layout for depth buffer attachment
+	//VulkanFunctionLibrary::TransitionImageLayout(currentVKSettings.depthBuffer.image, VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
     return true;
 
 }
@@ -521,6 +527,9 @@ bool PVulkanPlatformInit::CreateSwapChain()
         return false;
     }
     
+    // Make sure that surface supports the copying of swapchain images
+    assert(surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surfaceKHR, &surfaceFormatCount, VK_NULL_HANDLE);
     
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surfaceKHR, &surfaceFormatCount, &surfaceFormats[0]);
@@ -532,6 +541,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     swapchainInfo.surface = currentVKSettings.surface;
     swapchainInfo.pNext = NULL;
     swapchainInfo.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+    currentVKSettings.surfaceFormat = swapchainInfo.imageFormat;
 
     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surfaceKHR, &currentVKSettings.presentModeCount, NULL);
     currentVKSettings.presentModes = std::vector<VkPresentModeKHR>(currentVKSettings.presentModeCount);
@@ -582,7 +592,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
     swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     swapchainInfo.clipped = true;
-    swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     
     auto device = currentVKSettings.device;
     // Create the swapchain
@@ -627,21 +637,19 @@ bool PVulkanPlatformInit::CreateSwapChain()
         imgViewInfo.subresourceRange.levelCount = 1;
         imgViewInfo.subresourceRange.baseArrayLayer = 0;
         imgViewInfo.subresourceRange.layerCount = 1;
-        imgViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imgViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;        
 
         result = vkCreateImageView(device, &imgViewInfo, currentVKSettings.allocationCallback, &img.imageView);
         assert(result == VK_SUCCESS);
-        currentVKSettings.imageBuffers.push_back(img);
+        currentVKSettings.swapChainImgBufs.push_back(img);
     };
-    currentVKSettings.swapchainImages.clear();
-
     // Create Depth Buffer
     VkImageCreateInfo imgCreateInfo = {};
     imgCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imgCreateInfo.pNext = VK_NULL_HANDLE;
     imgCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imgCreateInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
-    imgCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    imgCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     imgCreateInfo.extent.width = swapchainInfo.imageExtent.width;
     imgCreateInfo.extent.height = swapchainInfo.imageExtent.height;
     imgCreateInfo.extent.depth = 1;
@@ -704,6 +712,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
         perror("Error! Unable to create depth buffer image view!");
         return false;
     }
+
     return true;
 }
 
@@ -723,7 +732,7 @@ void PVulkanPlatformInit::CleanupVulkan()
     vkDestroyRenderPass(device, currentVKSettings.renderPass, currentVKSettings.allocationCallback);
     vkDestroyCommandPool(device, currentVKSettings.commandPool, currentVKSettings.allocationCallback);
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
-        vkDestroyImageView(device, currentVKSettings.imageBuffers[i].imageView, currentVKSettings.allocationCallback);
+        vkDestroyImageView(device, currentVKSettings.swapChainImgBufs[i].imageView, currentVKSettings.allocationCallback);
     vkDestroySwapchainKHR(device, currentVKSettings.swapchain, currentVKSettings.allocationCallback);
 
     vkDestroyDescriptorPool(device, currentVKSettings.descriptorPool, currentVKSettings.allocationCallback);
@@ -769,7 +778,7 @@ bool PVulkanPlatformInit::CreateRenderPass()
     colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
     colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     colorAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
     // Create depth attachment
     VkAttachmentDescription depthAttachmentInfo = {};
@@ -780,7 +789,7 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     std::vector<VkAttachmentDescription> attachments(2);
     attachments[0] = colorAttachmentInfo;
     attachments[1] = depthAttachmentInfo;
@@ -809,13 +818,14 @@ bool PVulkanPlatformInit::CreateRenderPass()
     subpassDescription.pInputAttachments = VK_NULL_HANDLE;
    
 
-    // Create subpass dependency for auto transititoning between image layouts
+    // Create subpass dependency for auto transitioning between image layouts
     VkSubpassDependency dependency = {};
     dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
+    dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

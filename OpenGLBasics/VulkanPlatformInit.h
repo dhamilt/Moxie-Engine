@@ -54,19 +54,21 @@ struct PVulkanPlatformInitInfo
     VkInstanceCreateInfo initInfo;
     VkApplicationInfo appInfo;
     VkSurfaceKHR surface;
-    std::vector<VkFormat> surfaceFormats;
+    VkFormat surfaceFormat;
     std::vector<VkColorSpaceKHR> surfaceColorSpaces;
 
     std::vector<VkPresentModeKHR> presentModes;
     VkBool32 presentModeCount;
     bool limitFramerate = false;
 
+	VkPhysicalDeviceSynchronization2Features synchroFeatures;
+
     VkSwapchainKHR swapchain;
     std::vector<VkImage> swapchainImages;
     PVkImageBuffer depthBuffer;
     VkImageViewCreateInfo depthViewInfo;
     VkBool32 swapchainImageCount;
-    std::vector<PVkImageBuffer> imageBuffers;
+    std::vector<PVkImageBuffer> swapChainImgBufs;
 
     VkRenderPass renderPass;
     std::vector<VkFence> inFlightFences;
@@ -115,15 +117,16 @@ public:
     bool CreateFences(VkFence* fencePtr);
     //bool SetupVulkanWindow(VkSurfaceKHR surface, int width, int height);
     void CleanupVulkan();
+	// Choose the Mailbox Present Mode ("Triple Buffering")
+   // if available, otherwise default to FIFO Mode
+	VkPresentModeKHR SetPresentMode(const std::vector<VkPresentModeKHR>& availableModes);
     PVulkanPlatformInitInfo* GetInfo();
     static PVulkanPlatformInit* Get();
     void operator=(const PVulkanPlatformInit& other) = delete;
 protected:
     virtual bool IsSupported() override;
     virtual bool InitializePlatform() override;
-    // Choose the Mailbox Present Mode ("Triple Buffering")
-   // if available, otherwise default to FIFO Mode
-    VkPresentModeKHR SetPresentMode(const std::vector<VkPresentModeKHR>& availableModes);
+    
     void TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, VkFormat imgFormat);
     PVulkanPlatformInit();
 

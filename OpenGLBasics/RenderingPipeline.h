@@ -210,7 +210,7 @@ class BRenderingPipeline final
 	// Fills index buffer with index data for mesh
 	void FillVkIndexBuffer(std::string primitiveName);
 	// Fills uniform buffers with binding data
-	void FillVkUniformBuffers(std::string primitiveName);
+	void FillVkUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
 	// Sets the descriptor layouts for the uniform buffers on shaders
 	void SetVkDescriptorForUniformBuffers(std::string primitiveName, std::vector<VkDescriptorSetLayoutBinding> descriptorLayoutBindings = defaultDescriptorLayoutBindings);
 	// Adds shader stage file(s) to be used and read by the graphics pipeline

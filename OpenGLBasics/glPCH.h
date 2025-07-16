@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-#include "string.h"
-#include "stdlib.h"
+#include <cstring>
+#include <cstdlib>
 #include <glm/glm.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtc/matrix_transform.hpp>

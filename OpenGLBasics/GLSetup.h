@@ -11,10 +11,11 @@
 #include "Camera.h"
 #include "Light.h"
 #include <unordered_map>
-#include "MViewport.h"
+#include "WViewport.h"
 #include "imgui/imgui_internal.h"
 #include "MainMenu.h"
 #include "RenderingPipeline.h"
+#include "VulkanRenderpassBuilder.h"
 
 class Material;
 
@@ -22,7 +23,7 @@ class Material;
 #define USE_OPENGL 0
 
 
-#define MAX_VULKAN_FRAMES_IN_FLIGHT (const VkBool32)3
+#define MAX_VULKAN_FRAMES_IN_FLIGHT (const VkBool32)2
 
 // TODO: Have the default rendering language be determined by an ini file
 // for now, set the rendering language to be Vulkan
@@ -34,6 +35,7 @@ class Material;
 // MESH IN THE SCENE
 // Facade class used to hide the GLEW, GLFW, and callbacks
 typedef EventHandler<void, int, int> WindowResizeSignature;
+typedef EventHandler<void> RenderFrameRefreshSignature;
 
 class GLSetup
 {
@@ -82,7 +84,7 @@ public:
 private:
 	// Framebuffer ID
 	GLuint screenTextureID;
-	// Framebuffer Object and Renderbuffer Object
+	// Framebuffer Object and Render buffer Object
 	GLuint fbo, rbo;
 	// Viewport
 	WViewport* viewport;
@@ -106,7 +108,7 @@ private:
 	float white4[4]{1.0f, 1.0f, 1.0f, 1.0f};
 	ImGuiContext* mainWindowGUIContext;
 	ImPlotContext* mainImPlotContext;
-	ImGuiWindow* windowInFocus;
+	ImGuiWindow* windowInFocus;	
 	bool viewportInFocus;
 	WMainMenu* mainMenu;
 	BRenderingPipeline* pipeline;
@@ -124,6 +126,10 @@ private:
 	std::vector<VkFramebuffer> glFramebuffers;
 	VkBool32 currentRenderingFrame = 0;
 	WindowResizeSignature windowResizeDelegate;
+	RenderFrameRefreshSignature renderFrameRefreshDelegate;
+	bool showDemoWindow = true;
+	bool cachingFirstFramesInFlight = true;
+	VulkanRenderpassBuilder* renderpassBuilder;
 };
 
 /// <summary>
