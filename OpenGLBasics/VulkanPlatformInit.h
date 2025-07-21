@@ -63,6 +63,8 @@ struct PVulkanPlatformInitInfo
 
 	VkPhysicalDeviceSynchronization2Features synchroFeatures;
 
+	VkImageViewCreateInfo swapchainImgViewInfo;
+	VkSwapchainCreateInfoKHR swapchainInfo;
     VkSwapchainKHR swapchain;
     std::vector<VkImage> swapchainImages;
     PVkImageBuffer depthBuffer;

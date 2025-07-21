@@ -24,9 +24,12 @@ public:
 	WViewport();
 	~WViewport();
 	virtual void Paint() override;
-	void CreateViewportFramebuffers();
-	bool CreateViewportSwapchain();
-	void CreateViewportRenderPass();
+	void CreateViewportFramebuffers(VkRenderPass renderpass);
+	bool CreateViewportImages();
+	bool CreateViewportImageViews();
+	bool CreateViewportImageSamples();
+	void StartViewportRenderpass(VkCommandBuffer buffer, VkRenderPass renderpass, VkBool32 frameIndex);
+	void EndViewportRenderPass(VkCommandBuffer buffer);
 	void CreateViewportCommandBuffers();
 	void AttachToImGUI();
 	bool operator==( GUI_Base& other);
@@ -43,9 +46,7 @@ private:
 	bool windowOpen;
 	std::vector<ViewportImageParamsVk> paramCollection;
 	VkBool32 currentRenderingFrame;
-	VkRenderPass renderPass;
 	VkSwapchainKHR swapchain;
 	std::vector<VkCommandBuffer> cmdBuffers;
 	std::vector<VkFramebuffer> frameBuffers;
 };
-

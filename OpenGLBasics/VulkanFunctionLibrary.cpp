@@ -44,6 +44,13 @@ void VulkanFunctionLibrary::TransitionImageLayout(VkImage image, VkFormat fmt, V
 {
 	auto cmdBuffer = BeginOneOffCommandBuffer();
 
+	TransitionImageLayout(cmdBuffer, image, fmt, aspect, oldLayout, newLayout);
+
+	EndOneOffCommandBuffer(cmdBuffer);
+}
+
+void VulkanFunctionLibrary::TransitionImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout)
+{
 	VkImageMemoryBarrier barrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
 		.oldLayout = oldLayout,
@@ -93,6 +100,24 @@ void VulkanFunctionLibrary::TransitionImageLayout(VkImage image, VkFormat fmt, V
 		sourceStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
 		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	}
+
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_GENERAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+	}
+
 	else if (oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
 	{
 		barrier.srcAccessMask = 0;
@@ -160,7 +185,6 @@ void VulkanFunctionLibrary::TransitionImageLayout(VkImage image, VkFormat fmt, V
 		1, &barrier
 	);
 
-	EndOneOffCommandBuffer(cmdBuffer);
 }
 
 std::vector<VkCommandBuffer> VulkanFunctionLibrary::CreateDefaultCommandBuffers(VkBool32 count)
@@ -298,6 +322,58 @@ VkRenderPass VulkanFunctionLibrary::CreateDefaultRenderpass()
 		throw new std::runtime_error("Unable to create render pass!");
 
 	return val;
+}
+
+VkPipelineCache VulkanFunctionLibrary::CreateDefaultPipelineCache()
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+
+	VkPipelineCacheCreateInfo pipelineCacheInfo;
+	pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	pipelineCacheInfo.pNext = VK_NULL_HANDLE;
+	pipelineCacheInfo.flags = 0;
+	pipelineCacheInfo.initialDataSize = 0;
+	pipelineCacheInfo.pInitialData = VK_NULL_HANDLE;
+
+	VkPipelineCache pipelineCache;
+
+	VkResult result = vkCreatePipelineCache(vkSettings->device, &pipelineCacheInfo, vkSettings->allocationCallback, &pipelineCache);
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("Unable to create pipeline cache!");
+	return pipelineCache;
+}
+
+VkDescriptorPool VulkanFunctionLibrary::CreateDefaultDescriptorPool()
+{
+	VkResult result;
+	VkDescriptorPool pool;
+	// Create a Descriptor Pool
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	std::vector<VkDescriptorPoolSize> poolSizes;
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 });
+	poolSizes.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 });
+
+	VkDescriptorPoolCreateInfo poolInfo;
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.pNext = VK_NULL_HANDLE;
+	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	poolInfo.maxSets = 1000 * (uint32_t)poolSizes.size();
+	poolInfo.poolSizeCount = (uint32_t)poolSizes.size();
+	poolInfo.pPoolSizes = poolSizes.data();
+
+	result = vkCreateDescriptorPool(vkSettings->device, &poolInfo, vkSettings->allocationCallback, &pool);
+
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("Unable to create the descriptor pool!");
+
+	return pool;
+
 }
 
 void VulkanFunctionLibrary::CreateVkBuffer(VkDevice device, const VkAllocationCallbacks* allocationCallback, VkPhysicalDevice physicalDevice,

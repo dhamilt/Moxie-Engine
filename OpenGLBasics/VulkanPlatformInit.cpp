@@ -12,7 +12,17 @@ bool isSupported = true;
 
 
 
- 
+PVulkanPlatformInit* PVulkanPlatformInit::Get()
+{
+	assert(isSupported);
+	// TODO: Create implementation that supports multiple threads accessing this
+	if (instance == nullptr)
+	{
+		instance = new PVulkanPlatformInit();
+		instance->currentVKSettings = PVulkanPlatformInitInfo();
+	}
+	return instance;
+}
 
 PVulkanPlatformInit::PVulkanPlatformInit()
 {
@@ -51,17 +61,7 @@ bool PVulkanPlatformInit::CreateDescriptorPool()
 
     return true;
 }
-PVulkanPlatformInit* PVulkanPlatformInit::Get()
-{
-    assert(isSupported);
-    // TODO: Create implementation that supports multiple threads accessing this
-    if (instance == nullptr)
-    {
-        instance = new PVulkanPlatformInit();
-        instance->currentVKSettings = PVulkanPlatformInitInfo();
-    }
-    return instance;
-}
+
 
 bool PVulkanPlatformInit::CreateFences(VkFence* fencePtr)
 {
@@ -92,95 +92,89 @@ void PVulkanPlatformInit::GetWindowExtent(VkExtent2D& windowExtent)
 
 bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
 {
-    auto framework = new Spunk::VkSetup();
-    if (framework->IsPlatformSupported())
-        return framework->CreateInstance(window);
-//    if (InitializePlatform())
-//    {
-//        VkResult result;
-//        
-//        
-//        // TODO: Create a flagging system to dynamically add all required extensions for instance
-//        // Retrieve the number of extensions for SDL to work
-//  // with Vulkan
-//        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, NULL))
-//        {
-//            perror("Error! Unable to find the required amount of Vulkan extensions!");
-//            return false;
-//        }
-//
-//        // Load in the extensions
-//        currentVKSettings.extensions = std::vector<const char*>(currentVKSettings.extensionCount);
-//        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, currentVKSettings.extensions.data()))
-//        {
-//            perror("Error! Unable to load Vulkan extensions!");
-//            return false;
-//        }
-//
-//        VkBool32 supportedExtensionCount;
-//        std::vector<VkExtensionProperties> supportedExtensions;
-//        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, VK_NULL_HANDLE);
-//        supportedExtensions = std::vector<VkExtensionProperties>(supportedExtensionCount);
-//        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, &supportedExtensions[0]);
-//
-//        // Add Display mode extension
-//        currentVKSettings.extensions.push_back("VK_KHR_display");
-//        currentVKSettings.extensionCount++;
-//
-//        // if deploying a debug build of engine
-//#if _DEBUG
-//        // Initialize Vulkan Validation Layers
-//        currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
-//        currentVKSettings.layerCount++;
-//  //      auto query = std::find(supportedExtensions.begin(), supportedExtensions.end(), [](std::string str) { return str.compare("VK_EXT_layer_settings") == 0; });
-//		//if (query != supportedExtensions.end())
-//		//{
-//		//	currentVKSettings.extensions.push_back("VK_EXT_layer_settings");
-//  //          currentVKSettings.extensionCount++;
-//  //      }
-//
-//        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
-//        supportedExtensions.resize(supportedExtensionCount);
-//        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
-//
-//        // Enable debug report extension
-//        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-//        currentVKSettings.extensionCount++;
-//
-//        
-//#endif // DEBUG
-//
-//        // Setup application info
-//        auto _appInfo = &currentVKSettings.appInfo;
-//        _appInfo->pApplicationName = "Moxie Engine";
-//        _appInfo->applicationVersion = 1;
-//        _appInfo->pEngineName = "LunarG SDK";
-//        _appInfo->engineVersion = 1;
-//        _appInfo->apiVersion = VK_HEADER_VERSION_COMPLETE;
-//
-//        // Setup instance creation info
-//        auto _initInfo = &currentVKSettings.initInfo;
-//        _initInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-//        _initInfo->flags = currentVKSettings.initFlags;
-//        _initInfo->pApplicationInfo = _appInfo;
-//        _initInfo->enabledExtensionCount = currentVKSettings.extensionCount;
-//        _initInfo->ppEnabledExtensionNames = currentVKSettings.extensions.data();
-//        _initInfo->enabledLayerCount = currentVKSettings.layerCount;
-//        _initInfo->ppEnabledLayerNames = currentVKSettings.layers.data();
-// 
-//
-//        // Create vulkan instance
-//        result = vkCreateInstance(&currentVKSettings.initInfo, currentVKSettings.allocationCallback, &currentVKSettings.instance);
-//
-//        //// Initialize ImGui window
-//        //currentVKSettings.window = ImGui_ImplVulkanH_Window();
-//
-//       
-//
-//        assert(result == VK_SUCCESS);
-//        return true;
-//    }
-//    return false;
+    //auto framework = new Spunk::VkSetup();
+    //if (framework->IsPlatformSupported())
+    //    return framework->CreateInstance(window);
+    if (InitializePlatform())
+    {
+        VkResult result;
+        
+        
+        // TODO: Create a flagging system to dynamically add all required extensions for instance
+        // Retrieve the number of extensions for SDL to work
+  // with Vulkan
+        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, NULL))
+        {
+            perror("Error! Unable to find the required amount of Vulkan extensions!");
+            return false;
+        }
+
+        // Load in the extensions
+        currentVKSettings.extensions = std::vector<const char*>(currentVKSettings.extensionCount);
+        if (!SDL_Vulkan_GetInstanceExtensions(window, &currentVKSettings.extensionCount, currentVKSettings.extensions.data()))
+        {
+            perror("Error! Unable to load Vulkan extensions!");
+            return false;
+        }
+
+        VkBool32 supportedExtensionCount;
+        std::vector<VkExtensionProperties> supportedExtensions;
+        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, VK_NULL_HANDLE);
+        supportedExtensions = std::vector<VkExtensionProperties>(supportedExtensionCount);
+        vkEnumerateInstanceExtensionProperties(VK_NULL_HANDLE, &supportedExtensionCount, &supportedExtensions[0]);
+
+        // Add Display mode extension
+        currentVKSettings.extensions.push_back("VK_KHR_display");
+        currentVKSettings.extensionCount++;
+
+        // if deploying a debug build of engine
+#if _DEBUG
+        // Initialize Vulkan Validation Layers
+        currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
+        currentVKSettings.layerCount++;
+ 
+
+        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
+        supportedExtensions.resize(supportedExtensionCount);
+        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
+
+        // Enable debug report extension
+        currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        currentVKSettings.extensionCount++;
+
+        
+#endif // DEBUG
+
+        // Setup application info
+        auto _appInfo = &currentVKSettings.appInfo;
+        _appInfo->pApplicationName = "Moxie Engine";
+        _appInfo->applicationVersion = 1;
+        _appInfo->pEngineName = "LunarG SDK";
+        _appInfo->engineVersion = 1;
+        _appInfo->apiVersion = VK_HEADER_VERSION_COMPLETE;
+
+        // Setup instance creation info
+        auto _initInfo = &currentVKSettings.initInfo;
+        _initInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        _initInfo->flags = currentVKSettings.initFlags;
+        _initInfo->pApplicationInfo = _appInfo;
+        _initInfo->enabledExtensionCount = currentVKSettings.extensionCount;
+        _initInfo->ppEnabledExtensionNames = currentVKSettings.extensions.data();
+        _initInfo->enabledLayerCount = currentVKSettings.layerCount;
+        _initInfo->ppEnabledLayerNames = currentVKSettings.layers.data();
+ 
+
+        // Create vulkan instance
+        result = vkCreateInstance(&currentVKSettings.initInfo, currentVKSettings.allocationCallback, &currentVKSettings.instance);
+
+        //// Initialize ImGui window
+        //currentVKSettings.window = ImGui_ImplVulkanH_Window();
+
+       
+
+        assert(result == VK_SUCCESS);
+        return true;
+    }
     return false;
 }
 
@@ -499,14 +493,10 @@ bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer* commandBuffers)
         throw std::runtime_error("Unable to allocate for command buffer(s)!");
         return false;
     }
-    //memcpy(commandBuffers, currentVKSettings.commandBuffers.data(), MAX_VULKAN_FRAMES_IN_FLIGHT * sizeof(currentVKSettings.commandBuffers[0]));
     // Set the image layout for all of the swapchain images
     for (VkBool32 i = 0; i < currentVKSettings.swapChainImgBufs.size(); ++i)
-    {
 		VulkanFunctionLibrary::TransitionImageLayout(currentVKSettings.swapChainImgBufs[i].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-    }
-    // Set the image layout for depth buffer attachment
-	//VulkanFunctionLibrary::TransitionImageLayout(currentVKSettings.depthBuffer.image, VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    
 
     return true;
 
@@ -536,12 +526,12 @@ bool PVulkanPlatformInit::CreateSwapChain()
 
 
     // Create swapchain for managing and switching between image buffers on vulkan surface
-    VkSwapchainCreateInfoKHR swapchainInfo = {};
-    swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchainInfo.surface = currentVKSettings.surface;
-    swapchainInfo.pNext = NULL;
-    swapchainInfo.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-    currentVKSettings.surfaceFormat = swapchainInfo.imageFormat;
+    auto swapchainInfo = &currentVKSettings.swapchainInfo;
+    swapchainInfo->sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchainInfo->surface = currentVKSettings.surface;
+    swapchainInfo->pNext = NULL;
+    swapchainInfo->imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+    currentVKSettings.surfaceFormat = swapchainInfo->imageFormat;
 
     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surfaceKHR, &currentVKSettings.presentModeCount, NULL);
     currentVKSettings.presentModes = std::vector<VkPresentModeKHR>(currentVKSettings.presentModeCount);
@@ -554,22 +544,22 @@ bool PVulkanPlatformInit::CreateSwapChain()
 
     // Make one more than the swapchain requires
     // as long as it is permitted
-    swapchainInfo.minImageCount = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageCount,
+    swapchainInfo->minImageCount = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageCount,
         surfaceCapabilities.maxImageCount,surfaceCapabilities.minImageCount+1);
-    currentVKSettings.minImageCount = swapchainInfo.minImageCount;
+    currentVKSettings.minImageCount = swapchainInfo->minImageCount;
     // Clamp swapchain image extent to surface extent threshold
-    swapchainInfo.imageExtent.height = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageExtent.height,
+    swapchainInfo->imageExtent.height = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageExtent.height,
         surfaceCapabilities.maxImageExtent.height, surfaceCapabilities.currentExtent.height);
-    swapchainInfo.imageExtent.width = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageExtent.width,
+    swapchainInfo->imageExtent.width = MathLibrary<uint32_t>::Clamp(surfaceCapabilities.minImageExtent.width,
         surfaceCapabilities.maxImageExtent.width, surfaceCapabilities.currentExtent.width);
     
     // Set swapchain's starting transform to use default transform if surface supports it
     // otherwise use the current surface transform
-    swapchainInfo.preTransform = surfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ?
+    swapchainInfo->preTransform = surfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ?
         VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : surfaceCapabilities.currentTransform;
 
     // Find a supported composite alpha mode - one of these is guaranteed to be set
-    swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    swapchainInfo->compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     std::vector<VkCompositeAlphaFlagBitsKHR> compositeAlphaFlags = {
         VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
@@ -579,24 +569,24 @@ bool PVulkanPlatformInit::CreateSwapChain()
 
     for (auto it = compositeAlphaFlags.begin(); it != compositeAlphaFlags.end(); it++) {
         if (surfaceCapabilities.supportedCompositeAlpha & *it) {
-            swapchainInfo.compositeAlpha = *it;
+            swapchainInfo->compositeAlpha = *it;
             break;
         }
     }
     
-    swapchainInfo.imageArrayLayers = 1;
-    swapchainInfo.presentMode = SetPresentMode(currentVKSettings.presentModes);
-    swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchainInfo.queueFamilyIndexCount = 1;
-    swapchainInfo.pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
-    swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
-    swapchainInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    swapchainInfo.clipped = true;
-    swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    swapchainInfo->imageArrayLayers = 1;
+    swapchainInfo->presentMode = SetPresentMode(currentVKSettings.presentModes);
+    swapchainInfo->imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapchainInfo->queueFamilyIndexCount = 1;
+    swapchainInfo->pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
+    swapchainInfo->oldSwapchain = VK_NULL_HANDLE;
+    swapchainInfo->imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    swapchainInfo->clipped = true;
+    swapchainInfo->imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     
     auto device = currentVKSettings.device;
     // Create the swapchain
-    result = vkCreateSwapchainKHR(device, &swapchainInfo, currentVKSettings.allocationCallback, &currentVKSettings.swapchain);
+    result = vkCreateSwapchainKHR(device, swapchainInfo, currentVKSettings.allocationCallback, &currentVKSettings.swapchain);
     
     if (result != VK_SUCCESS)
     {
@@ -617,29 +607,28 @@ bool PVulkanPlatformInit::CreateSwapChain()
     }
 
     //currentVKSettings.imageBuffers = std::vector<PVkImageBuffer>(currentVKSettings.swapchainImageCount);
+    VkImageViewCreateInfo* swapChainImgViewInfo = &currentVKSettings.swapchainImgViewInfo;
+	swapChainImgViewInfo->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	swapChainImgViewInfo->pNext = nullptr;
+	swapChainImgViewInfo->flags = 0;	
+	swapChainImgViewInfo->format = swapchainInfo->imageFormat;
+	swapChainImgViewInfo->components.r = VK_COMPONENT_SWIZZLE_R;
+	swapChainImgViewInfo->components.g = VK_COMPONENT_SWIZZLE_G;
+	swapChainImgViewInfo->components.b = VK_COMPONENT_SWIZZLE_B;
+	swapChainImgViewInfo->components.a = VK_COMPONENT_SWIZZLE_A;
+	swapChainImgViewInfo->subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	swapChainImgViewInfo->subresourceRange.baseMipLevel = 0;
+	swapChainImgViewInfo->subresourceRange.levelCount = 1;
+	swapChainImgViewInfo->subresourceRange.baseArrayLayer = 0;
+	swapChainImgViewInfo->subresourceRange.layerCount = 1;
+	swapChainImgViewInfo->viewType = VK_IMAGE_VIEW_TYPE_2D;
     // Create image view(s) for the swapchain
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
     {
         PVkImageBuffer img = {};
-        img.image = currentVKSettings.swapchainImages[i];
-        VkImageViewCreateInfo imgViewInfo = {};
-        imgViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imgViewInfo.pNext = nullptr;
-        imgViewInfo.flags = 0;
-        imgViewInfo.image = img.image;
-        imgViewInfo.format = swapchainInfo.imageFormat;
-        imgViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-        imgViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-        imgViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-        imgViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-        imgViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        imgViewInfo.subresourceRange.baseMipLevel = 0;
-        imgViewInfo.subresourceRange.levelCount = 1;
-        imgViewInfo.subresourceRange.baseArrayLayer = 0;
-        imgViewInfo.subresourceRange.layerCount = 1;
-        imgViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;        
-
-        result = vkCreateImageView(device, &imgViewInfo, currentVKSettings.allocationCallback, &img.imageView);
+        img.image = currentVKSettings.swapchainImages[i];        
+        swapChainImgViewInfo->image = img.image;
+        result = vkCreateImageView(device, swapChainImgViewInfo, currentVKSettings.allocationCallback, &img.imageView);
         assert(result == VK_SUCCESS);
         currentVKSettings.swapChainImgBufs.push_back(img);
     };
@@ -650,8 +639,8 @@ bool PVulkanPlatformInit::CreateSwapChain()
     imgCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imgCreateInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
     imgCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    imgCreateInfo.extent.width = swapchainInfo.imageExtent.width;
-    imgCreateInfo.extent.height = swapchainInfo.imageExtent.height;
+    imgCreateInfo.extent.width = swapchainInfo->imageExtent.width;
+    imgCreateInfo.extent.height = swapchainInfo->imageExtent.height;
     imgCreateInfo.extent.depth = 1;
     imgCreateInfo.mipLevels = 1;
     imgCreateInfo.arrayLayers = 1;

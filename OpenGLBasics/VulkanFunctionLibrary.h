@@ -11,10 +11,13 @@ public:
 	static VkCommandBuffer BeginOneOffCommandBuffer();
 	static void EndOneOffCommandBuffer(VkCommandBuffer cmdBuffer);
 	static void TransitionImageLayout(VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout);
+	static void TransitionImageLayout(VkCommandBuffer buffer, VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout);
 	static std::vector<VkCommandBuffer> CreateDefaultCommandBuffers(VkBool32 count);
 	static VkImageView CreateColor2DImageView(VkImage image, VkFormat fmt);
 	static std::vector<VkFramebuffer> CreateDefaultFramebuffers(VkBool32 imgViewCount, VkImageView* pImgViews, VkExtent2D resolution, VkRenderPass renderpass);
 	static VkRenderPass CreateDefaultRenderpass();
+	static VkPipelineCache CreateDefaultPipelineCache();
+	static VkDescriptorPool CreateDefaultDescriptorPool();
 	static void CreateVkBuffer(VkDevice device, const VkAllocationCallbacks* allocationCallback, VkPhysicalDevice physicalDevice, VkBufferUsageFlags bufferUsageFlags,
 		VkMemoryPropertyFlags memoryPropertyFlags, UniformBufferParams& params, VkBool32 bufferCreateFlags = 0);
 

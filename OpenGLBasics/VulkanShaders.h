@@ -409,7 +409,7 @@ inline void VkShaderUtil::BindParams()
 	bindingDescriptorInfo.pNext = 0;
 	bindingDescriptorInfo.pBindings = &bindingDescriptors[0];
 	bindingDescriptorInfo.bindingCount = bindingCount;
-	bindingDescriptorInfo.flags = 0;
+	bindingDescriptorInfo.flags = VK_DESCRIPTOR_POOL_CREATE_HOST_ONLY_BIT_EXT;
 
 	VkDescriptorSetLayout shaderDescriptorLayout;
 	result = vkCreateDescriptorSetLayout(vkSettings->device, &bindingDescriptorInfo, vkSettings->allocationCallback, &shaderDescriptorLayout);

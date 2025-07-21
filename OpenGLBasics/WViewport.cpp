@@ -1,6 +1,7 @@
 #include "glPCH.h"
 #include "WViewport.h"
 #include "VulkanFunctionLibrary.h"
+#include "VulkanPlatformInit.h"
 #include "GLSetup.h"
 
 
@@ -16,6 +17,9 @@ WViewport::WViewport()
 
 #if USE_VULKAN
 	paramCollection.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+	CreateViewportImages();
+	CreateViewportImageViews();
+	CreateViewportImageSamples();	
 #endif
 }
 
@@ -41,7 +45,11 @@ WViewport::~WViewport()
 	if (textureID > 0)
 		glDeleteTextures(1, &textureID);
 #elif USE_VULKAN
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	paramCollection.clear();
 
+	for(VkFramebuffer framebuffer : frameBuffers)
+		vkDestroyFramebuffer(vkSettings->device, framebuffer,vkSettings->allocationCallback);
 #endif
 }
 
@@ -102,23 +110,143 @@ void WViewport::Paint()
 	
 }
 
-void WViewport::CreateViewportFramebuffers()
+void WViewport::CreateViewportFramebuffers(VkRenderPass renderpass)
 {
 	std::vector<VkImageView> imgViews;
 	for (auto it = paramCollection.begin(); it != paramCollection.end(); ++it)
 		imgViews.push_back(it->viewportImgView);
 	
-	frameBuffers = VulkanFunctionLibrary::CreateDefaultFramebuffers(MAX_VULKAN_FRAMES_IN_FLIGHT, &imgViews[0], VkExtent2D(width, height), renderPass);
+	frameBuffers = VulkanFunctionLibrary::CreateDefaultFramebuffers(MAX_VULKAN_FRAMES_IN_FLIGHT, &imgViews[0], VkExtent2D(width, height), renderpass);
 }
 
-bool WViewport::CreateViewportSwapchain()
+bool WViewport::CreateViewportImages()
 {
-	return false;
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkSwapchainCreateInfoKHR* swapchainInfo = &vkSettings->swapchainInfo;
+	VkImageCreateInfo imgInfo;
+	imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imgInfo.pNext = VK_NULL_HANDLE;
+	imgInfo.flags = 0;
+	imgInfo.imageType = VK_IMAGE_TYPE_2D;
+	imgInfo.format = swapchainInfo->imageFormat;
+	imgInfo.extent.width = swapchainInfo->imageExtent.width;
+	imgInfo.extent.height = swapchainInfo->imageExtent.height;
+	imgInfo.extent.depth = 1;
+	imgInfo.arrayLayers = swapchainInfo->imageArrayLayers;
+	imgInfo.mipLevels = 1;
+	imgInfo.tiling = VK_IMAGE_TILING_LINEAR;
+	imgInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imgInfo.sharingMode = swapchainInfo->imageSharingMode;
+	imgInfo.queueFamilyIndexCount = 1;
+	imgInfo.pQueueFamilyIndices = &vkSettings->queueFamilies.front();
+	
+	width = swapchainInfo->imageExtent.width;
+	height = swapchainInfo->imageExtent.height;
+
+	for (int i = 0; i < paramCollection.size(); ++i)
+	{
+		auto current = &paramCollection[i];
+		VkResult result = vkCreateImage(vkSettings->device, &imgInfo, vkSettings->allocationCallback, &current->viewportImg);
+		if (result != VK_SUCCESS)
+			throw std::runtime_error("Unable to create image for viewport!");
+
+		// Allocate memory for the image 
+		VkMemoryRequirements memReqs;
+		vkGetImageMemoryRequirements(vkSettings->device, current->viewportImg, &memReqs);
+		VkMemoryAllocateInfo memoryInfo = {};
+		memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		memoryInfo.allocationSize = memReqs.size;
+
+
+		result = vkAllocateMemory(vkSettings->device, &memoryInfo, vkSettings->allocationCallback, &current->imgMemory);
+
+		if (result != VK_SUCCESS)
+		{
+			perror("Error! Unable to allocate memory for the viewport image!");
+			return false;
+		}
+
+		// Bind memory buffer to image
+		result = vkBindImageMemory(vkSettings->device, current->viewportImg, current->imgMemory, 0);
+
+		if (result != VK_SUCCESS)
+		{
+			perror("Error! Unable to bind memory to viewport image!");
+			return false;
+		}
+	}
+	return true;
 }
 
-void WViewport::CreateViewportRenderPass()
+bool WViewport::CreateViewportImageViews()
 {
-	renderPass = VulkanFunctionLibrary::CreateDefaultRenderpass();
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	auto imgViewInfo = vkSettings->swapchainImgViewInfo;	
+	for (int i = 0; i < paramCollection.size(); ++i)
+	{
+		auto current = &paramCollection[i];
+		imgViewInfo.image = current->viewportImg;
+		VkResult result = vkCreateImageView(vkSettings->device, &imgViewInfo, vkSettings->allocationCallback, &current->viewportImgView);
+		assert(result == VK_SUCCESS);
+		
+	}
+	return true;
+}
+
+bool WViewport::CreateViewportImageSamples()
+{
+	VkSamplerCreateInfo viewportSmplrInfo = {
+				.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+				.pNext = VK_NULL_HANDLE,
+				.flags = 0,
+				.magFilter = VK_FILTER_LINEAR,
+				.minFilter = VK_FILTER_LINEAR,
+				.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+				.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+				.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+				.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+				.anisotropyEnable = VK_FALSE,
+				.compareEnable = VK_FALSE,
+				.minLod = -1000,
+				.maxLod = 1000,
+				.unnormalizedCoordinates = VK_FALSE
+				};
+
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	for(int i = 0; i < paramCollection.size(); ++i)
+	{
+		auto current = &paramCollection[i];
+		VkResult result =  vkCreateSampler(vkSettings->device, &viewportSmplrInfo, vkSettings->allocationCallback, &current->sampler);
+		if(result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Unable to create sampler for viewport image!");
+		}
+	}
+	return true;
+}
+
+void WViewport::StartViewportRenderpass(VkCommandBuffer buffer, VkRenderPass renderpass, VkBool32 frameIndex)
+{
+
+
+	VkClearValue clearVal;
+	clearVal.color = {0.0f, 0.0f, 0.0f, 1.0f};
+	VkRenderPassBeginInfo renderpassInfo;
+	renderpassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderpassInfo.pNext = VK_NULL_HANDLE;
+	renderpassInfo.renderPass = renderpass;
+	renderpassInfo.framebuffer = frameBuffers[frameIndex];
+	renderpassInfo.renderArea = {0, 0, (VkBool32)width, (VkBool32)height};
+	renderpassInfo.clearValueCount = 1;
+	renderpassInfo.pClearValues = &clearVal;
+	vkCmdBeginRenderPass(buffer, &renderpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void WViewport::EndViewportRenderPass(VkCommandBuffer buffer)
+{
+	vkCmdEndRenderPass(buffer);
 }
 
 void WViewport::CreateViewportCommandBuffers()
@@ -187,129 +315,11 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameInde
 	auto swapChainImage = vkSettings->swapchainImages[frameIndex];
 	auto swapChainImageView = vkSettings->swapChainImgBufs[frameIndex].imageView;
 	
-	VkResult result;
-	VkMemoryRequirements imgMemReqs;
-		{
-			VkImageCreateInfo viewportImgInfo =
-			{
-				.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-				.pNext = VK_NULL_HANDLE,
-				.flags = 0,
-				.imageType = VK_IMAGE_TYPE_2D,
-				.format = VK_FORMAT_B8G8R8A8_UNORM,
-				.extent = {static_cast<VkBool32>(width), static_cast<VkBool32>(height), 1},
-				.mipLevels = 1,
-				.arrayLayers = 1,
-				.samples = VK_SAMPLE_COUNT_1_BIT,
-				.tiling = VK_IMAGE_TILING_OPTIMAL,
-				.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-				.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-				.queueFamilyIndexCount = 1,
-				.pQueueFamilyIndices = &vkSettings->queueFamilies[0],
-				.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED
-			};
 
+	
 
-			result = vkCreateImage(vkSettings->device, &viewportImgInfo, vkSettings->allocationCallback, &paramCollection[frameIndex].viewportImg);
-			if (result != VK_SUCCESS)
-			{
-				throw new std::runtime_error("Unable to create image for viewport!");
-			}
+	VulkanFunctionLibrary::TransitionImageLayout(cmdBuffer, paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-
-			vkGetImageMemoryRequirements(vkSettings->device, paramCollection[frameIndex].viewportImg, &imgMemReqs);
-			VkMemoryPropertyFlags imgMemPropertiesFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-
-			// find out if memory type is supported in memory buffer
-			VkPhysicalDeviceMemoryProperties memoryProperties;
-			vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex], &memoryProperties);
-
-			// Flags for allowing the device memory to be accessible and malleable to application code
-			VkBool32 memoryFlagIndex = -1;
-			for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
-			{
-				if (imgMemReqs.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & imgMemPropertiesFlags) == imgMemPropertiesFlags)
-				{
-					memoryFlagIndex = i;
-					break;
-				}
-			}
-
-			VkMemoryAllocateInfo imgMemInfo =
-			{
-				.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-				.pNext = VK_NULL_HANDLE,
-				.allocationSize = imgMemReqs.size,
-				.memoryTypeIndex = memoryFlagIndex
-			};
-			result = vkAllocateMemory(vkSettings->device, &imgMemInfo, vkSettings->allocationCallback, &paramCollection[frameIndex].imgMemory);
-			if (result != VK_SUCCESS)
-			{
-				throw new std::runtime_error("Unable to allocate memory for image!");
-			}
-
-			result = vkBindImageMemory(vkSettings->device, paramCollection[frameIndex].viewportImg, paramCollection[frameIndex].imgMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				throw new std::runtime_error("Unable to bind viewport image memory!");
-			}
-
-			VulkanFunctionLibrary::TransitionImageLayout(paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		}
-
-
-		{
-			VkImageViewCreateInfo viewportImgViewInfo = {
-				.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-				.pNext = VK_NULL_HANDLE,
-				.flags = 0,
-				.image = paramCollection[frameIndex].viewportImg,
-				.viewType = VK_IMAGE_VIEW_TYPE_2D,
-				.format = VK_FORMAT_B8G8R8A8_UNORM,
-				.components = {	VK_COMPONENT_SWIZZLE_R,
-								VK_COMPONENT_SWIZZLE_G,
-								VK_COMPONENT_SWIZZLE_B,
-								VK_COMPONENT_SWIZZLE_A },
-				.subresourceRange = {
-									VK_IMAGE_ASPECT_COLOR_BIT,
-									0,
-									1,
-									0,
-									1}
-
-			};
-
-			result = vkCreateImageView(vkSettings->device, &viewportImgViewInfo, vkSettings->allocationCallback, &paramCollection[frameIndex].viewportImgView);
-			if (result != VK_SUCCESS)
-			{
-				throw new std::runtime_error("Unable to create image view for viewport!");
-			}
-		}
-
-		{
-			VkSamplerCreateInfo viewportSmplrInfo = {
-				.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-				.pNext = VK_NULL_HANDLE,
-				.flags = 0, 
-				.magFilter = VK_FILTER_LINEAR,
-				.minFilter = VK_FILTER_LINEAR,
-				.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-				.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-				.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-				.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-				.maxAnisotropy = 1.0f,
-				.minLod = -1000, 
-				.maxLod = 1000				
-			};
-
-			result = vkCreateSampler(vkSettings->device, &viewportSmplrInfo, vkSettings->allocationCallback, &paramCollection[frameIndex].sampler);
-			if (result != VK_SUCCESS)
-			{
-				throw new std::runtime_error("Unable to create image texture for viewport!");
-			}
-
-		}
 	
 	VkImageSubresourceLayers colorAttachLayer = {
 		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -327,140 +337,14 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameInde
 	};
 	
 
-	vkCmdCopyImage(cmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].viewportImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &colorAttachImg);
+	vkCmdCopyImage(cmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].viewportImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &colorAttachImg);	
 
-	// Create a staging buffer for swapchain images to viewport
-	VkBufferCreateInfo bufferInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = VK_NULL_HANDLE,
-		.flags = 0,
-		.size = static_cast<VkBool32>(width) * static_cast<VkBool32>(height) * 4,
-		.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 1,
-		.pQueueFamilyIndices = vkSettings->queueFamilies.data()
-	};
-
-
-	result = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback, &paramCollection[frameIndex].buffer);
-	if (result != VK_SUCCESS)
-	{
-		throw new std::runtime_error("Unable to reserve memory for buffer!");
-	}
-
-
-	// Retrieve memory requirements for setting up memory buffer
-	vkGetBufferMemoryRequirements(vkSettings->device, paramCollection[frameIndex].buffer, &imgMemReqs);
-
-	// find out if memory type is supported in memory buffer
-	VkPhysicalDeviceMemoryProperties memoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices.front(), &memoryProperties);
-	// Flags for allowing the device memory to be accessible and malleable to application code
-	VkBool32 memoryFlagIndex = -1;
-	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; i++)
-	{
-		if (imgMemReqs.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		{
-			memoryFlagIndex = i;
-			break;
-		}
-	}
-
-	if (memoryFlagIndex == -1)
-	{
-		throw new std::runtime_error("Unable to access vulkan device memory!");
-	}
-
-	// Allocate device memory for memory buffer
-	VkMemoryAllocateInfo memoryAllocationInfo = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = imgMemReqs.size,
-		.memoryTypeIndex = memoryFlagIndex
-	};
-
-
-	result = vkAllocateMemory(vkSettings->device, &memoryAllocationInfo, vkSettings->allocationCallback, &paramCollection[frameIndex].stagingMemory);
-	if (result != VK_SUCCESS)
-	{
-		throw new std::runtime_error("Unable to allocate device memory for buffer!");
-	}
-
-	// Bind device memory to buffer
-	vkBindBufferMemory(vkSettings->device, paramCollection[frameIndex].buffer, paramCollection[frameIndex].stagingMemory, 0);
-
-	// Copy swapchain image data to buffer
-	VkBufferImageCopy bufCpyParams = {
-		.bufferOffset = 0,
-		.bufferRowLength = 0,
-		.bufferImageHeight = 0,
-		.imageSubresource = colorAttachLayer,
-		.imageExtent = colorAttachImg.extent
-	};
-	
-	vkCmdCopyImageToBuffer(cmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].buffer, 1, &bufCpyParams);
-
-	paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL);
+	VulkanFunctionLibrary::TransitionImageLayout(cmdBuffer, paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
 	currentRenderingFrame = frameIndex;
 }
 
 void WViewport::VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
 {
-	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	auto swapChainImage = vkSettings->swapchainImages[frameIndex];
-
-	currentRenderingFrame = frameIndex;
-
-	VkImageSubresourceLayers colorAttachLayer = {
-		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-		.mipLevel = 0,
-		.baseArrayLayer = 0,
-		.layerCount = 1
-	};
-
-	VkImageCopy colorAttachImg = {
-		.srcSubresource = colorAttachLayer,
-		.srcOffset = {0,0,0},
-		.dstSubresource = colorAttachLayer,
-		.dstOffset = {0,0,0},
-		.extent = {static_cast<VkBool32>(width), static_cast<VkBool32>(height), 1}
-	};
-
-
-	// Copy swapchain image data to buffer
-	VkBufferImageCopy bufCpyParams = {
-		.bufferOffset = 0,
-		.bufferRowLength = 0,
-		.bufferImageHeight = 0,
-		.imageSubresource = colorAttachLayer,
-		.imageExtent = colorAttachImg.extent
-	};
-
-	vkCmdCopyImageToBuffer(cmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].buffer, 1, &bufCpyParams);
-
-
-	vkCmdCopyImage(cmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].viewportImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &colorAttachImg);
-	VkDescriptorImageInfo descriptorImgInfo;
-	descriptorImgInfo.sampler = paramCollection[frameIndex].sampler;
-	descriptorImgInfo.imageView = paramCollection[frameIndex].viewportImgView;
-	descriptorImgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-	VkDescriptorBufferInfo descriptorBufInfo = 
-	{
-		.buffer = paramCollection[frameIndex].buffer,
-		.offset = 0,
-		.range = colorAttachImg.extent.width * colorAttachImg.extent.height * 4
-	};
-
-	
-	VkWriteDescriptorSet descriptorWrite;
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.dstSet = paramCollection[frameIndex].descriptorSet;	
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &descriptorBufInfo;
-	descriptorWrite.pImageInfo = &descriptorImgInfo;
-	
-
-	//vkUpdateDescriptorSets(vkSettings->device, 1, &descriptorWrite, 0, VK_NULL_HANDLE);
+	if (paramCollection[frameIndex].descriptorSet == VK_NULL_HANDLE)
+		paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_GENERAL);
 }

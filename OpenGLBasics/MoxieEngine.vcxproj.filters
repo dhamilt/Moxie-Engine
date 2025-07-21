@@ -158,7 +158,7 @@
     <ClCompile Include="GUI_Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MViewport.cpp">
+    <ClCompile Include="WViewport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StandaloneWindow.cpp">
@@ -210,6 +210,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VulkanFunctionLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanRenderpassBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -406,7 +409,7 @@
     <ClInclude Include="LogMacros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MViewport.h">
+    <ClInclude Include="WViewport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StandaloneWindow.h">
@@ -479,6 +482,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui\imgui_impl_sdl2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderpassBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

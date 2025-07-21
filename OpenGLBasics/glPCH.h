@@ -31,3 +31,4 @@
 #include "VectorLibrary.h"
 #include "MeshDefaultsLibrary.h"
 #include "MathLibrary.h"
+#include "VkSetup.h"

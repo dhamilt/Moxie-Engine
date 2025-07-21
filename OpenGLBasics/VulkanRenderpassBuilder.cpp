@@ -27,7 +27,7 @@ VkCommandBuffer VulkanRenderpassBuilder::GetCommandBufferHandle(VkBool32 frameIn
 				VkCommandBufferBeginInfo cmdBeginInfo = {
 				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 				.pNext = VK_NULL_HANDLE,
-				.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+				.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
 				.pInheritanceInfo = VK_NULL_HANDLE
 				};
 				assert(vkBeginCommandBuffer(commandbuffers[frameIndex], &cmdBeginInfo) == VK_SUCCESS);
