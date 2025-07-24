@@ -2,7 +2,6 @@
 #include "VulkanPlatformInit.h"
 #include "VulkanFunctionLibrary.h"
 #include "GLSetup.h"
-#include "VkSetup.h"
 
 #if __APPLE__
 bool isSupported = false;
