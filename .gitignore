@@ -26,8 +26,6 @@ x64/Debug/Moxie.exe
 
 *.recipe
 
-x64/
-
 .vs/
 
 *.dat
