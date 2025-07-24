@@ -606,7 +606,6 @@ bool PVulkanPlatformInit::CreateSwapChain()
         return false;
     }
 
-    //currentVKSettings.imageBuffers = std::vector<PVkImageBuffer>(currentVKSettings.swapchainImageCount);
     VkImageViewCreateInfo* swapChainImgViewInfo = &currentVKSettings.swapchainImgViewInfo;
 	swapChainImgViewInfo->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	swapChainImgViewInfo->pNext = nullptr;
@@ -703,6 +702,18 @@ bool PVulkanPlatformInit::CreateSwapChain()
     }
 
     return true;
+}
+
+void PVulkanPlatformInit::ResizeSwapChain(int _width, int _height)
+{
+    
+    auto info =  &currentVKSettings.swapchainInfo;
+    info->imageExtent =VkExtent2D(_width, _height);
+    info->oldSwapchain = currentVKSettings.swapchain;
+    VkResult result = vkCreateSwapchainKHR(currentVKSettings.device, info, currentVKSettings.allocationCallback, &currentVKSettings.swapchain);
+
+    if (result != VK_SUCCESS)
+        throw std::runtime_error("Unable to resize swapchain!");
 }
 
 void PVulkanPlatformInit::CleanupVulkan()

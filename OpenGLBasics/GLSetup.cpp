@@ -116,7 +116,7 @@ void GLSetup::StartSDLWindow()
 
 #if USE_VULKAN
 	
-	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	SDL_WindowFlags windowFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 	// Create Vulkan Window
 	sdlWindow = SDL_CreateWindow("Moxie Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
 	if (!sdlWindow)
@@ -125,7 +125,7 @@ void GLSetup::StartSDLWindow()
 		assert(sdlWindow);
 		throw std::runtime_error("Context window could not be created!");
 	}
-	SDL_HideWindow(sdlWindow);
+	//SDL_HideWindow(sdlWindow);
 	auto platformInstance =PVulkanPlatformInit::Get();
 	auto vkSettings = platformInstance->GetInfo();
 	// Make sure the vulkan instance was created correctly
@@ -282,7 +282,13 @@ void GLSetup::StartSDLWindow()
 
 	// Bind window resizing delegate to graphics pipeline
 	auto binding = std::function<void(int, int)>(std::bind(&BRenderingPipeline::ResizeScreen, pipeline, std::placeholders::_1, std::placeholders::_2));
-	windowResizeDelegate += binding;	
+	// Bind window resizing delegate to viewport
+	auto viewportResizeBinding = std::function<void(int, int)>(std::bind(&WViewport::ResizeFramebuffers, viewport, std::placeholders::_1, std::placeholders::_2));
+	// Bind window resize delegate to the resizing of the swapchain
+	auto swapchainResizeBinding = std::function<void(int, int)>(std::bind(&PVulkanPlatformInit::ResizeSwapChain, PVulkanPlatformInit::Get(), std::placeholders::_1, std::placeholders::_2));
+	windowResizeDelegate += binding;
+	windowResizeDelegate += viewportResizeBinding;
+	windowResizeDelegate += swapchainResizeBinding;
 	
 #endif
 	
@@ -360,16 +366,7 @@ void GLSetup::Render()
 	// Run one frame of the Render thread
 	if (sdlWindow)
 	{
-		// If window has been resized
-		// broadcast it to all functions subscribed to the delegate
-		int currentWidth = 0, currentHeight = 0;
-		SDL_GetWindowSize(sdlWindow, &currentWidth, &currentHeight);
-		if (currentWidth != width || currentHeight != height)
-		{
-			windowResizeDelegate.Broadcast(currentWidth, currentHeight);
-			width = currentWidth;
-			height = currentHeight;
-		}
+		
 		// Keep a reference of the 4x4 view and projection matrices each frame
 		// in order to pass into the drawing of meshes
 		view = mainCamera->GetViewMatrix();
@@ -384,6 +381,18 @@ void GLSetup::Render()
 
 
 #if USE_OPENGL
+
+		// If window has been resized
+		// broadcast it to all functions subscribed to the delegate
+		int currentWidth = 0, currentHeight = 0;
+		SDL_GetWindowSize(sdlWindow, &currentWidth, &currentHeight);
+		if (currentWidth != width || currentHeight != height)
+		{
+			windowResizeDelegate.Broadcast(currentWidth, currentHeight);
+			width = currentWidth;
+			height = currentHeight;
+		}
+
 		pipeline->LoadCurrentFramebuffer();
 
 		// Use the initial framebuffer to record all render data for this frame
@@ -401,13 +410,7 @@ void GLSetup::Render()
 
 		pipeline->RenderPrimitives();
 		
-		//// Send projection and view matrices to objects
-		//// being rendered
-		//for (int i = 0; i < renderObjs.size(); i++)
-		//	renderObjs[i]->Draw(projection, view);
-
 		// Stop capturing render data for initial framebuffer
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		pipeline->UnloadFramebuffer();
 		// Start a new frame for the GUI to render
 		ImGui_ImplOpenGL3_NewFrame();
@@ -643,7 +646,8 @@ void GLSetup::Render()
 
 		// Retrieve the next frame
 		currentRenderingFrame = (currentRenderingFrame + 1) % MAX_VULKAN_FRAMES_IN_FLIGHT;
-		renderFrameRefreshDelegate.Broadcast();
+		if(!cachingFirstFramesInFlight)
+			renderFrameRefreshDelegate.Broadcast();
 		// tell ImGui to set up for first run of frames in flight
 		if (cachingFirstFramesInFlight && currentRenderingFrame == 0)
 			cachingFirstFramesInFlight = false;	

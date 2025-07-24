@@ -114,6 +114,7 @@ public:
     bool CreateLogicalDeviceAndQueue();
     bool CreateDescriptorPool();
     bool CreateSwapChain();
+	void ResizeSwapChain(int _width, int _height);
     bool CreateRenderPass();
     bool CreateSemaphores(VkSemaphore* presentSemaphorePtr, VkSemaphore* renderSemaphorePtr);
     bool CreateFences(VkFence* fencePtr);
@@ -292,7 +293,7 @@ VkBool32 DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTyp
     return VK_FALSE;
 }
 
-VkBool32 DebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+inline VkBool32 DebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
 	VkDebugUtilsMessageTypeFlagBitsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
 	// if no discernable data provided from callback

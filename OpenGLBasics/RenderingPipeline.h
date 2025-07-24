@@ -272,6 +272,8 @@ class BRenderingPipeline final
 	void GenerateDefaultFramebuffer();
 	// Generates a Vulkan framebuffer
 	void GenerateVkFrameBuffers();
+	// Resizes vulkan framebuffer
+	void ResizeVkFramebuffers(int _width, int _height);
 	// Sends viewport info to graphics pipeline based on screen resolution
 	void SetViewportInfo(VkCommandBuffer cmdBuffer);
 	// Adds vertex buffers to command buffer 

@@ -60,6 +60,7 @@ void WViewport::Paint()
 	if (ImGui::IsWindowFocused())
 		printf("Viewport is focused\n");
 
+	ImGui::SetNextWindowSize(ImVec2(width, height));
 	ImGui::Begin("Viewport", &windowOpen);
 
 #if USE_OPENGL
@@ -110,13 +111,26 @@ void WViewport::Paint()
 	
 }
 
-void WViewport::CreateViewportFramebuffers(VkRenderPass renderpass)
+void WViewport::CreateViewportFramebuffers(VkRenderPass _renderpass)
 {
+	renderpass = static_cast<VkRenderPass>(_renderpass);
 	std::vector<VkImageView> imgViews;
 	for (auto it = paramCollection.begin(); it != paramCollection.end(); ++it)
 		imgViews.push_back(it->viewportImgView);
 	
 	frameBuffers = VulkanFunctionLibrary::CreateDefaultFramebuffers(MAX_VULKAN_FRAMES_IN_FLIGHT, &imgViews[0], VkExtent2D(width, height), renderpass);
+}
+
+void WViewport::ResizeFramebuffers(int _width, int _height)
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	for(VkFramebuffer framebuf : frameBuffers)
+		vkDestroyFramebuffer(vkSettings->device, framebuf, vkSettings->allocationCallback);
+	frameBuffers.clear();
+	width = _width;
+	height = _height;
+	CreateViewportFramebuffers(renderpass);
+
 }
 
 bool WViewport::CreateViewportImages()
@@ -345,6 +359,7 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameInde
 
 void WViewport::VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
 {
-	if (paramCollection[frameIndex].descriptorSet == VK_NULL_HANDLE)
-		paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_GENERAL);
+	if (paramCollection[frameIndex].descriptorSet != VK_NULL_HANDLE)
+		ImGui_ImplVulkan_RemoveTexture(paramCollection[frameIndex].descriptorSet);
+	paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_GENERAL);
 }

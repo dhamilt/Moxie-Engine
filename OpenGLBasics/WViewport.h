@@ -25,6 +25,7 @@ public:
 	~WViewport();
 	virtual void Paint() override;
 	void CreateViewportFramebuffers(VkRenderPass renderpass);
+	void ResizeFramebuffers(int width, int height);
 	bool CreateViewportImages();
 	bool CreateViewportImageViews();
 	bool CreateViewportImageSamples();
@@ -49,4 +50,5 @@ private:
 	VkSwapchainKHR swapchain;
 	std::vector<VkCommandBuffer> cmdBuffers;
 	std::vector<VkFramebuffer> frameBuffers;
+	VkRenderPass renderpass;
 };

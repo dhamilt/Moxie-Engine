@@ -1144,6 +1144,38 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebufferInfo.width = screenResolution.width;
 	framebufferInfo.height = screenResolution.height;
+	
+	
+	// Set the attachment count to be same as the number of image buffers allocated for in the swapchain
+	framebufferInfo.attachmentCount = 2;
+	for (uint32_t i = 0; i < vkSettings->swapchainImageCount; i++)
+	{
+		std::vector<VkImageView> attachments;
+		attachments.push_back(vkSettings->swapChainImgBufs[i].imageView);
+		attachments.push_back(vkSettings->depthBuffer.imageView);
+		framebufferInfo.pAttachments = &attachments[0];
+		framebufferInfo.pNext = VK_NULL_HANDLE;
+		framebufferInfo.renderPass = vkSettings->renderPass;
+		framebufferInfo.layers = 1;
+		framebufferInfo.flags = 0;
+		VkFramebuffer vkFramebuffer;
+		auto result = vkCreateFramebuffer(vkSettings->device, &framebufferInfo,
+			vkSettings->allocationCallback, &vkFramebuffer);
+		assert(result == VK_SUCCESS);
+		vkFramebuffers.push_back(vkFramebuffer);
+	}
+}
+
+void BRenderingPipeline::ResizeVkFramebuffers(int _width, int _height)
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkFramebufferCreateInfo framebufferInfo = {};
+	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+
+	// Set the attachment count to be same as the number of image buffers allocated for in the swapchain
+	framebufferInfo.attachmentCount = 2;
+	framebufferInfo.width = screenResolution.width;
+	framebufferInfo.height = screenResolution.height;
 	// if being recalled due to resizing
 	if (vkFramebuffers.size() > 0)
 	{
@@ -1152,9 +1184,6 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 			vkDestroyFramebuffer(vkSettings->device, vkFramebuffers[i], vkSettings->allocationCallback);
 		vkFramebuffers.clear();
 	}
-	
-	// Set the attachment count to be same as the number of image buffers allocated for in the swapchain
-	framebufferInfo.attachmentCount = 2;
 	for (uint32_t i = 0; i < vkSettings->swapchainImageCount; i++)
 	{
 		std::vector<VkImageView> attachments;
@@ -1265,7 +1294,7 @@ void BRenderingPipeline::ResizeScreen(int width, int height)
 	screenResolution.width = width;
 	screenResolution.height = height;
 	// Resize the framebuffer capture to new resolution
-	GenerateVkFrameBuffers();
+	ResizeVkFramebuffers(width, height);
 	// Update the viewport info for the graphics pipeline(s)
 	for (auto primitivePtr = primitives.begin(); primitivePtr != primitives.end(); primitivePtr++)
 		vulkanPipelineBuilder->LoadViewportInfo(primitivePtr->second->pipelineBuilderParams, screenResolution);
