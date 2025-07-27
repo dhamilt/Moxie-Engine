@@ -18,6 +18,8 @@ public:
 	static VkRenderPass CreateDefaultRenderpass();
 	static VkPipelineCache CreateDefaultPipelineCache();
 	static VkDescriptorPool CreateDefaultDescriptorPool();
+	static std::vector<VkSubpassDescription> CreatePipelineSubpasses();
+	static std::vector<VkSubpassDependency> CreatePipelineSubpassDependencies();
 	static void CreateVkBuffer(VkDevice device, const VkAllocationCallbacks* allocationCallback, VkPhysicalDevice physicalDevice, VkBufferUsageFlags bufferUsageFlags,
 		VkMemoryPropertyFlags memoryPropertyFlags, UniformBufferParams& params, VkBool32 bufferCreateFlags = 0);
 

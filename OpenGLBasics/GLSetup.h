@@ -114,6 +114,7 @@ private:
 	BRenderingPipeline* pipeline;
 	VkCommandBufferBeginInfo beginCmdBufferInfo;
 	VkRenderPassBeginInfo beginRenderPassInfo;
+	VkRenderingInfo renderPassInfo;
 	VkClearValue* clearValues;
 	std::vector<VkCommandBuffer> cmdBuffers;
 	std::vector<VkCommandBuffer> imguiCmdBuffers;

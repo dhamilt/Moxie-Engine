@@ -363,3 +363,8 @@ void WViewport::VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
 		ImGui_ImplVulkan_RemoveTexture(paramCollection[frameIndex].descriptorSet);
 	paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_GENERAL);
 }
+
+void WViewport::PresentViewportTexture(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
+{
+	VulkanFunctionLibrary::TransitionImageLayout(cmdBuffer, paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+}

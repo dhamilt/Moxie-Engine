@@ -117,7 +117,7 @@ public:
 	void ResizeSwapChain(int _width, int _height);
     bool CreateRenderPass();
     bool CreateSemaphores(VkSemaphore* presentSemaphorePtr, VkSemaphore* renderSemaphorePtr);
-    bool CreateFences(VkFence* fencePtr);
+    VkFence CreateFence();
     //bool SetupVulkanWindow(VkSurfaceKHR surface, int width, int height);
     void CleanupVulkan();
 	// Choose the Mailbox Present Mode ("Triple Buffering")

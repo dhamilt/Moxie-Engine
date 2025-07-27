@@ -62,24 +62,19 @@ bool PVulkanPlatformInit::CreateDescriptorPool()
 }
 
 
-bool PVulkanPlatformInit::CreateFences(VkFence* fencePtr)
-{
-    currentVKSettings.inFlightFences.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
-    for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
-    {
-        VkFenceCreateInfo fenceInfo = {};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        // Create the fence with the Create Signaled flag,
-        //so the fence can wait before using it on a GPU command (for the first frame)
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        VkResult result = vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &currentVKSettings.inFlightFences[i]);
-        if (result != VK_SUCCESS)
-        {
-            throw std::runtime_error("Unable to create in flight fence #" + std::to_string(i) + "!");
-        }
-    }
-    memcpy(fencePtr, currentVKSettings.inFlightFences.data(), sizeof(currentVKSettings.inFlightFences[0]) * MAX_VULKAN_FRAMES_IN_FLIGHT);
-    return true;
+VkFence PVulkanPlatformInit::CreateFence()
+{   
+    VkFence fence;
+    VkFenceCreateInfo fenceInfo = {};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    // Create the fence with the Create Signaled flag,
+    //so the fence can wait before using it on a GPU command (for the first frame)
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VkResult result = vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &fence);
+    if (result != VK_SUCCESS)
+        throw std::runtime_error("Unable to create in flight fence!");
+           
+    return fence;
 }
 
 void PVulkanPlatformInit::GetWindowExtent(VkExtent2D& windowExtent)
@@ -323,13 +318,19 @@ bool PVulkanPlatformInit::CreateSemaphores(VkSemaphore* presentSemaphorePtr, VkS
 {
     currentVKSettings.imageAvailableSemaphores.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
     currentVKSettings.renderFinishedSemaphores.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+    /*VkSemaphoreTypeCreateInfo semaphoreTypeInfo;
+    semaphoreTypeInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+    semaphoreTypeInfo.pNext = VK_NULL_HANDLE;
+    semaphoreTypeInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+    semaphoreTypeInfo.initialValue = 0;*/
+	VkSemaphoreCreateInfo semaphoreInfo = {
+			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+			.pNext = VK_NULL_HANDLE,
+			.flags = 0
+	};
     for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; i++)
     {
-        VkSemaphoreCreateInfo semaphoreInfo = {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-            .pNext = VK_NULL_HANDLE,
-            .flags = 0
-        };
+        
         VkResult result = vkCreateSemaphore(currentVKSettings.device, &semaphoreInfo, currentVKSettings.allocationCallback, &currentVKSettings.imageAvailableSemaphores[i]);
         if (result != VK_SUCCESS)
         {
@@ -492,11 +493,7 @@ bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer* commandBuffers)
         throw std::runtime_error("Unable to allocate for command buffer(s)!");
         return false;
     }
-    // Set the image layout for all of the swapchain images
-    for (VkBool32 i = 0; i < currentVKSettings.swapChainImgBufs.size(); ++i)
-		VulkanFunctionLibrary::TransitionImageLayout(currentVKSettings.swapChainImgBufs[i].image, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-    
-
+   
     return true;
 
 }
@@ -786,7 +783,7 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     std::vector<VkAttachmentDescription> attachments(2);
@@ -803,39 +800,69 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthRef.attachment = 1;
     depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    // Create Subpass info
-    VkSubpassDescription subpassDescription = {};
-    subpassDescription.flags = 0;
-    subpassDescription.colorAttachmentCount = 1;
-    subpassDescription.pColorAttachments = &colorRef;
-    subpassDescription.pDepthStencilAttachment = &depthRef;
-    subpassDescription.inputAttachmentCount = 0;
-    subpassDescription.pPreserveAttachments = VK_NULL_HANDLE;
-    subpassDescription.preserveAttachmentCount = 0;
-    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
-    subpassDescription.pResolveAttachments = VK_NULL_HANDLE;
-    subpassDescription.pInputAttachments = VK_NULL_HANDLE;
-   
+	VkAttachmentReference transferRef = {};
+	transferRef.attachment = 0;
+	transferRef.layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
-    // Create subpass dependency for auto transitioning between image layouts
-    VkSubpassDependency dependency = {};
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    VkAttachmentReference presentRef = {};
+    presentRef.attachment = 0;
+    presentRef.layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkBool32 preserveAttachments[2] = {0, 1};
+	// Create Color to Depth/Stencil subpass
+	VkSubpassDescription colorToDepthStencilSubpass;
+	colorToDepthStencilSubpass.flags = 0;
+	colorToDepthStencilSubpass.colorAttachmentCount = 1;
+	colorToDepthStencilSubpass.pColorAttachments = &colorRef;
+	colorToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
+	colorToDepthStencilSubpass.inputAttachmentCount = 0;
+	colorToDepthStencilSubpass.pPreserveAttachments = preserveAttachments;
+	colorToDepthStencilSubpass.preserveAttachmentCount = 2;
+	colorToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	colorToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	colorToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+	// Create Depth/Stencil to Transfer subpass
+	VkSubpassDescription depthStencilToTransferSubpass;
+	depthStencilToTransferSubpass.flags = 0;
+	depthStencilToTransferSubpass.colorAttachmentCount = 1;
+	depthStencilToTransferSubpass.pColorAttachments = &colorRef;
+	depthStencilToTransferSubpass.pDepthStencilAttachment = &transferRef;
+	depthStencilToTransferSubpass.inputAttachmentCount = 0;
+	depthStencilToTransferSubpass.pPreserveAttachments = preserveAttachments;
+	depthStencilToTransferSubpass.preserveAttachmentCount = 2;
+	depthStencilToTransferSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	depthStencilToTransferSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	depthStencilToTransferSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+    // Create Transfer to Present subpass
+    VkSubpassDescription transferToPresentSubpass;
+    transferToPresentSubpass.flags = 0;
+    transferToPresentSubpass.colorAttachmentCount = 1;
+    transferToPresentSubpass.pColorAttachments = &colorRef;
+    transferToPresentSubpass.pDepthStencilAttachment = &presentRef;
+    transferToPresentSubpass.inputAttachmentCount = 0;
+    transferToPresentSubpass.pInputAttachments = VK_NULL_HANDLE;
+    transferToPresentSubpass.preserveAttachmentCount = 0;
+    transferToPresentSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+    transferToPresentSubpass.pResolveAttachments = VK_NULL_HANDLE;
+    transferToPresentSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+   
+    std::vector<VkSubpassDescription> subpasses = { colorToDepthStencilSubpass, depthStencilToTransferSubpass, transferToPresentSubpass };
+
+    // Create a chain of subpass dependencies for auto transitioning between image layouts
+    auto subpassDependencies = VulkanFunctionLibrary::CreatePipelineSubpassDependencies();
 
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = 2;
-    renderPassInfo.pNext = VK_NULL_HANDLE;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpassDescription;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-  
     renderPassInfo.pAttachments = &attachments[0];
+    renderPassInfo.pNext = VK_NULL_HANDLE;
+    renderPassInfo.subpassCount = (VkBool32)subpasses.size();
+    renderPassInfo.pSubpasses = subpasses.data();
+    renderPassInfo.dependencyCount = (VkBool32)subpassDependencies.size();
+    renderPassInfo.pDependencies = subpassDependencies.data();   
     renderPassInfo.flags = NULL;
     VkResult result = vkCreateRenderPass(currentVKSettings.device, &renderPassInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderPass);
     assert(result == VK_SUCCESS);

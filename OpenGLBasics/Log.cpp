@@ -52,7 +52,7 @@ void Log::Message(MessageTypes type, const char* message, const char* fileName, 
 	char buffer[1024];
 
 	va_list args;
-	va_start(args, message);
+	va_start(args, functionName);
 	vsprintf(buffer, message, args);
 	va_end(args);
 
