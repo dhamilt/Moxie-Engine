@@ -5,11 +5,12 @@
 VkCommandBuffer VulkanFunctionLibrary::BeginOneOffCommandBuffer()
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	assert(vkResetCommandPool(vkSettings->device, vkSettings->oneOffCommandPool, 0) == VK_SUCCESS);
 	// Create a temporary command buffer
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = vkSettings->commandPool;
+	allocInfo.commandPool = vkSettings->oneOffCommandPool;
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -37,7 +38,7 @@ void VulkanFunctionLibrary::EndOneOffCommandBuffer(VkCommandBuffer cmdBuffer)
 	vkQueueSubmit(vkSettings->queue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(vkSettings->queue);
 
-	vkFreeCommandBuffers(vkSettings->device, vkSettings->commandPool, 1, &cmdBuffer);
+	vkFreeCommandBuffers(vkSettings->device, vkSettings->oneOffCommandPool, 1, &cmdBuffer);
 }
 
 void VulkanFunctionLibrary::TransitionImageLayout(VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -151,10 +152,11 @@ std::vector<VkCommandBuffer> VulkanFunctionLibrary::CreateDefaultCommandBuffers(
 	std::vector<VkCommandBuffer> val(count);
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	assert(vkResetCommandPool(vkSettings->device, vkSettings->oneOffCommandPool, 0) == VK_SUCCESS);
 	VkCommandBufferAllocateInfo cmdBufferInfo = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 		.pNext = VK_NULL_HANDLE,
-		.commandPool = vkSettings->commandPool,
+		.commandPool = vkSettings->oneOffCommandPool,
 		.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY,
 		.commandBufferCount = 1,
 	};
@@ -230,57 +232,100 @@ std::vector<VkFramebuffer> VulkanFunctionLibrary::CreateDefaultFramebuffers(VkBo
 
 VkRenderPass VulkanFunctionLibrary::CreateDefaultRenderpass()
 {
-	VkAttachmentDescription colorAttachment = {
-		.flags = 0,
-		.format = VK_FORMAT_B8G8R8A8_UNORM,
-		.samples = VK_NUM_OF_SAMPLES,
-		.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-	};
+	VkRenderPass renderpass;
+	// Create color attachment(s)
+	VkAttachmentDescription colorAttachmentInfo = {};
+	colorAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
+	colorAttachmentInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+	colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	VkAttachmentReference colorRef = {
-		.attachment = 0,
-		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-	};
+	// Create depth attachment
+	VkAttachmentDescription depthAttachmentInfo = {};
+	depthAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
+	depthAttachmentInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
+	depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	std::vector<VkAttachmentDescription> attachments(1);
+	attachments[0] = colorAttachmentInfo;
+	//attachments[1] = depthAttachmentInfo;
 
-	VkSubpassDescription subpass = {
-		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-		.colorAttachmentCount = 1,
-		.pColorAttachments = &colorRef
-	};
 
-	VkSubpassDependency subpassDependency = {
-		.srcSubpass = VK_SUBPASS_EXTERNAL,
-		.dstSubpass = 0,
-		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-	};
+	VkAttachmentReference colorRef = {};
+	colorRef.attachment = 0;
+	colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	VkRenderPassCreateInfo renderPassInfo = {
-		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-		.attachmentCount = 1,
-		.pAttachments = &colorAttachment,
-		.subpassCount = 1,
-		.pSubpasses = &subpass,
-		.dependencyCount = 1,
-		.pDependencies =  &subpassDependency
-	};
+
+	/*VkAttachmentReference depthRef = {};
+	depthRef.attachment = 1;
+	depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;*/
+
+
+	VkBool32 preserveAttachments[2] = { 0, 1 };
+	// Create Color to Depth/Stencil subpass
+	VkSubpassDescription colorToDepthStencilSubpass;
+	colorToDepthStencilSubpass.flags = 0;
+	colorToDepthStencilSubpass.colorAttachmentCount = 1;
+	colorToDepthStencilSubpass.pColorAttachments = &colorRef;
+	colorToDepthStencilSubpass.pDepthStencilAttachment = VK_NULL_HANDLE;
+	colorToDepthStencilSubpass.inputAttachmentCount = 0;
+	colorToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	colorToDepthStencilSubpass.preserveAttachmentCount = 0;
+	colorToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	colorToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	colorToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+	//// Create Depth/Stencil to Transfer subpass
+	//VkSubpassDescription depthStencilToTransferSubpass;
+	//depthStencilToTransferSubpass.flags = 0;
+	//depthStencilToTransferSubpass.colorAttachmentCount = 1;
+	//depthStencilToTransferSubpass.pColorAttachments = &colorRef;
+	//depthStencilToTransferSubpass.pDepthStencilAttachment = &depthRef;
+	//depthStencilToTransferSubpass.inputAttachmentCount = 0;
+	//depthStencilToTransferSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	//depthStencilToTransferSubpass.preserveAttachmentCount = 0;
+	//depthStencilToTransferSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	//depthStencilToTransferSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	//depthStencilToTransferSubpass.pInputAttachments = VK_NULL_HANDLE;
+	
+
+
+	std::vector<VkSubpassDescription> subpasses = { colorToDepthStencilSubpass/*, depthStencilToTransferSubpass*/ };
+
+	// Create Color attachment dependency
+	VkSubpassDependency colorDependency;
+	colorDependency.srcSubpass = 0;
+	colorDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+	colorDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	colorDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	colorDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	colorDependency.dstAccessMask = VK_ACCESS_NONE;
+	colorDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 
-	VkRenderPass val;
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = (VkBool32)attachments.size();
+	renderPassInfo.pAttachments = &attachments[0];
+	renderPassInfo.pNext = VK_NULL_HANDLE;
+	renderPassInfo.subpassCount = (VkBool32)subpasses.size();
+	renderPassInfo.pSubpasses = subpasses.data();
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &colorDependency;
+	renderPassInfo.flags = NULL;
+	VkResult result = vkCreateRenderPass(vkSettings->device, &renderPassInfo, vkSettings->allocationCallback, &renderpass);
+	assert(result == VK_SUCCESS);
 
-	VkResult result = vkCreateRenderPass(vkSettings->device, &renderPassInfo, vkSettings->allocationCallback, &val);
-	if (result != VK_SUCCESS)
-		throw new std::runtime_error("Unable to create render pass!");
-
-	return val;
+	return renderpass;
 }
 
 VkPipelineCache VulkanFunctionLibrary::CreateDefaultPipelineCache()
@@ -350,16 +395,16 @@ std::vector<VkSubpassDependency> VulkanFunctionLibrary::CreatePipelineSubpassDep
 	// Create Depth/Stencil to Transfer dependency
 	VkSubpassDependency depthStencilToTransferDependency;
 	depthStencilToTransferDependency.srcSubpass = 1;
-	depthStencilToTransferDependency.dstSubpass = 2;
+	depthStencilToTransferDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
 	depthStencilToTransferDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	depthStencilToTransferDependency.dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	depthStencilToTransferDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 	depthStencilToTransferDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	depthStencilToTransferDependency.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+	depthStencilToTransferDependency.dstAccessMask = VK_ACCESS_NONE;
 	depthStencilToTransferDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Create Transfer to Present dependency
 	VkSubpassDependency transferToPresentDependency;
-	transferToPresentDependency.srcSubpass = 2;
+	transferToPresentDependency.srcSubpass = 1;
 	transferToPresentDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
 	transferToPresentDependency.srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	transferToPresentDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -367,7 +412,7 @@ std::vector<VkSubpassDependency> VulkanFunctionLibrary::CreatePipelineSubpassDep
 	transferToPresentDependency.dstAccessMask = VK_ACCESS_NONE;
 	transferToPresentDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	std::vector<VkSubpassDependency> chain {colorToDepthStencilDependency, depthStencilToTransferDependency, transferToPresentDependency};
+	std::vector<VkSubpassDependency> chain {colorToDepthStencilDependency, depthStencilToTransferDependency/*, transferToPresentDependency*/};
 	return chain;
 }
 

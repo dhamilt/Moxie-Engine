@@ -60,7 +60,7 @@ void WViewport::Paint()
 	if (ImGui::IsWindowFocused())
 		printf("Viewport is focused\n");
 
-	ImGui::SetNextWindowSize(ImVec2(width, height));
+	ImGui::SetNextWindowSize(ImVec2(float(width), float(height)));
 	ImGui::Begin("Viewport", &windowOpen);
 
 #if USE_OPENGL
@@ -119,6 +119,11 @@ void WViewport::CreateViewportFramebuffers(VkRenderPass _renderpass)
 		imgViews.push_back(it->viewportImgView);
 	
 	frameBuffers = VulkanFunctionLibrary::CreateDefaultFramebuffers(MAX_VULKAN_FRAMES_IN_FLIGHT, &imgViews[0], VkExtent2D(width, height), renderpass);
+}
+
+void WViewport::GetCurrentFramebuffer(VkBool32 frameIndex, VkFramebuffer& framebuffer)
+{
+	framebuffer = frameBuffers[frameIndex];
 }
 
 void WViewport::ResizeFramebuffers(int _width, int _height)
@@ -323,7 +328,7 @@ bool WViewport::FrameBufferErrorCheck(GLuint status)
 	return result;
 }
 
-void WViewport::VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
+void WViewport::VkCopySwapchainImg(VkCommandBuffer srcCmdBuffer, VkCommandBuffer dstCmdBuffer, VkBool32 frameIndex)
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	auto swapChainImage = vkSettings->swapchainImages[frameIndex];
@@ -331,10 +336,10 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameInde
 	
 
 	
+	VulkanFunctionLibrary::TransitionImageLayout(swapChainImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED , VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-	VulkanFunctionLibrary::TransitionImageLayout(cmdBuffer, paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	VulkanFunctionLibrary::TransitionImageLayout(paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	
 	VkImageSubresourceLayers colorAttachLayer = {
 		.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 		.mipLevel = 0,
@@ -351,9 +356,12 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameInde
 	};
 	
 
-	vkCmdCopyImage(cmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].viewportImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &colorAttachImg);	
+	vkCmdCopyImage(dstCmdBuffer, swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, paramCollection[frameIndex].viewportImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &colorAttachImg);	
 
-	VulkanFunctionLibrary::TransitionImageLayout(cmdBuffer, paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
+	VulkanFunctionLibrary::TransitionImageLayout(srcCmdBuffer, swapChainImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	VulkanFunctionLibrary::TransitionImageLayout(paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 	currentRenderingFrame = frameIndex;
 }
 
@@ -361,7 +369,7 @@ void WViewport::VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
 {
 	if (paramCollection[frameIndex].descriptorSet != VK_NULL_HANDLE)
 		ImGui_ImplVulkan_RemoveTexture(paramCollection[frameIndex].descriptorSet);
-	paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_GENERAL);
+	paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void WViewport::PresentViewportTexture(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)

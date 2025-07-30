@@ -62,19 +62,24 @@ bool PVulkanPlatformInit::CreateDescriptorPool()
 }
 
 
-VkFence PVulkanPlatformInit::CreateFence()
+bool PVulkanPlatformInit::CreateFences()
 {   
-    VkFence fence;
-    VkFenceCreateInfo fenceInfo = {};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    // Create the fence with the Create Signaled flag,
-    //so the fence can wait before using it on a GPU command (for the first frame)
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    VkResult result = vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &fence);
-    if (result != VK_SUCCESS)
-        throw std::runtime_error("Unable to create in flight fence!");
-           
-    return fence;
+    for(int i = 0; i < currentVKSettings.frameData.size(); ++i)
+    {
+        auto frameData = &currentVKSettings.frameData[i];
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        // Create the fence with the Create Signaled flag,
+        //so the fence can wait before using it on a GPU command (for the first frame)
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        VkResult result = vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &frameData->Fence);
+        if (result != VK_SUCCESS)
+        {
+            perror("Unable to create in flight fence!");
+            return false;
+        }
+    }
+    return true;
 }
 
 void PVulkanPlatformInit::GetWindowExtent(VkExtent2D& windowExtent)
@@ -459,9 +464,9 @@ void PVulkanPlatformInit::GetDeviceExtensions(VkBool32& extCount, std::vector<Vk
     }
 }
 
-bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer* commandBuffers)
+bool PVulkanPlatformInit::CreateCommandPools()
 {
- 
+    currentVKSettings.frameData = std::vector<ImGui_ImplVulkanH_Frame>(MAX_VULKAN_FRAMES_IN_FLIGHT);
     // Create a command pool for command buffer actions to be placed
     VkCommandPoolCreateInfo poolInfo = {};
     poolInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -470,32 +475,59 @@ bool PVulkanPlatformInit::CreateCommandPool(VkCommandBuffer* commandBuffers)
     poolInfo.pNext              = NULL;
 
     auto device = currentVKSettings.device;
-    auto result =  vkCreateCommandPool(device, &poolInfo, currentVKSettings.allocationCallback, &currentVKSettings.commandPool);
-
-    if (result != VK_SUCCESS)
+    for(int i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; ++i)
     {
-        perror("Error! Unable to create command pool!");
-        return false;
+		auto result = vkCreateCommandPool(device, &poolInfo, currentVKSettings.allocationCallback, &currentVKSettings.frameData[i].CommandPool);
+
+		if (result != VK_SUCCESS)
+		{
+			perror("Error! Unable to create command pool!");
+			return false;
+		}
+
+		VkCommandBufferAllocateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		bufferInfo.commandPool = currentVKSettings.frameData[i].CommandPool;
+		bufferInfo.commandBufferCount = 1;
+		bufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+		// Allocate command buffer for each frame in flight		
+		result = vkAllocateCommandBuffers(device, &bufferInfo, &currentVKSettings.frameData[i].CommandBuffer);
+
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Unable to allocate for command buffer(s)!");
+			return false;
+		}
     }
 
-    VkCommandBufferAllocateInfo bufferInfo = {};
-    bufferInfo.sType                = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    bufferInfo.commandPool          = currentVKSettings.commandPool;
-    bufferInfo.commandBufferCount   = MAX_VULKAN_FRAMES_IN_FLIGHT;
-    bufferInfo.level                = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    // Allocate for only command buffers that have been requested
-    currentVKSettings.commandBuffers = std::vector<VkCommandBuffer>(MAX_VULKAN_FRAMES_IN_FLIGHT);
-    result = vkAllocateCommandBuffers(device, &bufferInfo, commandBuffers);
-
-    if (result != VK_SUCCESS)
-    {
-        throw std::runtime_error("Unable to allocate for command buffer(s)!");
-        return false;
-    }
+    
    
     return true;
 
+}
+
+bool PVulkanPlatformInit::CreateOneOffCommandPool()
+{
+	VkCommandPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = currentVKSettings.queueFamilies[0];
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	poolInfo.pNext = NULL;
+
+	auto result = vkCreateCommandPool(currentVKSettings.device, &poolInfo, currentVKSettings.allocationCallback, &currentVKSettings.oneOffCommandPool);
+
+	if (result != VK_SUCCESS)
+	{
+		perror("Error! Unable to create command pool!");
+		return false;
+	}
+    return true;
+}
+
+ImGui_ImplVulkanH_Frame* PVulkanPlatformInit::GetCurrentFrameData(VkBool32 frameIndex)
+{
+  return &currentVKSettings.frameData[frameIndex];        
 }
 
 bool PVulkanPlatformInit::CreateSwapChain()
@@ -719,14 +751,21 @@ void PVulkanPlatformInit::CleanupVulkan()
     vkDeviceWaitIdle(device);
     for (VkBool32 j = 0; j < MAX_VULKAN_FRAMES_IN_FLIGHT; j++)
     {
-        vkDestroyFence(device, currentVKSettings.inFlightFences[j], currentVKSettings.allocationCallback);
         vkDestroySemaphore(device, currentVKSettings.imageAvailableSemaphores[j], currentVKSettings.allocationCallback);
         vkDestroySemaphore(device, currentVKSettings.renderFinishedSemaphores[j], currentVKSettings.allocationCallback);
-        vkFreeCommandBuffers(device, currentVKSettings.commandPool, MAX_VULKAN_FRAMES_IN_FLIGHT, &currentVKSettings.commandBuffers[j]);
     }
     
+    for (VkBool32 i = 0; i < currentVKSettings.frameData.size(); ++i)
+    {
+         ImGui_ImplVulkanH_Frame* frame = &currentVKSettings.frameData[i];
+         vkFreeCommandBuffers(device, frame->CommandPool, 1, &frame->CommandBuffer);
+         vkDestroyCommandPool(device, frame->CommandPool, currentVKSettings.allocationCallback);
+         vkDestroyFence(device, frame->Fence, currentVKSettings.allocationCallback);         
+    }
+    currentVKSettings.frameData.clear();
+
     vkDestroyRenderPass(device, currentVKSettings.renderPass, currentVKSettings.allocationCallback);
-    vkDestroyCommandPool(device, currentVKSettings.commandPool, currentVKSettings.allocationCallback);
+    vkDestroyCommandPool(device, currentVKSettings.oneOffCommandPool, currentVKSettings.allocationCallback);
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
         vkDestroyImageView(device, currentVKSettings.swapChainImgBufs[i].imageView, currentVKSettings.allocationCallback);
     vkDestroySwapchainKHR(device, currentVKSettings.swapchain, currentVKSettings.allocationCallback);
@@ -752,6 +791,58 @@ void PVulkanPlatformInit::GetSupportedImageFormats(VkBool32& formatCount, std::v
     supportedFormats = std::vector<VkSurfaceFormatKHR>(formatCount);
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, &supportedFormats[0]);
     assert(result == VK_SUCCESS);
+}
+
+bool PVulkanPlatformInit::CreateImGuiFrameData(ImGui_ImplVulkanH_Frame* frames)
+{
+    std::vector<ImGui_ImplVulkanH_Frame> _frames;
+    _frames.resize(MAX_VULKAN_FRAMES_IN_FLIGHT);
+
+    for (VkBool32 i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; ++i)
+    {
+		VkCommandPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.queueFamilyIndex = currentVKSettings.queueFamilies[0];
+		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		poolInfo.pNext = NULL;
+
+		auto result = vkCreateCommandPool(currentVKSettings.device, &poolInfo, currentVKSettings.allocationCallback, &_frames[i].CommandPool);
+
+		if (result != VK_SUCCESS)
+		{
+			perror("Error! Unable to create command pool!");
+			return false;
+		}
+
+		VkCommandBufferAllocateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		bufferInfo.commandPool = _frames[i].CommandPool;
+		bufferInfo.commandBufferCount = 1;
+		bufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+		// Allocate command buffer for each frame in flight		
+		result = vkAllocateCommandBuffers(currentVKSettings.device, &bufferInfo, &_frames[i].CommandBuffer);
+
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Unable to allocate for command buffer(s)!");
+			return false;
+		}
+
+		VkFenceCreateInfo fenceInfo = {};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		// Create the fence with the Create Signaled flag,
+		//so the fence can wait before using it on a GPU command (for the first frame)
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		result = vkCreateFence(currentVKSettings.device, &fenceInfo, currentVKSettings.allocationCallback, &_frames[i].Fence);
+		if (result != VK_SUCCESS)
+		{
+			perror("Unable to create in flight fence!");
+			return false;
+		}
+    }
+    memcpy(frames, _frames.data(), _frames.size() * sizeof(ImGui_ImplVulkanH_Frame));
+    return true;
 }
 
 // TODO: implement functionality to retrieve the highest level
@@ -800,14 +891,6 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthRef.attachment = 1;
     depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	VkAttachmentReference transferRef = {};
-	transferRef.attachment = 0;
-	transferRef.layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-
-    VkAttachmentReference presentRef = {};
-    presentRef.attachment = 0;
-    presentRef.layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
     VkBool32 preserveAttachments[2] = {0, 1};
 	// Create Color to Depth/Stencil subpass
 	VkSubpassDescription colorToDepthStencilSubpass;
@@ -816,53 +899,33 @@ bool PVulkanPlatformInit::CreateRenderPass()
 	colorToDepthStencilSubpass.pColorAttachments = &colorRef;
 	colorToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
 	colorToDepthStencilSubpass.inputAttachmentCount = 0;
-	colorToDepthStencilSubpass.pPreserveAttachments = preserveAttachments;
-	colorToDepthStencilSubpass.preserveAttachmentCount = 2;
+	colorToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	colorToDepthStencilSubpass.preserveAttachmentCount = 0;
 	colorToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
 	colorToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
 	colorToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
 
-	// Create Depth/Stencil to Transfer subpass
-	VkSubpassDescription depthStencilToTransferSubpass;
-	depthStencilToTransferSubpass.flags = 0;
-	depthStencilToTransferSubpass.colorAttachmentCount = 1;
-	depthStencilToTransferSubpass.pColorAttachments = &colorRef;
-	depthStencilToTransferSubpass.pDepthStencilAttachment = &transferRef;
-	depthStencilToTransferSubpass.inputAttachmentCount = 0;
-	depthStencilToTransferSubpass.pPreserveAttachments = preserveAttachments;
-	depthStencilToTransferSubpass.preserveAttachmentCount = 2;
-	depthStencilToTransferSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	depthStencilToTransferSubpass.pResolveAttachments = VK_NULL_HANDLE;
-	depthStencilToTransferSubpass.pInputAttachments = VK_NULL_HANDLE;
-
-    // Create Transfer to Present subpass
-    VkSubpassDescription transferToPresentSubpass;
-    transferToPresentSubpass.flags = 0;
-    transferToPresentSubpass.colorAttachmentCount = 1;
-    transferToPresentSubpass.pColorAttachments = &colorRef;
-    transferToPresentSubpass.pDepthStencilAttachment = &presentRef;
-    transferToPresentSubpass.inputAttachmentCount = 0;
-    transferToPresentSubpass.pInputAttachments = VK_NULL_HANDLE;
-    transferToPresentSubpass.preserveAttachmentCount = 0;
-    transferToPresentSubpass.pPreserveAttachments = VK_NULL_HANDLE;
-    transferToPresentSubpass.pResolveAttachments = VK_NULL_HANDLE;
-    transferToPresentSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-
    
-    std::vector<VkSubpassDescription> subpasses = { colorToDepthStencilSubpass, depthStencilToTransferSubpass, transferToPresentSubpass };
+	// Create Color to Depth/Stencil attachment dependency
+	VkSubpassDependency colorToDepthStencilDependency;
+	colorToDepthStencilDependency.srcSubpass = 0;
+	colorToDepthStencilDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+	colorToDepthStencilDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	colorToDepthStencilDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	colorToDepthStencilDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	colorToDepthStencilDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	colorToDepthStencilDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    // Create a chain of subpass dependencies for auto transitioning between image layouts
-    auto subpassDependencies = VulkanFunctionLibrary::CreatePipelineSubpassDependencies();
 
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = 2;
     renderPassInfo.pAttachments = &attachments[0];
     renderPassInfo.pNext = VK_NULL_HANDLE;
-    renderPassInfo.subpassCount = (VkBool32)subpasses.size();
-    renderPassInfo.pSubpasses = subpasses.data();
-    renderPassInfo.dependencyCount = (VkBool32)subpassDependencies.size();
-    renderPassInfo.pDependencies = subpassDependencies.data();   
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &colorToDepthStencilSubpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &colorToDepthStencilDependency;   
     renderPassInfo.flags = NULL;
     VkResult result = vkCreateRenderPass(currentVKSettings.device, &renderPassInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderPass);
     assert(result == VK_SUCCESS);

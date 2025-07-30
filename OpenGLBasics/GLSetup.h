@@ -116,13 +116,11 @@ private:
 	VkRenderPassBeginInfo beginRenderPassInfo;
 	VkRenderingInfo renderPassInfo;
 	VkClearValue* clearValues;
-	std::vector<VkCommandBuffer> cmdBuffers;
-	std::vector<VkCommandBuffer> imguiCmdBuffers;
+	std::vector<ImGui_ImplVulkanH_Frame> imguiFrameData;
 	std::vector<VkPipeline> triangleShaderPipeline;
 	std::vector<VkSemaphore> imageAvailableSemaphores, renderFinishedSemaphores;
 	VkResult renderingResult;
 	VkShaderStageConfigs shaderConfigs;
-	std::vector<VkFence> inFlightFences;
 	VkDevice* currentVkDevice;
 	VkSwapchainKHR* VkSwapchain;
 	std::vector<VkFramebuffer> glFramebuffers;

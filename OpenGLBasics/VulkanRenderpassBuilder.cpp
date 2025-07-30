@@ -235,7 +235,7 @@ void VulkanRenderpassBuilder::CreateCommandBuffers()
 		VkCommandBufferAllocateInfo cmdBufferInfo = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			.pNext = VK_NULL_HANDLE,
-			.commandPool = vkSettings->commandPool,
+			.commandPool = vkSettings->oneOffCommandPool,
 			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			.commandBufferCount = 1,
 		};

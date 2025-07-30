@@ -33,26 +33,7 @@ void BRenderingPipeline::CleanupRenderingPipeline()
 	for (auto it = primitives.begin(); it != primitives.end(); it++) {
 
 #if USE_VULKAN
-		auto renderData = it->second;
-		/*vkDestroyBuffer(device, renderData->vertexBufParams.buffer, allocationCallback);
-		vkFreeMemory(device, renderData->vertexBufferMemory, allocationCallback);
-
-		vkDestroyBuffer(device, renderData->indexBuffer, allocationCallback);
-		vkFreeMemory(device, renderData->indexBufferMemory, allocationCallback);*/
-		//for (uint16_t i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; ++i)
-		//{
-		//	vkDestroyBuffer(device, renderData->mvpParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->normalParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->lightParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->viewParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->objParams.buffers[i], allocationCallback);
-
-		//	vkFreeMemory(device, renderData->mvpParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->normalParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->lightParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->viewParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->objParams.deviceMemory[i], allocationCallback);
-		//}
+		auto renderData = it->second;		
 
 
 		for(uint16_t j = 0; j < (uint16_t)renderData->descriptorSetLayouts.size(); ++j)
@@ -1208,24 +1189,46 @@ void BRenderingPipeline::SetViewportInfo(VkCommandBuffer cmdBuffer)
 
 	VkExtent2D swapChainExtent;
 	vkInitials->GetWindowExtent(swapChainExtent);	
-		
-	VkViewport viewport = {};
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	viewport.width = static_cast<float>(swapChainExtent.width);
-	viewport.height = static_cast<float>(swapChainExtent.height);
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewports.push_back(viewport);
 	
-	vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+	
+	if(viewports.empty())
+	{		
+		VkViewport viewport;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		viewport.width = static_cast<float>(swapChainExtent.width);
+		viewport.height = static_cast<float>(swapChainExtent.height);
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewports.push_back(viewport);
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+	}
+	else
+	{
+		VkViewport* viewportPtr;
+		viewportPtr = &viewports.front();
+		viewportPtr->width = static_cast<float>(swapChainExtent.width);
+		viewportPtr->height = static_cast<float>(swapChainExtent.height);
+		vkCmdSetViewport(cmdBuffer, 0, 1, viewportPtr);
+	}
+	
+	
 
-	VkRect2D scissor = {};
-	scissor.extent = screenResolution;
-	scissor.offset = { 0,0 };
-	scissors.push_back(scissor);
+	if (scissors.empty())
+	{
+		VkRect2D scissor;
+		scissor.extent = screenResolution;
+		scissor.offset = { 0,0 };
+		scissors.push_back(scissor);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+	}
+	else
+	{
+		VkRect2D* scissorPtr = &scissors.front();
+		scissorPtr->extent = screenResolution;
+		vkCmdSetScissor(cmdBuffer, 0, 1, scissorPtr);
+	}
 
-	vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
 	// Load viewport and scissor info into graphics pipeline
 	defaultViewportStateInfo.viewportCount = static_cast<VkBool32>(viewports.size());

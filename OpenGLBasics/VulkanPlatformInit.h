@@ -36,9 +36,10 @@ struct PVulkanPlatformInitInfo
     float queuePriority = 1.0f;
     VkQueue  queue;
     std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-   
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
+	
+	VkCommandPool oneOffCommandPool;
+	std::vector<ImGui_ImplVulkanH_Frame> frameData;
+    
 
     VkDebugReportCallbackEXT debugReportCallback;
     VkPipelineCache pipelineCache;
@@ -106,7 +107,10 @@ public:
     void GetInstanceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
     void GetDeviceExtensions(VkBool32& extCount, std::vector<VkExtensionProperties>& properties);
     void GetSupportedImageFormats(VkBool32& formatCount, std::vector<VkSurfaceFormatKHR>& supportedFormats);
-    bool CreateCommandPool(VkCommandBuffer* commandBuffers);
+	bool CreateImGuiFrameData(ImGui_ImplVulkanH_Frame* frames);
+    bool CreateCommandPools();
+	bool CreateOneOffCommandPool();
+	ImGui_ImplVulkanH_Frame* GetCurrentFrameData(VkBool32 frameIndex);
     void GetWindowExtent(VkExtent2D& windowExtent);
     bool GetPhysicalDevices();
     bool SetupDebugCallbacks();
@@ -117,8 +121,7 @@ public:
 	void ResizeSwapChain(int _width, int _height);
     bool CreateRenderPass();
     bool CreateSemaphores(VkSemaphore* presentSemaphorePtr, VkSemaphore* renderSemaphorePtr);
-    VkFence CreateFence();
-    //bool SetupVulkanWindow(VkSurfaceKHR surface, int width, int height);
+    bool CreateFences();
     void CleanupVulkan();
 	// Choose the Mailbox Present Mode ("Triple Buffering")
    // if available, otherwise default to FIFO Mode
