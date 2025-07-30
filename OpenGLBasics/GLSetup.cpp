@@ -7,7 +7,6 @@
 #include "VulkanPlatformInit.h"
 #include "VulkanFunctionLibrary.h"
 #include "VulkanPipelineBuilder.h"
-//#include "VulkanErrorReporting.h"
 
 
 
@@ -288,9 +287,9 @@ void GLSetup::StartSDLWindow()
 	auto viewportResizeBinding = std::function<void(int, int)>(std::bind(&WViewport::ResizeFramebuffers, viewport, std::placeholders::_1, std::placeholders::_2));
 	// Bind window resize delegate to the resizing of the swapchain
 	auto swapchainResizeBinding = std::function<void(int, int)>(std::bind(&PVulkanPlatformInit::ResizeSwapChain, PVulkanPlatformInit::Get(), std::placeholders::_1, std::placeholders::_2));
-	windowResizeDelegate += binding;
-	windowResizeDelegate += viewportResizeBinding;
 	windowResizeDelegate += swapchainResizeBinding;
+	windowResizeDelegate += binding;
+	//windowResizeDelegate += viewportResizeBinding;
 	
 #endif
 	
@@ -529,65 +528,61 @@ void GLSetup::Render()
 		
 		// Finalize the render pass for the command buffer		
 		vkCmdEndRenderPass(cmdBuffers[swapchainImgIndex]);
-		//// Restart the imgui command buffer to be ready to record draw gui commands for the current frame
-		//assert(vkResetCommandBuffer(imguiCmdBuffers[swapchainImgIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT) == VK_SUCCESS);
-		//// Begin command buffer recording for the current ui frame
-		//assert(vkBeginCommandBuffer(imguiCmdBuffers[swapchainImgIndex], &beginCmdBufferInfo) == VK_SUCCESS);
-		//// Copy the rendered frame to the viewport image for the ui
-		//viewport->VkCopySwapchainImg(cmdBuffers[swapchainImgIndex], swapchainImgIndex);
+		// Restart the imgui command buffer to be ready to record draw gui commands for the current frame
+		assert(vkResetCommandBuffer(imguiCmdBuffers[swapchainImgIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT) == VK_SUCCESS);
+		// Begin command buffer recording for the current ui frame
+		assert(vkBeginCommandBuffer(imguiCmdBuffers[swapchainImgIndex], &beginCmdBufferInfo) == VK_SUCCESS);
+		// Copy the rendered frame to the viewport image for the ui
+		viewport->VkCopySwapchainImg(cmdBuffers[swapchainImgIndex], imguiCmdBuffers[swapchainImgIndex], swapchainImgIndex);
 
 		
-		// End commands for primary command buffer
+		 //End commands for primary command buffer
 		assert(vkEndCommandBuffer(cmdBuffers[swapchainImgIndex]) == VK_SUCCESS);
 
 
-		//
-		//// Start rendering pass for imgui		
-		//viewport->StartViewportRenderpass(imguiCmdBuffers[swapchainImgIndex], imPass, swapchainImgIndex);
-		//// Copy drawn scene to separate renderpass for viewport image
-		//viewport->VkSetViewportImg(imguiCmdBuffers[swapchainImgIndex], swapchainImgIndex);
+		
+		
+		// Copy drawn scene to separate renderpass for viewport image
+		viewport->VkSetViewportImg(imguiCmdBuffers[swapchainImgIndex], swapchainImgIndex);
 
-		//ImGui_ImplVulkan_NewFrame();
-		//ImGui_ImplSDL2_NewFrame();
-		//ImGui::NewFrame();
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
 
-		///*if (!cachingFirstFramesInFlight)
-		//{*/
-		//	if (showDemoWindow)
-		//		ImGui::ShowDemoWindow(&showDemoWindow);
+			if (showDemoWindow)
+				ImGui::ShowDemoWindow(&showDemoWindow);
 
 
-		//	// Call all Paint calls for UI elements 
-		//	// that exist on the GUI		
-		//	for (auto uiElement : uiElements)
-		//	{
-		//		ImGui::SetNextWindowBgAlpha(1.0f);
-		//		uiElement->Paint();
-		//	}
+			// Call all Paint calls for UI elements 
+			// that exist on the GUI		
+			for (auto uiElement : uiElements)
+			{
+				ImGui::SetNextWindowBgAlpha(1.0f);
+				uiElement->Paint();
+			}
 
-		////}
-		//ImGui::EndFrame();
-		//// Begin ImGUI recording render pass
-		//// Render ImGui UI
-		//ImGui::Render();
-		//ImDrawData* imguiDrawData = ImGui::GetDrawData();
+		ImGui::EndFrame();
+		// Begin ImGUI recording render pass
+		// Render ImGui UI
+		ImGui::Render();
+		ImDrawData* imguiDrawData = ImGui::GetDrawData();
 
-		//// Record ImGui primitives into  ImGui command buffer
-		//ImGui_ImplVulkan_RenderDrawData(imguiDrawData, imguiCmdBuffers[swapchainImgIndex], imPipeline);
-		//
-		//// End rendering pass for imgui
-		//vkCmdEndRenderPass(imguiCmdBuffers[swapchainImgIndex]);
-		//viewport->PresentViewportTexture(imguiCmdBuffers[swapchainImgIndex], swapchainImgIndex);
-		//assert(vkEndCommandBuffer(imguiCmdBuffers[swapchainImgIndex]) == VK_SUCCESS);
-		//
-		//// Update and Render additional platform windows
-		//ImGuiIO& io = ImGui::GetIO();
-		//if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		//{
-		//	ImGui::UpdatePlatformWindows();
-		//	ImGui::RenderPlatformWindowsDefault();
+		// Record ImGui primitives into  ImGui command buffer
+		ImGui_ImplVulkan_RenderDrawData(imguiDrawData, imguiCmdBuffers[swapchainImgIndex], imPipeline);		
+		
+		assert(vkEndCommandBuffer(imguiCmdBuffers[swapchainImgIndex]) == VK_SUCCESS);
+		
+		
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			// Update and Render additional platform windows
+			ImGui::UpdatePlatformWindows();
+			// Draw all of the ui elements given to the imgui queue
+			// End rendering pass for imgui
+			ImGui::RenderPlatformWindowsDefault();
 
-		//}
+		}
 		
 		
 		// Submit draw commands to the device queue to be drawn
@@ -601,11 +596,7 @@ void GLSetup::Render()
 		queueSubmitInfo.waitSemaphoreCount = 1;
 		queueSubmitInfo.pWaitSemaphores = &vkSettings->imageAvailableSemaphores[currentRenderingFrame];
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		queueSubmitInfo.pWaitDstStageMask = &waitStage;
-		
-
-		
-		//VulkanFunctionLibrary::TransitionImageLayout(vkSettings->swapchainImages[swapchainImgIndex], VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+		queueSubmitInfo.pWaitDstStageMask = &waitStage;		
 
 		auto submitResult = vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, inFlightFences[currentRenderingFrame]);
 		assert(submitResult == VK_SUCCESS);
@@ -619,10 +610,7 @@ void GLSetup::Render()
 		presentationInfo.pWaitSemaphores = &vkSettings->renderFinishedSemaphores[currentRenderingFrame];
 		presentationInfo.pImageIndices = &swapchainImgIndex;
 		presentationInfo.pResults = &renderingResult;
-
-
-		//if(cachingFirstFramesInFlight)
-			//VulkanFunctionLibrary::TransitionImageLayout(vkSettings->swapchainImages[swapchainImgIndex], VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+			
 
 		VkResult result = vkQueuePresentKHR(vkSettings->queue, &presentationInfo);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
@@ -632,20 +620,12 @@ void GLSetup::Render()
 			windowResizeDelegate.Broadcast(width, height);
 		}
 		else if (result != VK_SUCCESS)
-		{
 			throw new std::runtime_error("Unable to send render image to window/surface!");
-		}
 		
-		//VulkanFunctionLibrary::TransitionImageLayout(vkSettings->swapchainImages[swapchainImgIndex], VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_GENERAL);
-
-
-
 		// retrieve the next frame
 		currentRenderingFrame = (currentRenderingFrame + 1) % MAX_VULKAN_FRAMES_IN_FLIGHT;
 		renderFrameRefreshDelegate.Broadcast();
-		// tell imgui to set up for first run of frames in flight
-		/*if (cachingfirstframesinflight && currentrenderingframe == 0)
-			cachingfirstframesinflight = false;	*/
+
 #endif
 	}
 

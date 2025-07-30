@@ -33,26 +33,7 @@ void BRenderingPipeline::CleanupRenderingPipeline()
 	for (auto it = primitives.begin(); it != primitives.end(); it++) {
 
 #if USE_VULKAN
-		auto renderData = it->second;
-		/*vkDestroyBuffer(device, renderData->vertexBufParams.buffer, allocationCallback);
-		vkFreeMemory(device, renderData->vertexBufferMemory, allocationCallback);
-
-		vkDestroyBuffer(device, renderData->indexBuffer, allocationCallback);
-		vkFreeMemory(device, renderData->indexBufferMemory, allocationCallback);*/
-		//for (uint16_t i = 0; i < MAX_VULKAN_FRAMES_IN_FLIGHT; ++i)
-		//{
-		//	vkDestroyBuffer(device, renderData->mvpParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->normalParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->lightParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->viewParams.buffers[i], allocationCallback);
-		//	vkDestroyBuffer(device, renderData->objParams.buffers[i], allocationCallback);
-
-		//	vkFreeMemory(device, renderData->mvpParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->normalParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->lightParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->viewParams.deviceMemory[i], allocationCallback);
-		//	vkFreeMemory(device, renderData->objParams.deviceMemory[i], allocationCallback);
-		//}
+		auto renderData = it->second;		
 
 
 		for(uint16_t j = 0; j < (uint16_t)renderData->descriptorSetLayouts.size(); ++j)

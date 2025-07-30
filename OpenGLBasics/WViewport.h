@@ -35,7 +35,7 @@ public:
 	void AttachToImGUI();
 	bool operator==( GUI_Base& other);
 	bool FrameBufferErrorCheck(GLuint status);
-	void VkCopySwapchainImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex);
+	void VkCopySwapchainImg(VkCommandBuffer srcCmdBuffer, VkCommandBuffer dstCmdBuffer, VkBool32 frameIndex);
 	void VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex);
 	void PresentViewportTexture(VkCommandBuffer cmdBuffer, VkBool32 frameIndex);
 
