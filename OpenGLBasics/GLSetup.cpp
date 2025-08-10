@@ -632,8 +632,7 @@ void GLSetup::Render()
 		queueSubmitInfo.waitSemaphoreCount = 1;
 		queueSubmitInfo.pWaitSemaphores = &vkSettings->imageAvailableSemaphores[currentRenderingFrame];
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		queueSubmitInfo.pWaitDstStageMask = &waitStage;
-		
+		queueSubmitInfo.pWaitDstStageMask = &waitStage;		
 
 
 		auto submitResult = vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, frameData->Fence);
