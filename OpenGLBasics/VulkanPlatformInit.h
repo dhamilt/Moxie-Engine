@@ -11,6 +11,7 @@ struct PVkImageBuffer
 {
     VkImage image;
     VkImageView imageView;
+	VkDeviceMemory memory;
 };
 
 struct PVulkanPlatformInitInfo
@@ -69,6 +70,7 @@ struct PVulkanPlatformInitInfo
     VkSwapchainKHR swapchain;
     std::vector<VkImage> swapchainImages;
     PVkImageBuffer depthBuffer;
+	VkImageCreateInfo depthImageInfo;
     VkImageViewCreateInfo depthViewInfo;
     VkBool32 swapchainImageCount;
     std::vector<PVkImageBuffer> swapChainImgBufs;

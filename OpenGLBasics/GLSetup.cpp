@@ -289,7 +289,7 @@ void GLSetup::StartSDLWindow()
 	auto swapchainResizeBinding = std::function<void(int, int)>(std::bind(&PVulkanPlatformInit::ResizeSwapChain, PVulkanPlatformInit::Get(), std::placeholders::_1, std::placeholders::_2));
 	windowResizeDelegate += swapchainResizeBinding;
 	windowResizeDelegate += binding;
-	//windowResizeDelegate += viewportResizeBinding;
+	windowResizeDelegate += viewportResizeBinding;
 	
 #endif
 	
@@ -567,12 +567,14 @@ void GLSetup::Render()
 		assert(vkEndCommandBuffer(frameData->CommandBuffer) == VK_SUCCESS);
 
 		// Begin ImGUI recording render pass
-		viewport->GetCurrentFramebuffer(swapchainImgIndex, currentFrameBuffer);
-		beginRenderPassInfo.framebuffer = currentFrameBuffer;
+		VkFramebuffer imguiFramebuffer;
+		viewport->GetCurrentFramebuffer(swapchainImgIndex, imguiFramebuffer);
+		beginRenderPassInfo.framebuffer = imguiFramebuffer;
 		beginRenderPassInfo.renderPass = imPass;
 		vkCmdBeginRenderPass(imguiFd->CommandBuffer, &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		// Copy drawn scene to separate renderpass for viewport image
-		viewport->VkSetViewportImg(imguiFd->CommandBuffer, swapchainImgIndex);
+		//if(!allViewportTexturesCreatedFlag)
+			viewport->VkSetViewportImg(imguiFd->CommandBuffer, swapchainImgIndex, allViewportTexturesCreatedFlag);
 
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -600,6 +602,7 @@ void GLSetup::Render()
 		
 		// End ImGUI recording render pass
 		vkCmdEndRenderPass(imguiFd->CommandBuffer);
+
 		// End ImGui recording commandbuffer
 		assert(vkEndCommandBuffer(imguiFd->CommandBuffer) == VK_SUCCESS);
 		
@@ -614,6 +617,7 @@ void GLSetup::Render()
 			ImGui::RenderPlatformWindowsDefault();
 
 		}
+
 		idleResult = vkQueueWaitIdle(vkSettings->queue);
 		assert(idleResult == VK_SUCCESS);
 		

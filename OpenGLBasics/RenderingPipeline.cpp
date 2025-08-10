@@ -1148,8 +1148,11 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 }
 
 void BRenderingPipeline::ResizeVkFramebuffers(int _width, int _height)
-{
+{	
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkResult deviceIdle = vkDeviceWaitIdle(vkSettings->device);
+	assert(deviceIdle == VK_SUCCESS);
+
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 
@@ -1158,7 +1161,7 @@ void BRenderingPipeline::ResizeVkFramebuffers(int _width, int _height)
 	framebufferInfo.width = screenResolution.width;
 	framebufferInfo.height = screenResolution.height;
 	// if being recalled due to resizing
-	if (vkFramebuffers.size() > 0)
+	if (!vkFramebuffers.empty())
 	{
 		// destroy existing framebuffers
 		for (int i = 0; i < (int)vkFramebuffers.size(); i++)

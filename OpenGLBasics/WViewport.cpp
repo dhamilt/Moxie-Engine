@@ -129,11 +129,25 @@ void WViewport::GetCurrentFramebuffer(VkBool32 frameIndex, VkFramebuffer& frameb
 void WViewport::ResizeFramebuffers(int _width, int _height)
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkResult idleResult = vkDeviceWaitIdle(vkSettings->device);
+	assert(idleResult == VK_SUCCESS);
+
 	for(VkFramebuffer framebuf : frameBuffers)
 		vkDestroyFramebuffer(vkSettings->device, framebuf, vkSettings->allocationCallback);
 	frameBuffers.clear();
 	width = _width;
 	height = _height;
+
+	for (VkBool32 i = 0; i < paramCollection.size(); ++i)
+	{
+		ViewportImageParamsVk* imgParams = &paramCollection[i];
+		vkFreeMemory(vkSettings->device, imgParams->imgMemory, vkSettings->allocationCallback);
+		vkDestroyImage(vkSettings->device, imgParams->viewportImg, vkSettings->allocationCallback);
+		vkDestroyImageView(vkSettings->device, imgParams->viewportImgView, vkSettings->allocationCallback);
+	}
+	CreateViewportImages();
+	CreateViewportImageViews();
+
 	CreateViewportFramebuffers(renderpass);
 
 }
@@ -365,14 +379,21 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer srcCmdBuffer, VkCommandBuffer
 	currentRenderingFrame = frameIndex;
 }
 
-void WViewport::VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
+void WViewport::VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex, bool& allViewportTexturesCreatedFlag)
 {
-	if (paramCollection[frameIndex].descriptorSet != VK_NULL_HANDLE)
-		ImGui_ImplVulkan_RemoveTexture(paramCollection[frameIndex].descriptorSet);
-	paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	/*allViewportTexturesCreatedFlag = true;
+	for (ViewportImageParamsVk param : paramCollection)
+		if(param.descriptorSet == VK_NULL_HANDLE)
+			allViewportTexturesCreatedFlag = false;
+
+	if(allViewportTexturesCreatedFlag)
+		return;*/
+
+	if (paramCollection[frameIndex].descriptorSet == VK_NULL_HANDLE)
+		paramCollection[frameIndex].descriptorSet = ImGui_ImplVulkan_AddTexture(paramCollection[frameIndex].sampler, paramCollection[frameIndex].viewportImgView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void WViewport::PresentViewportTexture(VkCommandBuffer cmdBuffer, VkBool32 frameIndex)
+void WViewport::PresentViewportTexture(VkBool32 frameIndex)
 {
-	VulkanFunctionLibrary::TransitionImageLayout(cmdBuffer, paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+	VulkanFunctionLibrary::TransitionImageLayout(paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 }

@@ -128,7 +128,7 @@ private:
 	WindowResizeSignature windowResizeDelegate;
 	RenderFrameRefreshSignature renderFrameRefreshDelegate;
 	bool showDemoWindow = true;
-	bool cachingFirstFramesInFlight = true;
+	bool allViewportTexturesCreatedFlag = false;
 	VkRenderPass imPass;
 	ImGui_ImplVulkanH_Window* imWD;
 	VkPipeline imPipeline;

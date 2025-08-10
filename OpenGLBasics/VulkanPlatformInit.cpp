@@ -607,7 +607,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     swapchainInfo->imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchainInfo->queueFamilyIndexCount = 1;
     swapchainInfo->pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
-    swapchainInfo->oldSwapchain = VK_NULL_HANDLE;
+    //swapchainInfo->oldSwapchain = VK_NULL_HANDLE;
     swapchainInfo->imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     swapchainInfo->clipped = true;
     swapchainInfo->imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -660,25 +660,26 @@ bool PVulkanPlatformInit::CreateSwapChain()
         currentVKSettings.swapChainImgBufs.push_back(img);
     };
     // Create Depth Buffer
-    VkImageCreateInfo imgCreateInfo = {};
-    imgCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imgCreateInfo.pNext = VK_NULL_HANDLE;
-    imgCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imgCreateInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
-    imgCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    imgCreateInfo.extent.width = swapchainInfo->imageExtent.width;
-    imgCreateInfo.extent.height = swapchainInfo->imageExtent.height;
-    imgCreateInfo.extent.depth = 1;
-    imgCreateInfo.mipLevels = 1;
-    imgCreateInfo.arrayLayers = 1;
-    imgCreateInfo.samples = VK_NUM_OF_SAMPLES;
-    imgCreateInfo.queueFamilyIndexCount = 1;
-    imgCreateInfo.pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
-    imgCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imgCreateInfo.flags = 0;
-    imgCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    
+    VkImageCreateInfo* imgCreateInfo = &currentVKSettings.depthImageInfo;
+    imgCreateInfo->sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imgCreateInfo->pNext = VK_NULL_HANDLE;
+    imgCreateInfo->imageType = VK_IMAGE_TYPE_2D;
+    imgCreateInfo->format = VK_FORMAT_D24_UNORM_S8_UINT;
+    imgCreateInfo->usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    imgCreateInfo->extent.width = swapchainInfo->imageExtent.width;
+    imgCreateInfo->extent.height = swapchainInfo->imageExtent.height;
+    imgCreateInfo->extent.depth = 1;
+    imgCreateInfo->mipLevels = 1;
+    imgCreateInfo->arrayLayers = 1;
+    imgCreateInfo->samples = VK_NUM_OF_SAMPLES;
+    imgCreateInfo->queueFamilyIndexCount = 1;
+    imgCreateInfo->pQueueFamilyIndices = &currentVKSettings.queueFamilies[0];
+    imgCreateInfo->sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imgCreateInfo->flags = 0;
+    imgCreateInfo->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    result = vkCreateImage(device, &imgCreateInfo, currentVKSettings.allocationCallback, &currentVKSettings.depthBuffer.image);
+    result = vkCreateImage(device, imgCreateInfo, currentVKSettings.allocationCallback, &currentVKSettings.depthBuffer.image);
 
     if (result != VK_SUCCESS)
     {
@@ -693,8 +694,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     depthBufMemoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     depthBufMemoryInfo.allocationSize = depthBufMemReqs.size;
 
-    VkDeviceMemory depthBufMemory;
-    result = vkAllocateMemory(device, &depthBufMemoryInfo, currentVKSettings.allocationCallback, &depthBufMemory);
+    result = vkAllocateMemory(device, &depthBufMemoryInfo, currentVKSettings.allocationCallback, &currentVKSettings.depthBuffer.memory);
     
     if (result != VK_SUCCESS)
     {
@@ -702,7 +702,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
         return false;
     }
     // Bind memory buffer to depth buffer
-    vkBindImageMemory(device, currentVKSettings.depthBuffer.image, depthBufMemory, 0);
+    vkBindImageMemory(device, currentVKSettings.depthBuffer.image, currentVKSettings.depthBuffer.memory, 0);
 
     auto depthViewInfo = &currentVKSettings.depthViewInfo;
     depthViewInfo->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -734,14 +734,28 @@ bool PVulkanPlatformInit::CreateSwapChain()
 
 void PVulkanPlatformInit::ResizeSwapChain(int _width, int _height)
 {
-    
+    VkResult deviceIdle =vkDeviceWaitIdle(currentVKSettings.device);
+    assert(deviceIdle == VK_SUCCESS);
+
     auto info =  &currentVKSettings.swapchainInfo;
     info->imageExtent =VkExtent2D(_width, _height);
-    info->oldSwapchain = currentVKSettings.swapchain;
-    VkResult result = vkCreateSwapchainKHR(currentVKSettings.device, info, currentVKSettings.allocationCallback, &currentVKSettings.swapchain);
 
-    if (result != VK_SUCCESS)
-        throw std::runtime_error("Unable to resize swapchain!");
+    // Destroy old swapchain img views
+    for (VkBool32 i = 0; i < currentVKSettings.swapChainImgBufs.size(); ++i)
+    {
+        VkImageView imgView = currentVKSettings.swapChainImgBufs[i].imageView;
+        vkDestroyImageView(currentVKSettings.device, imgView, currentVKSettings.allocationCallback);
+    }
+   
+    vkDestroySwapchainKHR(currentVKSettings.device, currentVKSettings.swapchain, currentVKSettings.allocationCallback);
+    currentVKSettings.swapChainImgBufs.clear();
+    //Destroy depth buffer image and view
+    vkFreeMemory(currentVKSettings.device, currentVKSettings.depthBuffer.memory, currentVKSettings.allocationCallback);
+	vkDestroyImage(currentVKSettings.device, currentVKSettings.depthBuffer.image, currentVKSettings.allocationCallback);
+	vkDestroyImageView(currentVKSettings.device, currentVKSettings.depthBuffer.imageView, currentVKSettings.allocationCallback);
+
+   
+    CreateSwapChain();
 }
 
 void PVulkanPlatformInit::CleanupVulkan()
@@ -769,6 +783,11 @@ void PVulkanPlatformInit::CleanupVulkan()
     for (VkBool32 i = 0; i < currentVKSettings.swapchainImageCount; i++)
         vkDestroyImageView(device, currentVKSettings.swapChainImgBufs[i].imageView, currentVKSettings.allocationCallback);
     vkDestroySwapchainKHR(device, currentVKSettings.swapchain, currentVKSettings.allocationCallback);
+
+	//Destroy depth buffer image and view
+	vkFreeMemory(currentVKSettings.device, currentVKSettings.depthBuffer.memory, currentVKSettings.allocationCallback);
+	vkDestroyImage(currentVKSettings.device, currentVKSettings.depthBuffer.image, currentVKSettings.allocationCallback);
+	vkDestroyImageView(currentVKSettings.device, currentVKSettings.depthBuffer.imageView, currentVKSettings.allocationCallback);
 
     vkDestroyDescriptorPool(device, currentVKSettings.descriptorPool, currentVKSettings.allocationCallback);
 

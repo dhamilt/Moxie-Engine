@@ -37,8 +37,8 @@ public:
 	bool operator==( GUI_Base& other);
 	bool FrameBufferErrorCheck(GLuint status);
 	void VkCopySwapchainImg(VkCommandBuffer srcCmdBuffer, VkCommandBuffer dstCmdBuffer, VkBool32 frameIndex);
-	void VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex);
-	void PresentViewportTexture(VkCommandBuffer cmdBuffer, VkBool32 frameIndex);
+	void VkSetViewportImg(VkCommandBuffer cmdBuffer, VkBool32 frameIndex, bool& allViewportTexturesCreatedFlag);
+	void PresentViewportTexture(VkBool32 frameIndex);
 
 private:
 	int width = 800, height = 600;
