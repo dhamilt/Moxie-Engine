@@ -238,9 +238,9 @@ VkRenderPass VulkanFunctionLibrary::CreateDefaultRenderpass()
 	colorAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
 	colorAttachmentInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
 	colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-	colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
@@ -248,10 +248,10 @@ VkRenderPass VulkanFunctionLibrary::CreateDefaultRenderpass()
 	VkAttachmentDescription depthAttachmentInfo = {};
 	depthAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
 	depthAttachmentInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
-	depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 	depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	std::vector<VkAttachmentDescription> attachments(1);

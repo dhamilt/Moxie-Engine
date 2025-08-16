@@ -2,6 +2,11 @@
 #include<vulkan/vulkan.h>
 #include "VulkanShaders.h"
 
+struct VkVertexAttributeToBindingMapping
+{
+	VkVertexInputBindingDescription inputBinding;
+	std::vector<VkVertexInputAttributeDescription> attributesForBinding;
+};
 
 struct VkPipelineBuilderParams {
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
@@ -15,14 +20,15 @@ struct VkPipelineBuilderParams {
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo;
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo; 
 	std::vector<VkPipelineLayoutCreateInfo> layoutInfo;
-	VkRenderPass* renderPassPtr;
 	
+	std::vector<VkVertexAttributeToBindingMapping> vertexBindingMappings;
 	std::vector<VkViewport> viewports;
 	std::vector<VkRect2D>scissors;
 	std::vector<VkShaderStageConfigs> shaderStagingConfigs;
 	std::vector<VkShaderModule> shaders;
 	std::vector<VkPushConstantRange> pushConstants;
 	std::vector<VkPipelineLayout> pipelineLayouts;
+	
 };
 
 static VkPipelineInputAssemblyStateCreateInfo defaultInputAssemblyState = {
@@ -77,7 +83,9 @@ static VkPipelineDepthStencilStateCreateInfo defaultDepthStencilState = {
 	.depthWriteEnable = VK_TRUE,
 	.depthCompareOp = VK_COMPARE_OP_LESS,
 	.depthBoundsTestEnable = VK_FALSE,
-	.stencilTestEnable = VK_FALSE
+	.stencilTestEnable = VK_TRUE,
+	.minDepthBounds = 0.0f,
+	.maxDepthBounds = 1.0f
 };
 
 // default rasterization state for graphics pipeline is neither having depth clamping
@@ -156,8 +164,9 @@ public:
 	void SetInputAssembly(VkPipelineBuilderParams& params, VkPrimitiveTopology topology, bool primitiveRestart = true);
 	void SetInputAssembly(VkPipelineBuilderParams& params, VkPipelineInputAssemblyStateCreateInfo inputAssemInfo = defaultInputAssemblyState);
 	void LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params);
+	void LoadRenderpass(VkRenderPass renderpass);
 	void LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo = defaultDepthStencilState);
-	void LoadPipelineLayout(VkPipelineBuilderParams& params, std::vector<VkPipelineLayout> pipelineLayouts);
+	void LoadPipelineLayout(VkPipelineBuilderParams& params, VkPipelineLayout* pPipelineLayout);
 	void LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo = defaultColorBlendState);
 	void LoadMultispamplingState(VkPipelineBuilderParams& params, VkPipelineMultisampleStateCreateInfo multisampleInfo = defaultMultisamplingState);
 	// TODO: overload with method that only accepts window's extents
@@ -166,6 +175,7 @@ public:
 	//void GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipeline);
 	void CreateMeshShaderPipeline(VkPipeline* pipeline, VkPipelineBuilderParams& params);
 	void BuildVertexInputState(VkPipelineBuilderParams& params, VkPipelineVertexInputStateCreateInfo vertexInputInfo);
+	VkGraphicsPipelineCreateInfo* GetPipelineInfo();
 	
 private:
 	VkShaderModule* fragModule, * vertModule;

@@ -290,6 +290,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClCompile Include="MeshComponent.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="MoxieEvents.cpp" />
+    <ClCompile Include="VkCubemap.cpp" />
     <ClCompile Include="VulkanRenderpassBuilder.cpp" />
     <ClCompile Include="WViewport.cpp" />
     <ClCompile Include="MyLightComponent.cpp" />
@@ -407,6 +408,7 @@ xcopy /y /d "$(SolutionDir)zlibd.dll" "$(OutDir)"</Command>
     <ClInclude Include="MeshDefaultsLibrary.h" />
     <ClInclude Include="MouseCapture.h" />
     <ClInclude Include="MoxieEvents.h" />
+    <ClInclude Include="VkCubemap.h" />
     <ClInclude Include="VulkanRenderpassBuilder.h" />
     <ClInclude Include="WViewport.h" />
     <ClInclude Include="MyLightComponent.h" />

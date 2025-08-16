@@ -35,6 +35,8 @@ class VkShaderUtil
 public:
 	void LoadShaderStage(const VkShaderStageConfigs& shaderConfig);
 	void LoadShaderStages(const std::vector<VkShaderStageConfigs>& shaderConfigs);
+	static bool LoadVertexShaderModule(const VkShaderStageConfigs& shaderConfigs, VkShaderModule* shaderModule);
+	static bool LoadFragmentShaderModule(const VkShaderStageConfigs& shaderConfigs, VkShaderModule* shaderModule);
 	static bool LoadShaderModules(VkShaderStageConfigs& shaderConfig);
 
 	VkShaderUtil() {};
@@ -79,6 +81,90 @@ inline void VkShaderUtil::LoadShaderStages(const std::vector<VkShaderStageConfig
 {
 	for (auto config : shaderConfigs)
 		LoadShaderStage(config);
+}
+
+inline bool VkShaderUtil::LoadVertexShaderModule(const VkShaderStageConfigs& shaderConfigs, VkShaderModule* shaderModule)
+{
+	// find shader mapping for vertex shader
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	for (auto it = shaderConfigs.shaderStageToFileMapping.begin(); it != shaderConfigs.shaderStageToFileMapping.end(); ++it)
+	{
+		if (it->first & VK_SHADER_STAGE_VERTEX_BIT)
+		{
+			std::vector<char> fileBuf;
+			auto shaderStr = it->second;
+			std::ifstream file(it->second, std::ios::ate | std::ifstream::binary);
+			size_t fileSize = 0;
+			// pass shader file data into buffer
+			if (file)
+			{
+				fileSize = file.tellg();
+				fileBuf.resize(fileSize);
+				file.seekg(0);
+				file.read(fileBuf.data(), fileSize);
+
+				file.close();
+
+				auto shaderCode = reinterpret_cast<const uint32_t*>(fileBuf.data());
+
+				VkShaderModuleCreateInfo shaderModuleInfo;
+				shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+				shaderModuleInfo.pNext = VK_NULL_HANDLE;
+				shaderModuleInfo.pCode = shaderCode;
+				shaderModuleInfo.codeSize = fileSize;
+				shaderModuleInfo.flags = 0;
+				VkResult result = vkCreateShaderModule(vkSettings->device, &shaderModuleInfo, vkSettings->allocationCallback, shaderModule);
+				return result == VK_SUCCESS;
+			}
+			else
+				return false;
+
+			
+		}
+	}
+	return false;
+}
+
+inline bool VkShaderUtil::LoadFragmentShaderModule(const VkShaderStageConfigs& shaderConfigs, VkShaderModule* shaderModule)
+{
+	// find shader mapping for fragment shader
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	for (auto it = shaderConfigs.shaderStageToFileMapping.begin(); it != shaderConfigs.shaderStageToFileMapping.end(); ++it)
+	{
+		if (it->first & VK_SHADER_STAGE_FRAGMENT_BIT)
+		{
+			std::vector<char> fileBuf;
+			auto shaderStr = it->second;
+			std::ifstream file(it->second, std::ios::ate | std::ifstream::binary);
+			size_t fileSize = 0;
+			// pass shader file data into buffer
+			if (file)
+			{
+				fileSize = file.tellg();
+				fileBuf.resize(fileSize);
+				file.seekg(0);
+				file.read(fileBuf.data(), fileSize);
+
+				file.close();
+
+
+				auto shaderCode = reinterpret_cast<const uint32_t*>(fileBuf.data());
+
+				VkShaderModuleCreateInfo shaderModuleInfo;
+				shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+				shaderModuleInfo.pNext = VK_NULL_HANDLE;
+				shaderModuleInfo.pCode = shaderCode;
+				shaderModuleInfo.codeSize = fileSize;
+				shaderModuleInfo.flags = 0;
+				VkResult result = vkCreateShaderModule(vkSettings->device, &shaderModuleInfo, vkSettings->allocationCallback, shaderModule);
+				return result == VK_SUCCESS;
+			}
+			else
+				return false;
+
+		}
+	}
+	return false;
 }
 
 inline bool VkShaderUtil::LoadShaderModules(VkShaderStageConfigs& shaderConfig)

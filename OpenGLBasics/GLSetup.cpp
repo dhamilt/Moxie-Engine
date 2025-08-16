@@ -7,6 +7,7 @@
 #include "VulkanPlatformInit.h"
 #include "VulkanFunctionLibrary.h"
 #include "VulkanPipelineBuilder.h"
+#include "VkCubemap.h"
 
 
 
@@ -24,6 +25,8 @@ GLSetup::~GLSetup()
 {	
 	// Shutdown and clean GUI
 #if USE_VULKAN
+	if(vkCubemap)
+		delete vkCubemap;
 	if (clearValues)
 		delete[] clearValues;
 	ImGui_ImplVulkan_Shutdown();
@@ -185,6 +188,9 @@ void GLSetup::StartSDLWindow()
 
 	// Ensure that the sync object semaphores are created properly
 	assert(platformInstance->CreateSemaphores(imageAvailableSemaphores.data(), renderFinishedSemaphores.data()));
+
+	// Initialize viewport and scissor
+	pipeline->SetViewportInfo();
 
 	// Dictate how the command buffer is used on startup of each frame
 
@@ -536,19 +542,21 @@ void GLSetup::Render()
 		// Create render pass on command buffer
 		// ensures that the subpass contents is passed into the main command buffer (for now, at least)
 		vkCmdBeginRenderPass(frameData->CommandBuffer, &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		
+
 		// Bind viewport and scissor states to command buffer
-		pipeline->SetViewportInfo(frameData->CommandBuffer);
+		pipeline->SetViewportInfoOnCommandBuffer(frameData->CommandBuffer);
 
 		for (auto it = pipeline->primitives.begin(); it != pipeline->primitives.end(); ++it)
 			if (it->second->graphicsPipeline == NULL)
 				pipeline->CreateDefaultGraphicsPipeline(it->first);
 		
-		
 
 		// RUN DRAW COMMANDS HERE		
 		pipeline->DrawVkIndexed(frameData->CommandBuffer);
-		
+		vkCmdNextSubpass(frameData->CommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdNextSubpass(frameData->CommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+		//VulkanFunctionLibrary::TransitionImageLayout(frameData->CommandBuffer, vkSettings->swapChainImgBufs[swapchainImgIndex].image, vkSettings->swapchainInfo.imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		// Finalize the render pass for the command buffer		
 		vkCmdEndRenderPass(frameData->CommandBuffer);
 
@@ -753,9 +761,12 @@ void GLSetup::GetDefaultMeshShader(Shader* defaultShader)
 
 void GLSetup::SubmitCubeMapData(std::vector<TextureData*> cubemapData)
 {
+	vkCubemap = new VkCubemap();
+	vkCubemap->GenerateCubeMap(cubemapData);
+	vkCubemap->Setup();
+	/*if (pipeline)
+		pipeline->GenerateCubemap(cubemapData);*/
 
-	if (pipeline)
-		pipeline->GenerateCubemap(cubemapData);
 
 }
 

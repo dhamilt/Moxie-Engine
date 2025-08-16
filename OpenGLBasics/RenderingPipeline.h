@@ -188,6 +188,7 @@ static std::vector<VkDescriptorSetLayoutBinding> defaultDescriptorLayoutBindings
 // Rendering pipeline to carry out rendering tasks requested on multiple platforms
 class BRenderingPipeline final
 {
+public:
 	BRenderingPipeline();
 	~BRenderingPipeline();
 	void CleanupRenderingPipeline();
@@ -273,9 +274,13 @@ class BRenderingPipeline final
 	// Generates a Vulkan framebuffer
 	void GenerateVkFrameBuffers();
 	// Resizes vulkan framebuffer
-	void ResizeVkFramebuffers(int _width, int _height);
+	void ResizeVkFramebuffers(int _width, int _height);	
 	// Sends viewport info to graphics pipeline based on screen resolution
-	void SetViewportInfo(VkCommandBuffer cmdBuffer);
+	void SetViewportInfo();
+	// Set viewport info on command buffer
+	void SetViewportInfoOnCommandBuffer(VkCommandBuffer cmdBuffer);
+	// Retrieve viewport and scissor information
+	void GetViewportInfo(VkBool32& viewportCount, VkViewport* _viewports, VkBool32& scissorCount, VkRect2D* _scissors);
 	// Adds vertex buffers to command buffer 
 	void DrawVk(VkCommandBuffer cmdBuffer);
 	// Adds draw commands to command buffer with indexed vertex buffer data

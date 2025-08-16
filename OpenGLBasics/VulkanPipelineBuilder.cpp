@@ -99,7 +99,14 @@ void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPi
             params.shaders.push_back(shaderModule);
         }
        
+       pipelineInfo.stageCount = (VkBool32)params.shaderStages.size();
+       pipelineInfo.pStages = params.shaderStages.data();
     }
+}
+
+void VkPipelineBuilder::LoadRenderpass(VkRenderPass renderpass)
+{
+    pipelineInfo.renderPass = renderpass;
 }
 
 void VkPipelineBuilder::LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo)
@@ -108,10 +115,10 @@ void VkPipelineBuilder::LoadDepthStencilState(VkPipelineBuilderParams& params, V
     pipelineInfo.pDepthStencilState = &params.depthStencilInfo;
 }
 
-void VkPipelineBuilder::LoadPipelineLayout(VkPipelineBuilderParams& params, std::vector<VkPipelineLayout> pipelineLayouts)
+void VkPipelineBuilder::LoadPipelineLayout(VkPipelineBuilderParams& params, VkPipelineLayout* pPipelineLayout)
 {
-    params.pipelineLayouts = pipelineLayouts;
-    pipelineInfo.layout = pipelineLayouts[0];
+    params.pipelineLayouts.push_back(*pPipelineLayout);
+    pipelineInfo.layout = *pPipelineLayout;
 }
 
 void VkPipelineBuilder::LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo)
@@ -242,4 +249,9 @@ void VkPipelineBuilder::BuildVertexInputState(VkPipelineBuilderParams& params, V
     params.vertexInputInfo = vertexInputInfo;
    
     pipelineInfo.pVertexInputState = &params.vertexInputInfo;
+}
+
+VkGraphicsPipelineCreateInfo* VkPipelineBuilder::GetPipelineInfo()
+{
+    return &pipelineInfo;
 }

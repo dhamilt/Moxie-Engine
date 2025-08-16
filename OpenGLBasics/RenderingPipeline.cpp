@@ -466,7 +466,7 @@ void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 	{
 		throw std::runtime_error("Unable to create pipeline layout from descriptor set layout(s)!");
 	}
-	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, renderData->pipelineBuilderParams.pipelineLayouts);
+	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, &renderData->pipelineBuilderParams.pipelineLayouts[0]);
 }
 
 void BRenderingPipeline::CreateDefaultGraphicsPipeline(std::string primitiveName)
@@ -557,8 +557,8 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 	
 	CubemapParams& params = vk_cubemapParams;
 	params.images = cubemapTextureData;
-
-	VkImageCreateInfo cubemapInfo = 
+	
+	VkImageCreateInfo cubemapInfo =
 	{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 		.pNext = VK_NULL_HANDLE,
@@ -567,17 +567,17 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 		.format = VK_FORMAT_R8G8B8A8_UNORM,
 		.extent = {(VkBool32)cubemapTextureData[0]->width, (VkBool32)cubemapTextureData[0]->height, 1},
 		.mipLevels = 1,
-		.arrayLayers =6,
+		.arrayLayers = 6,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
 		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.usage =  VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 1,
 		.pQueueFamilyIndices = &vkSettings->queueFamilies[0],
-		.initialLayout =VK_IMAGE_LAYOUT_UNDEFINED
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
 	};
 
-	VkPhysicalDeviceImageFormatInfo2 supportedImgFmtInfo = 
+	VkPhysicalDeviceImageFormatInfo2 supportedImgFmtInfo =
 	{
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2,
 		.pNext = VK_NULL_HANDLE,
@@ -606,7 +606,8 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 	{
 		throw new std::runtime_error("Unable to create Cubemap!");
 	}
-		
+
+
 	VkMemoryRequirements imgMemReqs;
 
 	vkGetImageMemoryRequirements(vkSettings->device, params.img, &imgMemReqs);
@@ -710,6 +711,8 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 			break;
 		}
 	}
+	
+	
 
 	if (memoryFlagIndex == -1)
 	{
@@ -729,20 +732,77 @@ void BRenderingPipeline::GenerateCubemap(std::vector<TextureData*> cubemapTextur
 	}
 	
 	vkBindBufferMemory(vkSettings->device, params.stagingBuffer, params.stagingMemory, 0);
+
+	VkImageSubresourceLayers cubemapImgSubResourceLayer;
+	cubemapImgSubResourceLayer.aspectMask = cubemapViewInfo.subresourceRange.aspectMask;
+	cubemapImgSubResourceLayer.mipLevel = 0;
+	cubemapImgSubResourceLayer.baseArrayLayer = 0;
+	cubemapImgSubResourceLayer.layerCount = 6;
+
+	VkBufferImageCopy imgCopyInfo;
+	imgCopyInfo.bufferOffset = 0;
+	imgCopyInfo.bufferImageHeight = cubemapTextureData[0]->height;
+	imgCopyInfo.bufferRowLength = cubemapTextureData[0]->width;
+	imgCopyInfo.imageExtent = VkExtent3D(cubemapTextureData[0]->width, cubemapTextureData[0]->height, 1);
+	imgCopyInfo.imageOffset = VkOffset3D(0, 0, 0);
+	imgCopyInfo.imageSubresource = cubemapImgSubResourceLayer;
+	std::vector<VkBufferImageCopy> cubemapImgCopyInfo;
+	VkDeviceSize offset = 0;
+	VkDeviceSize cubemapImgSize = cubemapTextureData[0]->width * cubemapTextureData[0]->height;
+	for (VkBool32 i = 0; i < 6; ++i)
+	{
+		imgCopyInfo.bufferOffset = offset;
+		// TODO find the origin point of the cubemap
+		// to properly set the image offsets
+		//// right side
+		//if (i == 0)
+		//{
+		//	imgCopyInfo.imageOffset = VkOffset3D
+		//}
+		//// left side
+		//if (i == 1)
+		//{
+		//}
+		//// top side
+		//if (i == 2)
+		//{
+
+		//}
+		//// bottom side
+		//if (i == 3)
+		//{
+
+		//}
+		//// forward side
+		//if (i == 4)
+		//{
+
+		//}
+		//// bottom side
+		//if (i == 5)
+		//{
+
+		//}
+		cubemapImgCopyInfo.push_back(imgCopyInfo);
+		offset+= cubemapImgSize;
+	}
+
+
 	void* dataBinding;
 	result = vkMapMemory(vkSettings->device, params.stagingMemory, 0, params.stagingBufferSize, 0, &dataBinding);
 	if (result != VK_SUCCESS)
 	{
 		throw new std::runtime_error("Unable to map memory to cubemap images!");
 	}
-	VkDeviceSize offset = 0;
+	VkDeviceSize memOffset = 0;
 	for (int i = 0; i < 6; ++i)
 	{
 		
-		memcpy((char*)dataBinding + offset, cubemapTextureData[i]->data, params.layerSize);
-		offset += params.layerSize;
+		memcpy((char*)dataBinding + memOffset, cubemapTextureData[i]->data, params.layerSize);
+		memOffset += params.layerSize;
 	}
 	vkUnmapMemory(vkSettings->device, params.stagingMemory);
+
 
 #endif
 	
@@ -1186,7 +1246,36 @@ void BRenderingPipeline::ResizeVkFramebuffers(int _width, int _height)
 	}
 }
 
-void BRenderingPipeline::SetViewportInfo(VkCommandBuffer cmdBuffer)
+void BRenderingPipeline::SetViewportInfo()
+{
+	auto vkInitials = PVulkanPlatformInit::Get();
+
+	VkExtent2D swapChainExtent;
+	vkInitials->GetWindowExtent(swapChainExtent);
+
+	VkViewport viewport;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	viewport.width = static_cast<float>(swapChainExtent.width);
+	viewport.height = static_cast<float>(swapChainExtent.height);
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewports.push_back(viewport);
+
+	VkRect2D scissor;
+	scissor.extent = swapChainExtent;
+	scissor.offset = { 0,0 };
+	scissors.push_back(scissor);
+
+	// Load viewport and scissor info into graphics pipeline
+	defaultViewportStateInfo.viewportCount = static_cast<VkBool32>(viewports.size());
+	defaultViewportStateInfo.pViewports = viewports.data();
+	defaultViewportStateInfo.scissorCount = static_cast<VkBool32>(scissors.size());
+	defaultViewportStateInfo.pScissors = scissors.data();
+
+}
+
+void BRenderingPipeline::SetViewportInfoOnCommandBuffer(VkCommandBuffer cmdBuffer)
 {
 	auto vkInitials = PVulkanPlatformInit::Get();
 
@@ -1238,6 +1327,19 @@ void BRenderingPipeline::SetViewportInfo(VkCommandBuffer cmdBuffer)
 	defaultViewportStateInfo.pViewports = viewports.data();
 	defaultViewportStateInfo.scissorCount = static_cast<VkBool32>(scissors.size());
 	defaultViewportStateInfo.pScissors = scissors.data();
+}
+
+void BRenderingPipeline::GetViewportInfo(VkBool32& viewportCount, VkViewport* _viewports, VkBool32& scissorCount, VkRect2D* _scissors)
+{
+	viewportCount = (VkBool32)viewports.size();
+
+	if(_viewports)
+		memcpy(_viewports, viewports.data(), sizeof(VkViewport)* viewportCount);
+
+	scissorCount = (VkBool32)scissors.size();
+
+	if(_scissors)
+		memcpy(_scissors, scissors.data(), sizeof(VkRect2D) * scissorCount);
 }
 
 void BRenderingPipeline::DrawVk(VkCommandBuffer cmdBuffer)

@@ -387,9 +387,15 @@ void PVulkanPlatformInit::TransitionImageLayout(VkImageLayout oldLayout, VkImage
 // Create a Logical Device using 1 queue
 bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
 {
-    
+    VkPhysicalDeviceInlineUniformBlockFeatures inlineUniformBlockFeatures;
+    inlineUniformBlockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES;
+    inlineUniformBlockFeatures.inlineUniformBlock = VK_TRUE;
+    inlineUniformBlockFeatures.descriptorBindingInlineUniformBlockUpdateAfterBind = VK_TRUE;
+    inlineUniformBlockFeatures.pNext = VK_NULL_HANDLE;
+
     currentVKSettings.deviceExtensions.push_back("VK_KHR_swapchain");
     currentVKSettings.deviceExtensions.push_back("VK_EXT_depth_range_unrestricted");
+    currentVKSettings.deviceExtensions.push_back("VK_EXT_inline_uniform_block");
     auto queueInfo = &currentVKSettings.queueInfo;
     auto deviceInfo = &currentVKSettings.deviceInfo;
 
@@ -401,7 +407,7 @@ bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
     queueInfo->push_back(_queue);
         
     deviceInfo->sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceInfo->pNext = VK_NULL_HANDLE;
+    deviceInfo->pNext = &inlineUniformBlockFeatures;
     deviceInfo->queueCreateInfoCount = (uint32_t)queueInfo->size();
     deviceInfo->pQueueCreateInfos = queueInfo->data();
     deviceInfo->enabledExtensionCount = (VkBool32)currentVKSettings.deviceExtensions.size();
@@ -666,7 +672,7 @@ bool PVulkanPlatformInit::CreateSwapChain()
     imgCreateInfo->pNext = VK_NULL_HANDLE;
     imgCreateInfo->imageType = VK_IMAGE_TYPE_2D;
     imgCreateInfo->format = VK_FORMAT_D24_UNORM_S8_UINT;
-    imgCreateInfo->usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    imgCreateInfo->usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     imgCreateInfo->extent.width = swapchainInfo->imageExtent.width;
     imgCreateInfo->extent.height = swapchainInfo->imageExtent.height;
     imgCreateInfo->extent.depth = 1;
@@ -880,9 +886,9 @@ bool PVulkanPlatformInit::CreateRenderPass()
     colorAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
     colorAttachmentInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
     colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
@@ -891,8 +897,8 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthAttachmentInfo.samples = VK_NUM_OF_SAMPLES;
     depthAttachmentInfo.format = VK_FORMAT_D24_UNORM_S8_UINT;
     depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachmentInfo.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachmentInfo.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
     depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     depthAttachmentInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depthAttachmentInfo.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -904,47 +910,103 @@ bool PVulkanPlatformInit::CreateRenderPass()
     VkAttachmentReference colorRef = {};
     colorRef.attachment = 0;
     colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference transferRef = {};
+    transferRef.attachment = 0;
+    transferRef.layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   
 
     VkAttachmentReference depthRef = {};
     depthRef.attachment = 1;
     depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentReference resolveAttachments[2]{ colorRef, depthRef };
+
     VkBool32 preserveAttachments[2] = {0, 1};
-	// Create Color to Depth/Stencil subpass
-	VkSubpassDescription colorToDepthStencilSubpass;
-	colorToDepthStencilSubpass.flags = 0;
-	colorToDepthStencilSubpass.colorAttachmentCount = 1;
-	colorToDepthStencilSubpass.pColorAttachments = &colorRef;
-	colorToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
-	colorToDepthStencilSubpass.inputAttachmentCount = 0;
-	colorToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
-	colorToDepthStencilSubpass.preserveAttachmentCount = 0;
-	colorToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
-	colorToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
-	colorToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
+	// Create Present to Depth/Stencil subpass
+	VkSubpassDescription presentToDepthStencilSubpass;
+	presentToDepthStencilSubpass.flags = 0;
+	presentToDepthStencilSubpass.colorAttachmentCount = 1;
+	presentToDepthStencilSubpass.pColorAttachments = &colorRef;
+	presentToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
+	presentToDepthStencilSubpass.inputAttachmentCount = 0;
+	presentToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	presentToDepthStencilSubpass.preserveAttachmentCount = 0;
+	presentToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	presentToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	presentToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+	// Create Depth/Stencil to Color subpass
+	VkSubpassDescription depthStencilToColorSubpass;
+    depthStencilToColorSubpass.flags = 0;
+    depthStencilToColorSubpass.colorAttachmentCount = 1;
+    depthStencilToColorSubpass.pColorAttachments = &colorRef;
+    depthStencilToColorSubpass.pDepthStencilAttachment = &depthRef;
+    depthStencilToColorSubpass.inputAttachmentCount = 0;
+    depthStencilToColorSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+    depthStencilToColorSubpass.preserveAttachmentCount = 0;
+    depthStencilToColorSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+    depthStencilToColorSubpass.pResolveAttachments = VK_NULL_HANDLE;
+    depthStencilToColorSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+	// Create Color to Transfer subpass
+	VkSubpassDescription colorToTransferSubpass;
+	colorToTransferSubpass.flags = 0;
+	colorToTransferSubpass.colorAttachmentCount = 1;
+	colorToTransferSubpass.pColorAttachments = &colorRef;
+	colorToTransferSubpass.pDepthStencilAttachment = VK_NULL_HANDLE;
+	colorToTransferSubpass.inputAttachmentCount = 0;
+	colorToTransferSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	colorToTransferSubpass.preserveAttachmentCount = 0;
+	colorToTransferSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	colorToTransferSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	colorToTransferSubpass.pInputAttachments = VK_NULL_HANDLE;
 
    
-	// Create Color to Depth/Stencil attachment dependency
-	VkSubpassDependency colorToDepthStencilDependency;
-	colorToDepthStencilDependency.srcSubpass = 0;
-	colorToDepthStencilDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
-	colorToDepthStencilDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	colorToDepthStencilDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	colorToDepthStencilDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-	colorToDepthStencilDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	colorToDepthStencilDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    VkSubpassDescription subpasses[3]{ presentToDepthStencilSubpass, depthStencilToColorSubpass, colorToTransferSubpass};
 
+	// Create Present to Depth/Stencil attachment dependency
+	VkSubpassDependency presentToDepthStencilDependency;
+	presentToDepthStencilDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	presentToDepthStencilDependency.dstSubpass = 0;
+	presentToDepthStencilDependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	presentToDepthStencilDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	presentToDepthStencilDependency.srcAccessMask = 0;
+	presentToDepthStencilDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	presentToDepthStencilDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Create Depth/Stencil to Color attachment dependency
+	VkSubpassDependency depthStencilToColorDependency;
+	depthStencilToColorDependency.srcSubpass = 0;
+	depthStencilToColorDependency.dstSubpass = 1;
+	depthStencilToColorDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	depthStencilToColorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	depthStencilToColorDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+	depthStencilToColorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	depthStencilToColorDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;	
+    
+	// Create Color to Transfer attachment dependency
+	VkSubpassDependency colorToTransferDependency;
+	colorToTransferDependency.srcSubpass = 1;
+	colorToTransferDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+	colorToTransferDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	colorToTransferDependency.dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	colorToTransferDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	colorToTransferDependency.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	colorToTransferDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+
+    VkSubpassDependency subpassDependencies[3]{ presentToDepthStencilDependency, depthStencilToColorDependency, colorToTransferDependency };
 
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = 2;
     renderPassInfo.pAttachments = &attachments[0];
     renderPassInfo.pNext = VK_NULL_HANDLE;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &colorToDepthStencilSubpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &colorToDepthStencilDependency;   
+    renderPassInfo.subpassCount = 3;
+    renderPassInfo.pSubpasses = subpasses;
+    renderPassInfo.dependencyCount = 3;
+    renderPassInfo.pDependencies = subpassDependencies;   
     renderPassInfo.flags = NULL;
     VkResult result = vkCreateRenderPass(currentVKSettings.device, &renderPassInfo, currentVKSettings.allocationCallback, &currentVKSettings.renderPass);
     assert(result == VK_SUCCESS);

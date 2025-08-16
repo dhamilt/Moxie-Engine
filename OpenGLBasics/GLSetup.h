@@ -18,6 +18,7 @@
 #include "VulkanRenderpassBuilder.h"
 
 class Material;
+class VkCubemap;
 
 #define USE_VULKAN 1
 #define USE_OPENGL 0
@@ -79,6 +80,7 @@ private:
 public:
 	Camera* mainCamera;
 	bool windowLoaded = false;
+	BRenderingPipeline* pipeline;
 
 
 private:
@@ -111,7 +113,6 @@ private:
 	ImGuiWindow* windowInFocus;	
 	bool viewportInFocus;
 	WMainMenu* mainMenu;
-	BRenderingPipeline* pipeline;
 	VkCommandBufferBeginInfo beginCmdBufferInfo;
 	VkRenderPassBeginInfo beginRenderPassInfo;
 	VkRenderingInfo renderPassInfo;
@@ -130,6 +131,7 @@ private:
 	bool showDemoWindow = true;
 	bool allViewportTexturesCreatedFlag = false;
 	VkRenderPass imPass;
+	VkCubemap* vkCubemap;
 	ImGui_ImplVulkanH_Window* imWD;
 	VkPipeline imPipeline;
 };

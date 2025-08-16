@@ -25,9 +25,9 @@ Cubemaps::Cubemaps(std::vector<std::string> files)
 		
 		textureDataCache.push_back(textureData);		
 	}
-
+	#if USE_VULKAN
 	GGLSPtr->SubmitCubeMapData(textureDataCache);
-
+	#endif
 }
 
 Cubemaps::~Cubemaps()
