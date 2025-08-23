@@ -222,6 +222,8 @@ public:
 	void SetVkPipelineStencilState(std::string primitiveName, VkStencilOpState frontStencilState, VkStencilOpState backStencilState);
 	// Creates pipeline layout from descriptor set layout(s)
 	void CreatePipelineLayout(std::string primitiveName);
+	// Create rendering pipelines for all initial primitives
+	void CreatePipelinesForInitialPrimitives();
 	// Creates a vulkan rendering pipeline from start to finish
 	void CreateDefaultGraphicsPipeline(std::string primitiveName);
 	// Creates a cubemap from texture data

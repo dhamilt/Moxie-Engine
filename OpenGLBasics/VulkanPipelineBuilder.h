@@ -9,6 +9,9 @@ struct VkVertexAttributeToBindingMapping
 };
 
 struct VkPipelineBuilderParams {
+	VkPipelineBuilderParams();
+
+	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -164,7 +167,7 @@ public:
 	void SetInputAssembly(VkPipelineBuilderParams& params, VkPrimitiveTopology topology, bool primitiveRestart = true);
 	void SetInputAssembly(VkPipelineBuilderParams& params, VkPipelineInputAssemblyStateCreateInfo inputAssemInfo = defaultInputAssemblyState);
 	void LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params);
-	void LoadRenderpass(VkRenderPass renderpass);
+	void LoadRenderpass(VkPipelineBuilderParams&params, VkRenderPass* renderpass);
 	void LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo = defaultDepthStencilState);
 	void LoadPipelineLayout(VkPipelineBuilderParams& params, VkPipelineLayout* pPipelineLayout);
 	void LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo = defaultColorBlendState);

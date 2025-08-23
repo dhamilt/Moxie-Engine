@@ -469,6 +469,13 @@ void BRenderingPipeline::CreatePipelineLayout(std::string primitiveName)
 	vulkanPipelineBuilder->LoadPipelineLayout(renderData->pipelineBuilderParams, &renderData->pipelineBuilderParams.pipelineLayouts[0]);
 }
 
+void BRenderingPipeline::CreatePipelinesForInitialPrimitives()
+{
+	for(auto it = primitives.begin(); it != primitives.end(); ++it)
+		if(it->second->graphicsPipeline == NULL)
+			CreateDefaultGraphicsPipeline(it->first);
+}
+
 void BRenderingPipeline::CreateDefaultGraphicsPipeline(std::string primitiveName)
 {
 	auto renderData = primitives[primitiveName];
@@ -513,7 +520,7 @@ void BRenderingPipeline::CreateDefaultGraphicsPipeline(std::string primitiveName
 		throw new std::runtime_error("Unable to create pipeline cache!");
 	}
 
-	result = vkCreateGraphicsPipelines(vkSettings->device, renderData->pipelineCache, 1, &pipelineInfo, vkSettings->allocationCallback, &renderData->graphicsPipeline);
+	result = vkCreateGraphicsPipelines(vkSettings->device, renderData->pipelineCache, 1, &renderData->pipelineBuilderParams.pipelineInfo, vkSettings->allocationCallback, &renderData->graphicsPipeline);
 	if (result != VK_SUCCESS)
 	{
 		throw new std::runtime_error("Unable to create graphics pipeline!");
@@ -1210,8 +1217,6 @@ void BRenderingPipeline::GenerateVkFrameBuffers()
 void BRenderingPipeline::ResizeVkFramebuffers(int _width, int _height)
 {	
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult deviceIdle = vkDeviceWaitIdle(vkSettings->device);
-	assert(deviceIdle == VK_SUCCESS);
 
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -1273,6 +1278,8 @@ void BRenderingPipeline::SetViewportInfo()
 	defaultViewportStateInfo.scissorCount = static_cast<VkBool32>(scissors.size());
 	defaultViewportStateInfo.pScissors = scissors.data();
 
+	
+
 }
 
 void BRenderingPipeline::SetViewportInfoOnCommandBuffer(VkCommandBuffer cmdBuffer)
@@ -1327,6 +1334,9 @@ void BRenderingPipeline::SetViewportInfoOnCommandBuffer(VkCommandBuffer cmdBuffe
 	defaultViewportStateInfo.pViewports = viewports.data();
 	defaultViewportStateInfo.scissorCount = static_cast<VkBool32>(scissors.size());
 	defaultViewportStateInfo.pScissors = scissors.data();
+
+	for(auto it = primitives.begin(); it != primitives.end(); ++it)
+	vulkanPipelineBuilder->LoadViewportInfo(it->second->pipelineBuilderParams, swapChainExtent);
 }
 
 void BRenderingPipeline::GetViewportInfo(VkBool32& viewportCount, VkViewport* _viewports, VkBool32& scissorCount, VkRect2D* _scissors)
@@ -1443,7 +1453,7 @@ void BRenderingPipeline::RenderPrimitives()
 	for (auto it = primitives.begin(); it != primitives.end(); it++)
 	{
 		RenderBufferData* primitive = it->second;
-		UpdateLightDataForShader(primitive);
+		//UpdateLightDataForShader(primitive);
 		DrawMesh(primitive);
 	}
 }

@@ -215,6 +215,9 @@
     <ClCompile Include="VulkanRenderpassBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VkCubemap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vector3D.h">
@@ -485,6 +488,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VulkanRenderpassBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VkCubemap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

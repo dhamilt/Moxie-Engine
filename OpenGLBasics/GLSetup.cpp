@@ -1,6 +1,7 @@
 #include "glPCH.h"
 #include "GLSetup.h"
 #include <cassert>
+#include <iostream>
 #include "GameLoop.h"
 #include "Material.h"
 #include "Mesh.h"
@@ -146,11 +147,11 @@ void GLSetup::StartSDLWindow()
 		throw std::runtime_error("Could not create Vulkan surface.");
 	}
 
-	// Ensure that the debug callbacks were created
-	assert(platformInstance->SetupDebugCallbacks());
+	//// Ensure that the debug callbacks were created
+	//assert(platformInstance->SetupDebugCallbacks());
 
-	// Ensure that the allocation callback(s) were created
-	assert(platformInstance->SetupAllocationCallbacks());
+	//// Ensure that the allocation callback(s) were created
+	//assert(platformInstance->SetupAllocationCallbacks());
 
 	// Ensure that the discrete gpu is being used
 	assert(platformInstance->GetPhysicalDevices());
@@ -207,7 +208,7 @@ void GLSetup::StartSDLWindow()
 	beginRenderPassInfo.renderArea.offset = { 0, 0 };
 	beginRenderPassInfo.renderArea.extent = { (VkBool32)width, (VkBool32)height };
 
-
+	pipeline->CreatePipelinesForInitialPrimitives();
 
 #endif // USE_VULKAN
 	
@@ -378,7 +379,7 @@ void GLSetup::Render()
 		// in order to pass into the drawing of meshes
 		view = mainCamera->GetViewMatrix();
 		pipeline->UpdateViewMatrix(view);
-
+		projection = glm::perspective(glm::radians(fov), (float)width/(float)height, nearClippingPlane, farClippingPlane);
 		// update the projection matrix
 		pipeline->UpdateProjectionMatrix(fov, (float)width, (float)height, nearClippingPlane, farClippingPlane);
 
@@ -482,8 +483,7 @@ void GLSetup::Render()
 		//ImGui::DockSpaceOverViewport(mainViewport, ImGuiDockNodeFlags_PassthruCentralNode);
 		// Get the index of the requested swapchain index being rendered on
 		// set timeout period to max time available
-		VkResult idleResult = vkQueueWaitIdle(vkSettings->queue);
-		assert(idleResult == VK_SUCCESS);
+		
 
 				
 		
@@ -508,8 +508,8 @@ void GLSetup::Render()
 		assert(vkResetFences(*currentVkDevice, 1, &frameData->Fence) == VK_SUCCESS);
 
 
-		// Reset the command pool for the current frame
-		assert(vkResetCommandPool(vkSettings->device, frameData->CommandPool, 0) == VK_SUCCESS);
+		//// Reset the command pool for the current frame
+		//assert(vkResetCommandPool(vkSettings->device, frameData->CommandPool, 0) == VK_SUCCESS);
 
 		// Restart the command buffer to be ready to record draw commands for the current frame
 		assert(vkResetCommandBuffer(frameData->CommandBuffer, 0) == VK_SUCCESS);
@@ -519,6 +519,8 @@ void GLSetup::Render()
 
 		// TODO: Create builder class that creates a handle to render pass subset and correlated data types (Framebuffers, swapchain images, command buffers, etc.)
 		// with helper functions in order to centralize render pass functionality
+		size_t markerId = aftermathMarkerIds.size();
+		aftermathMarkerIds[markerId] = "Draw Cube";
 
 		VkClearDepthStencilValue clearDepthStencilVal = {};
 		clearDepthStencilVal.depth = 0.0f;
@@ -545,34 +547,27 @@ void GLSetup::Render()
 
 		// Bind viewport and scissor states to command buffer
 		pipeline->SetViewportInfoOnCommandBuffer(frameData->CommandBuffer);
+				
 
-		for (auto it = pipeline->primitives.begin(); it != pipeline->primitives.end(); ++it)
-			if (it->second->graphicsPipeline == NULL)
-				pipeline->CreateDefaultGraphicsPipeline(it->first);
+
+		vkCubemap->UpdateViewProjectionMatricies(view, projection);
 		
-
 		// RUN DRAW COMMANDS HERE		
+		
 		pipeline->DrawVkIndexed(frameData->CommandBuffer);
-		vkCmdNextSubpass(frameData->CommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdNextSubpass(frameData->CommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-
-		//VulkanFunctionLibrary::TransitionImageLayout(frameData->CommandBuffer, vkSettings->swapChainImgBufs[swapchainImgIndex].image, vkSettings->swapchainInfo.imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		vkCubemap->DrawCubemap(frameData->CommandBuffer);
+		//vkCmdNextSubpass(frameData->CommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+		//vkCmdNextSubpass(frameData->CommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+		VulkanFunctionLibrary::TransitionImageLayout(frameData->CommandBuffer, vkSettings->swapChainImgBufs[swapchainImgIndex].image, vkSettings->swapchainInfo.imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		
 		// Finalize the render pass for the command buffer		
 		vkCmdEndRenderPass(frameData->CommandBuffer);
 
-		ImGui_ImplVulkanH_Frame* imguiFd = &imguiFrameData[currentRenderingFrame];
-		// Reset the command pool for the current frame
-		assert(vkResetCommandPool(vkSettings->device, imguiFd->CommandPool, 0) == VK_SUCCESS);
+		ImGui_ImplVulkanH_Frame* imguiFd = &imguiFrameData[currentRenderingFrame];		
 		// Restart the imgui command buffer to be ready to record draw gui commands for the current frame
 		assert(vkResetCommandBuffer(imguiFd->CommandBuffer, 0) == VK_SUCCESS);
 		// Begin command buffer recording for the current ui frame
 		assert(vkBeginCommandBuffer(imguiFd->CommandBuffer, &beginCmdBufferInfo) == VK_SUCCESS);
-		// Copy the rendered frame to the viewport image for the ui
-		viewport->VkCopySwapchainImg(frameData->CommandBuffer, imguiFd->CommandBuffer, swapchainImgIndex);
-
-		
-		 //End commands for primary command buffer
-		assert(vkEndCommandBuffer(frameData->CommandBuffer) == VK_SUCCESS);
 
 		// Begin ImGUI recording render pass
 		VkFramebuffer imguiFramebuffer;
@@ -580,6 +575,15 @@ void GLSetup::Render()
 		beginRenderPassInfo.framebuffer = imguiFramebuffer;
 		beginRenderPassInfo.renderPass = imPass;
 		vkCmdBeginRenderPass(imguiFd->CommandBuffer, &beginRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Copy the rendered frame to the viewport image for the ui
+		viewport->VkCopySwapchainImg(frameData->CommandBuffer, imguiFd->CommandBuffer, swapchainImgIndex);
+
+		//vkCmdSetCheckpointNV(frameData->CommandBuffer, (const void*)markerId);
+		 //End commands for primary command buffer
+		assert(vkEndCommandBuffer(frameData->CommandBuffer) == VK_SUCCESS);
+
+		
 		// Copy drawn scene to separate renderpass for viewport image
 		//if(!allViewportTexturesCreatedFlag)
 			viewport->VkSetViewportImg(imguiFd->CommandBuffer, swapchainImgIndex, allViewportTexturesCreatedFlag);
@@ -610,7 +614,7 @@ void GLSetup::Render()
 		
 		// End ImGUI recording render pass
 		vkCmdEndRenderPass(imguiFd->CommandBuffer);
-
+		
 		// End ImGui recording commandbuffer
 		assert(vkEndCommandBuffer(imguiFd->CommandBuffer) == VK_SUCCESS);
 		
@@ -625,9 +629,6 @@ void GLSetup::Render()
 			ImGui::RenderPlatformWindowsDefault();
 
 		}
-
-		idleResult = vkQueueWaitIdle(vkSettings->queue);
-		assert(idleResult == VK_SUCCESS);
 		
 		// Submit draw commands to the device queue to be drawn
 		VkSubmitInfo queueSubmitInfo = {};
@@ -645,9 +646,6 @@ void GLSetup::Render()
 
 		auto submitResult = vkQueueSubmit(vkSettings->queue, 1, &queueSubmitInfo, frameData->Fence);
 		assert(submitResult == VK_SUCCESS);
-
-		idleResult = vkQueueWaitIdle(vkSettings->queue);
-		assert(idleResult == VK_SUCCESS);
 
 		// Render the image to the window/surface
 		VkPresentInfoKHR presentationInfo = {};
@@ -675,7 +673,6 @@ void GLSetup::Render()
 		// retrieve the next frame
 		currentRenderingFrame = (currentRenderingFrame + 1) % MAX_VULKAN_FRAMES_IN_FLIGHT;
 		renderFrameRefreshDelegate.Broadcast();
-
 #endif
 	}
 
@@ -761,9 +758,10 @@ void GLSetup::GetDefaultMeshShader(Shader* defaultShader)
 
 void GLSetup::SubmitCubeMapData(std::vector<TextureData*> cubemapData)
 {
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 	vkCubemap = new VkCubemap();
 	vkCubemap->GenerateCubeMap(cubemapData);
-	vkCubemap->Setup();
+	vkCubemap->Setup(&vkSettings->renderPass);
 	/*if (pipeline)
 		pipeline->GenerateCubemap(cubemapData);*/
 

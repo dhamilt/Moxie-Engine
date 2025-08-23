@@ -90,8 +90,9 @@ int main(int argc, char* argv[])
 {
 	// Delayed initialization("Lazy" init)	
 	GGLSPtr->Init();
-
+	std::cout << "Load Render logic." << std::endl;
 	GGLPtr->Init();
+	std::cout << "Load Game logic." << std::endl;
 	//MSoundDataAsset* sound2 = new MSoundDataAsset("../Aritus - Summer With You.wav");
 	//MSoundDataAsset* sound = new MSoundDataAsset("../Large Professor - Frantic Barz (NIKK BLVKK Remix).wav");
 	//AudioSource* source = new AudioSource(/*device, context,*/ sound);	
@@ -101,19 +102,21 @@ int main(int argc, char* argv[])
 	//	
 
 	// Add a skybox to the scene
-	std::vector<std::string> faceFilePaths = { "../cubemaps/Yokohama3/posx.jpg",
-											"../cubemaps/Yokohama3/negx.jpg",
-											"../cubemaps/Yokohama3/posy.jpg",  
-											"../cubemaps/Yokohama3/negy.jpg",
-											"../cubemaps/Yokohama3/posz.jpg",
-											"../cubemaps/Yokohama3/negz.jpg" };
-
+	std::vector<std::string> faceFilePaths = { "cubemaps/Yokohama3/posx.jpg",
+											"cubemaps/Yokohama3/negx.jpg",
+											"cubemaps/Yokohama3/posy.jpg",  
+											"cubemaps/Yokohama3/negy.jpg",
+											"cubemaps/Yokohama3/posz.jpg",
+											"cubemaps/Yokohama3/negz.jpg" };
+	
+	std::cout << "Load cubemap images" << std::endl;
 	Cubemaps* skybox = new Cubemaps(faceFilePaths);	
 
 	//// Load a OBJ file to use as a 3d model
 	std::vector<DVertex> vertices;
 	std::vector<uint16_t> indices;
 	////MeshDefaultsLibrary::GetCubePrimitive(vertices, indices);
+	std::cout << "Loading icosahedron primitive." << std::endl;
 	MeshDefaultsLibrary::GetIcosahedronPrimitive(vertices, indices);
 	//MeshDefaultsLibrary::GetSpherePrimitive(3, vertices, indices);
 
@@ -136,6 +139,7 @@ int main(int argc, char* argv[])
 	customMeshComponent->transform.Translate(DVector3(0, -2, 7));
 	customMeshComponent->transform.SetRotation(quaternion(0.0f, DVector3(0.0f, 1.0f, 0.0f)));
 	actor->AddComponent(customMeshComponent);
+	std::cout << "Starting test run of render logic" << std::endl;
 	GGLSPtr->TestVulkan3DRun();
 	//// Make a light 
 	//MyLightComponent* lightComponent = new MyLightComponent();		
@@ -188,6 +192,7 @@ int main(int argc, char* argv[])
 	//
 	//
 	//actor->transform.SetPosition(DVector3(0, -2, 0));
+	std::cout << "Running Game Logic loop" << std::endl;
 	GGLPtr->Loop();
 	
 	

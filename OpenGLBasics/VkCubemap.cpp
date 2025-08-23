@@ -2,6 +2,7 @@
 #include "VkCubemap.h"
 #include "VulkanPlatformInit.h"
 #include "TextureData.h"
+#include "VulkanFunctionLibrary.h"
 #include "GLSetup.h"
 
 
@@ -27,15 +28,48 @@ VkCubemap::~VkCubemap()
 void VkCubemap::Setup()
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult idleResult = vkDeviceWaitIdle(vkSettings->device);
 	CreateCommandPool();
 	CreateCommandBuffers();
 	CreateRenderpass();
 	CreateFramebuffers();
+	CalculateNormals();
 	CreateCubemapShaders();
+	CreateSampler();
 	AddVertexInputBindings();
+	CreateIndexBuffer();
 	CreateViewportState();
 	CreateCubemapPipelines();
+}
+
+void VkCubemap::Setup(VkRenderPass* renderpass_)
+{
+	LoadRenderpass(renderpass_);
+	CalculateNormals();
+	CreateCubemapShaders();
+	CreateSampler();
+	AddVertexInputBindings();
+	CreateIndexBuffer();
+	CreateViewportState();
+	CreateCubemapPipelines();
+}
+
+void VkCubemap::CalculateNormals()
+{
+	DVector3 zero = DVector3(0.0f, 0.0f, 0.0f);
+	VkBool32 triangleCount = (VkBool32)cubeMapIndexBuffer.size() / 3;
+
+	for (VkBool32 i = 0; i < triangleCount; ++i)
+	{
+		VkBool32 i0 = cubeMapIndexBuffer[i * 3];
+		VkBool32 i1 = cubeMapIndexBuffer[i * 3 + 1];
+		VkBool32 i2 = cubeMapIndexBuffer[i * 3 + 2];
+
+		DVector3 t0 = cubeMapVertexBuffer[i0];
+		DVector3 t1 = cubeMapVertexBuffer[i1];
+		DVector3 t2 = cubeMapVertexBuffer[i2];
+		
+		cubemapParams.normals.push_back(glm::normalize(glm::cross(t1 - t0, t2 - t0)) - zero);
+	}
 }
 
 void VkCubemap::CreateCommandPool()
@@ -108,18 +142,31 @@ void VkCubemap::CreateRenderpass()
 	VkAttachmentReference resolveAttachments[2]{ colorRef, depthRef };
 
 	VkBool32 preserveAttachments[2] = { 0, 1 };
-	// Create Present to Depth/Stencil subpass
-	VkSubpassDescription presentToDepthStencilSubpass;
-	presentToDepthStencilSubpass.flags = 0;
-	presentToDepthStencilSubpass.colorAttachmentCount = 1;
-	presentToDepthStencilSubpass.pColorAttachments = &colorRef;
-	presentToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
-	presentToDepthStencilSubpass.inputAttachmentCount = 0;
-	presentToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
-	presentToDepthStencilSubpass.preserveAttachmentCount = 0;
-	presentToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
-	presentToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
-	presentToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
+	// Create Present to Shader Read subpass
+	VkSubpassDescription presentToShaderReadSubpass;
+	presentToShaderReadSubpass.flags = 0;
+	presentToShaderReadSubpass.colorAttachmentCount = 1;
+	presentToShaderReadSubpass.pColorAttachments = &colorRef;
+	presentToShaderReadSubpass.pDepthStencilAttachment = &depthRef;
+	presentToShaderReadSubpass.inputAttachmentCount = 0;
+	presentToShaderReadSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	presentToShaderReadSubpass.preserveAttachmentCount = 0;
+	presentToShaderReadSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	presentToShaderReadSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	presentToShaderReadSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+	// Create Shader Read to Depth/Stencil subpass
+	VkSubpassDescription shaderReadToDepthStencilSubpass;
+	shaderReadToDepthStencilSubpass.flags = 0;
+	shaderReadToDepthStencilSubpass.colorAttachmentCount = 1;
+	shaderReadToDepthStencilSubpass.pColorAttachments = &colorRef;
+	shaderReadToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
+	shaderReadToDepthStencilSubpass.inputAttachmentCount = 0;
+	shaderReadToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	shaderReadToDepthStencilSubpass.preserveAttachmentCount = 0;
+	shaderReadToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	shaderReadToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	shaderReadToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
 
 	// Create Depth/Stencil to Color subpass
 	VkSubpassDescription depthStencilToColorSubpass;
@@ -148,31 +195,42 @@ void VkCubemap::CreateRenderpass()
 	colorToTransferSubpass.pInputAttachments = VK_NULL_HANDLE;
 
 
-	VkSubpassDescription subpasses[3]{ presentToDepthStencilSubpass, depthStencilToColorSubpass, colorToTransferSubpass };
+	VkSubpassDescription subpasses[4]{ presentToShaderReadSubpass, shaderReadToDepthStencilSubpass, depthStencilToColorSubpass, colorToTransferSubpass };
 
-	// Create Present to Depth/Stencil attachment dependency
-	VkSubpassDependency presentToDepthStencilDependency;
-	presentToDepthStencilDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	presentToDepthStencilDependency.dstSubpass = 0;
-	presentToDepthStencilDependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-	presentToDepthStencilDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	presentToDepthStencilDependency.srcAccessMask = 0;
-	presentToDepthStencilDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	presentToDepthStencilDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Create Present to Shader Read attachment dependency
+	VkSubpassDependency presentToShaderReadDependency;
+	presentToShaderReadDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	presentToShaderReadDependency.dstSubpass = 0;
+	presentToShaderReadDependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	presentToShaderReadDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	presentToShaderReadDependency.srcAccessMask = 0;
+	presentToShaderReadDependency.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+	presentToShaderReadDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Create Shader Read to Depth/Stencil attachment dependency
+	VkSubpassDependency shaderReadToDepthStencilDependency;
+	shaderReadToDepthStencilDependency.srcSubpass = 0;
+	shaderReadToDepthStencilDependency.dstSubpass = 1;
+	shaderReadToDepthStencilDependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	shaderReadToDepthStencilDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	shaderReadToDepthStencilDependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	shaderReadToDepthStencilDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	shaderReadToDepthStencilDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Create Depth/Stencil to Color attachment dependency
 	VkSubpassDependency depthStencilToColorDependency;
-	depthStencilToColorDependency.srcSubpass = 0;
-	depthStencilToColorDependency.dstSubpass = 1;
+	depthStencilToColorDependency.srcSubpass = 1;
+	depthStencilToColorDependency.dstSubpass = 2;
 	depthStencilToColorDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	depthStencilToColorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	depthStencilToColorDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 	depthStencilToColorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	depthStencilToColorDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+
 	// Create Color to Transfer attachment dependency
 	VkSubpassDependency colorToTransferDependency;
-	colorToTransferDependency.srcSubpass = 1;
+	colorToTransferDependency.srcSubpass = 2;
 	colorToTransferDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
 	colorToTransferDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	colorToTransferDependency.dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -181,7 +239,7 @@ void VkCubemap::CreateRenderpass()
 	colorToTransferDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 
-	VkSubpassDependency subpassDependencies[3]{ presentToDepthStencilDependency, depthStencilToColorDependency, colorToTransferDependency };
+	VkSubpassDependency subpassDependencies[4]{ presentToShaderReadDependency, shaderReadToDepthStencilDependency, depthStencilToColorDependency, colorToTransferDependency };
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 
@@ -190,9 +248,9 @@ void VkCubemap::CreateRenderpass()
 	renderPassInfo.attachmentCount = 2;
 	renderPassInfo.pAttachments = &attachments[0];
 	renderPassInfo.pNext = VK_NULL_HANDLE;
-	renderPassInfo.subpassCount = 3;
+	renderPassInfo.subpassCount = 4;
 	renderPassInfo.pSubpasses = subpasses;
-	renderPassInfo.dependencyCount = 3;
+	renderPassInfo.dependencyCount = 4;
 	renderPassInfo.pDependencies = subpassDependencies;
 	renderPassInfo.flags = NULL;
 	VkResult result = vkCreateRenderPass(vkSettings->device, &renderPassInfo, vkSettings->allocationCallback, &renderpass);
@@ -202,7 +260,13 @@ void VkCubemap::CreateRenderpass()
 	pipelineBuilder.LoadDepthStencilState(pipelineBuilderParams);
 	
 	// Load renderpass to cubemap pipeline
-	pipelineBuilder.LoadRenderpass(renderpass);
+	pipelineBuilder.LoadRenderpass(pipelineBuilderParams, &renderpass);
+}
+
+void VkCubemap::LoadRenderpass(VkRenderPass* renderpass_)
+{
+	pipelineBuilder.LoadDepthStencilState(pipelineBuilderParams);
+	pipelineBuilder.LoadRenderpass(pipelineBuilderParams, renderpass_);
 }
 
 void VkCubemap::CreateFramebuffers()
@@ -225,6 +289,31 @@ void VkCubemap::CreateFramebuffers()
 		throw std::runtime_error("Unable to create framebuffers for cubemap!");
 }
 
+void VkCubemap::CreateSampler()
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+
+	VkSamplerCreateInfo samplerInfo;
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.pNext = VK_NULL_HANDLE;
+	samplerInfo.flags = 0;
+	samplerInfo.magFilter = VK_FILTER_NEAREST;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.anisotropyEnable = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+	samplerInfo.minLod = 0.1f;
+	samplerInfo.maxLod = 1.0f;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+	VkResult samplerResult = vkCreateSampler(vkSettings->device, &samplerInfo, vkSettings->allocationCallback, &cubemapParams.sampler);
+	assert(samplerResult == VK_SUCCESS);
+}
+
 void VkCubemap::CreateViewportState()
 {
 	auto renderingPipeline = GGLSPtr->pipeline;
@@ -234,10 +323,11 @@ void VkCubemap::CreateViewportState()
 	viewports.resize(viewportCount);
 	std::vector<VkRect2D> scissors;
 	scissors.resize(scissorCount);
+	
 	renderingPipeline->GetViewportInfo(viewportCount, viewports.data(), scissorCount, scissors.data());
 	
 
-	pipelineBuilder.LoadViewportInfo(pipelineBuilderParams, viewportCount, viewports.data(), scissorCount, scissors.data());
+	pipelineBuilder.LoadViewportInfo(pipelineBuilderParams, scissors[0].extent);
 }
 
 void VkCubemap::GenerateCubeMap(std::vector<TextureData*> cubemapTextureData)
@@ -264,11 +354,11 @@ void VkCubemap::GenerateCubeMap(std::vector<TextureData*> cubemapTextureData)
 		.arrayLayers = 6,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
 		.tiling = VK_IMAGE_TILING_OPTIMAL,
-		.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 1,
 		.pQueueFamilyIndices = &vkSettings->queueFamilies[0],
-		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+		.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED
 	};
 
 	VkPhysicalDeviceImageFormatInfo2 supportedImgFmtInfo =
@@ -300,7 +390,6 @@ void VkCubemap::GenerateCubeMap(std::vector<TextureData*> cubemapTextureData)
 	{
 		throw new std::runtime_error("Unable to create Cubemap!");
 	}
-
 
 	VkMemoryRequirements imgMemReqs;
 	vkGetImageMemoryRequirements(vkSettings->device, cubemapParams.img, &imgMemReqs);
@@ -370,6 +459,9 @@ void VkCubemap::GenerateCubeMap(std::vector<TextureData*> cubemapTextureData)
 	{
 		throw new std::runtime_error("Unable to create image view!");
 	}
+
+	VulkanFunctionLibrary::TransitionImageLayout(cubemapParams.img, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cubemapViewInfo.subresourceRange.layerCount);
+
 
 	cubemapParams.stagingBufferSize = cubemapTextureData[0]->width * cubemapTextureData[0]->height * cubemapTextureData[0]->channels * 6;
 	cubemapParams.layerSize = cubemapParams.stagingBufferSize / 6;
@@ -480,8 +572,7 @@ void VkCubemap::GenerateCubeMap(std::vector<TextureData*> cubemapTextureData)
 	}
 
 
-	void* dataBinding;
-	result = vkMapMemory(vkSettings->device, cubemapParams.stagingMemory, 0, cubemapParams.stagingBufferSize, 0, &dataBinding);
+	result = vkMapMemory(vkSettings->device, cubemapParams.stagingMemory, 0, cubemapParams.stagingBufferSize, 0, &cubemapParams.stagingData);
 	if (result != VK_SUCCESS)
 	{
 		throw new std::runtime_error("Unable to map memory to cubemap images!");
@@ -490,7 +581,7 @@ void VkCubemap::GenerateCubeMap(std::vector<TextureData*> cubemapTextureData)
 	for (int i = 0; i < 6; ++i)
 	{
 
-		memcpy((char*)dataBinding + memOffset, cubemapTextureData[i]->data, cubemapParams.layerSize);
+		memcpy((char*)cubemapParams.stagingData + memOffset, cubemapTextureData[i]->data, cubemapParams.layerSize);
 		memOffset += cubemapParams.layerSize;
 	}
 	vkUnmapMemory(vkSettings->device, cubemapParams.stagingMemory);
@@ -636,6 +727,64 @@ void VkCubemap::CreateCubemapShaders()
 	layoutResult = vkCreateDescriptorSetLayout(vkSettings->device, &fragmentDescriptorSetLayoutInfo, vkSettings->allocationCallback, &cubemapParams.fragmentLayout);
 	assert(layoutResult == VK_SUCCESS);
 
+	VkDescriptorSetAllocateInfo vertexDescriptorSetInfo;
+	vertexDescriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	vertexDescriptorSetInfo.pNext = VK_NULL_HANDLE;
+	vertexDescriptorSetInfo.descriptorPool = vkSettings->descriptorPool;
+	vertexDescriptorSetInfo.descriptorSetCount = 1;
+	vertexDescriptorSetInfo.pSetLayouts = &cubemapParams.vertexLayout;
+	VkResult descriptorSetResult = vkAllocateDescriptorSets(vkSettings->device, &vertexDescriptorSetInfo, &cubemapParams.vertexDescriptor);
+	assert(descriptorSetResult == VK_SUCCESS);
+
+	VkDescriptorSetAllocateInfo fragmentDescriptorSetInfo;
+	fragmentDescriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	fragmentDescriptorSetInfo.pNext = VK_NULL_HANDLE;
+	fragmentDescriptorSetInfo.descriptorPool = vkSettings->descriptorPool;
+	fragmentDescriptorSetInfo.descriptorSetCount = 1;
+	fragmentDescriptorSetInfo.pSetLayouts = &cubemapParams.fragmentLayout;
+	descriptorSetResult = vkAllocateDescriptorSets(vkSettings->device, &fragmentDescriptorSetInfo, &cubemapParams.fragmentDescriptor);
+	assert(descriptorSetResult == VK_SUCCESS);
+
+	VkBufferCreateInfo bufferInfo;
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.pNext = VK_NULL_HANDLE;
+	bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	bufferInfo.size = sizeof(CubemapObjectProperties);
+	bufferInfo.flags = 0;
+	bufferInfo.pQueueFamilyIndices = &vkSettings->queueFamilies[0];
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	bufferInfo.queueFamilyIndexCount = 1;
+	VkResult bufferResult = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback, &cubemapParams.objectPropertyBuffer);
+
+	VkMemoryRequirements memReqs;
+	vkGetBufferMemoryRequirements(vkSettings->device, cubemapParams.objectPropertyBuffer, &memReqs);
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex], &memoryProperties);
+	VkBool32 memoryFlagIndex = -1;
+	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; ++i)
+	{
+		if (memReqs.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+		{
+			memoryFlagIndex = i;
+			break;
+		}
+	}
+
+	if(memoryFlagIndex == -1)
+		throw std::runtime_error("Unable to access vulkan device memory!");
+
+	VkMemoryAllocateInfo memoryInfo;
+	memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryInfo.pNext = VK_NULL_HANDLE;
+	memoryInfo.allocationSize = memReqs.size;
+	memoryInfo.memoryTypeIndex = memoryFlagIndex;
+	VkResult memoryResult = vkAllocateMemory(vkSettings->device, &memoryInfo, vkSettings->allocationCallback, &cubemapParams.vertexMemory);
+	assert(memoryResult == VK_SUCCESS);
+	vkBindBufferMemory(vkSettings->device, cubemapParams.objectPropertyBuffer, cubemapParams.vertexMemory, 0);
+	
+
+	
+
 	VkPushConstantRange constants[2]{ vertexBindingRange, fragmentBindingRange };
 	VkDescriptorSetLayout layouts[2]{ cubemapParams.vertexLayout, cubemapParams.fragmentLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
@@ -663,7 +812,7 @@ void VkCubemap::CreateCubemapShaders()
 void VkCubemap::AddVertexInputBindings()
 {
 	VkVertexInputBindingDescription vertexBindingInfo;
-	vertexBindingInfo.binding =0;
+	vertexBindingInfo.binding = 0;
 	vertexBindingInfo.stride = sizeof(CubemapVertConstants);
 	vertexBindingInfo.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
@@ -675,16 +824,16 @@ void VkCubemap::AddVertexInputBindings()
 
 	VkVertexInputAttributeDescription texCoordAttrInfo;
 	texCoordAttrInfo.binding = 0;
-	texCoordAttrInfo.location = 1;
 	texCoordAttrInfo.format = VK_FORMAT_R32G32B32_SFLOAT;
+	texCoordAttrInfo.location = 2;
 	texCoordAttrInfo.offset = offsetof(CubemapVertConstants, texCoord);
-
-	VkVertexInputAttributeDescription vertexInputAttributes[2]{ vertexAttrInfo, texCoordAttrInfo };
+	
+	//VkVertexInputAttributeDescription vertexInputAttributes[2]{ vertexAttrInfo, texCoordAttrInfo };
 
 	VkVertexAttributeToBindingMapping vertexMapping;
 	vertexMapping.inputBinding = vertexBindingInfo;
 	vertexMapping.attributesForBinding.push_back(vertexAttrInfo);
-	vertexMapping.attributesForBinding.push_back(texCoordAttrInfo);
+	//vertexMapping.attributesForBinding.push_back(texCoordAttrInfo);
 
 	pipelineBuilderParams.vertexBindingMappings.push_back(vertexMapping);
 
@@ -694,17 +843,105 @@ void VkCubemap::AddVertexInputBindings()
 	pipelineVertexStateInfo.flags = 0;
 	pipelineVertexStateInfo.vertexBindingDescriptionCount = 1;
 	pipelineVertexStateInfo.pVertexBindingDescriptions = &pipelineBuilderParams.vertexBindingMappings.front().inputBinding;
-	pipelineVertexStateInfo.vertexAttributeDescriptionCount = 2;
+	pipelineVertexStateInfo.vertexAttributeDescriptionCount = (VkBool32)pipelineBuilderParams.vertexBindingMappings[0].attributesForBinding.size();
 	pipelineVertexStateInfo.pVertexAttributeDescriptions = pipelineBuilderParams.vertexBindingMappings.front().attributesForBinding.data();
 
 	pipelineBuilder.BuildVertexInputState(pipelineBuilderParams, pipelineVertexStateInfo);
+}
+
+void VkCubemap::CreateIndexBuffer()
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	// Create vertex buffer on gpu
+	VkBufferCreateInfo bufferInfo;
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.pNext = VK_NULL_HANDLE;
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.size = cubeMapVertexBuffer.size() * sizeof(DVector3);
+	bufferInfo.flags = 0;
+	bufferInfo.pQueueFamilyIndices = &vkSettings->queueFamilies[0];
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	bufferInfo.queueFamilyIndexCount = 1;
+	VkResult bufferResult = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback, &cubemapParams.vertexBuffer);
+
+	VkMemoryRequirements memReqs;
+	vkGetBufferMemoryRequirements(vkSettings->device, cubemapParams.vertexBuffer, &memReqs);
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex], &memoryProperties);
+	VkBool32 memoryFlagIndex = -1;
+	for (VkBool32 i = 0; i < memoryProperties.memoryTypeCount; ++i)
+	{
+		if (memReqs.memoryTypeBits & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+		{
+			memoryFlagIndex = i;
+			break;
+		}
+	}
+
+	if (memoryFlagIndex == -1)
+		throw std::runtime_error("Unable to access vulkan device memory!");
+
+	VkMemoryAllocateInfo memoryInfo;
+	memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryInfo.pNext = VK_NULL_HANDLE;
+	memoryInfo.allocationSize = memReqs.size;
+	memoryInfo.memoryTypeIndex = memoryFlagIndex;
+	VkResult memoryResult = vkAllocateMemory(vkSettings->device, &memoryInfo, vkSettings->allocationCallback, &cubemapParams.vertexBufMemory);
+	assert(memoryResult == VK_SUCCESS);
+	vkBindBufferMemory(vkSettings->device, cubemapParams.vertexBuffer, cubemapParams.vertexBufMemory, 0);
+
+
+
+	// Create index buffer on gpu
+
+	bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	bufferInfo.size = cubeMapIndexBuffer.size() * sizeof(uint16_t);
+	bufferResult = vkCreateBuffer(vkSettings->device, &bufferInfo, vkSettings->allocationCallback, &cubemapParams.indexBuffer);
+
+	vkGetBufferMemoryRequirements(vkSettings->device, cubemapParams.indexBuffer, &memReqs);
+	vkGetPhysicalDeviceMemoryProperties(vkSettings->physicalDevices[vkSettings->discreteGPUIndex], &memoryProperties);
+	memoryFlagIndex = -1;
+	
+	for (VkBool32 j = 0; j < memoryProperties.memoryTypeCount; ++j)
+	{
+		if (memReqs.memoryTypeBits & (1 << j) && (memoryProperties.memoryTypes[j].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+		{
+			memoryFlagIndex = j;
+			break;
+		}
+	}
+
+	if (memoryFlagIndex == -1)
+		throw std::runtime_error("Unable to access vulkan device memory!");
+
+	memoryInfo.allocationSize = memReqs.size;
+	memoryInfo.memoryTypeIndex = memoryFlagIndex;
+	memoryResult = vkAllocateMemory(vkSettings->device, &memoryInfo, vkSettings->allocationCallback, &cubemapParams.indexBufMemory);
+	assert(memoryResult == VK_SUCCESS);
+	vkBindBufferMemory(vkSettings->device, cubemapParams.indexBuffer, cubemapParams.indexBufMemory, 0);
+
+
+	// Fill vertex and index buffers
+
+	void* data;
+	VkResult mappingResult = vkMapMemory(vkSettings->device, cubemapParams.vertexBufMemory, 0, sizeof(DVector3)* cubeMapVertexBuffer.size(), 0, &data);
+	assert(mappingResult == VK_SUCCESS);
+	memcpy(data, cubeMapVertexBuffer.data(), sizeof(DVector3) * cubeMapVertexBuffer.size());
+	vkUnmapMemory(vkSettings->device, cubemapParams.vertexBufMemory);
+
+	data = 0;
+	mappingResult = vkMapMemory(vkSettings->device, cubemapParams.indexBufMemory, 0, sizeof(uint16_t) * cubeMapIndexBuffer.size(), 0, &data);
+	assert(mappingResult == VK_SUCCESS);
+	memcpy(data, cubeMapIndexBuffer.data(), sizeof(uint16_t) * cubeMapIndexBuffer.size());
+	vkUnmapMemory(vkSettings->device, cubemapParams.indexBufMemory);
+
 }
 
 void VkCubemap::CreateCubemapPipelines()
 {
 	auto pipelinePtr = pipelineBuilder.GetPipelineInfo();
 
-	// Create the remaining parameters for the first subpass pipeline 
+	// Create the remaining parameters for the third subpass pipeline 
 	pipelinePtr->subpass = 0;
 	pipelineBuilder.LoadMultispamplingState(pipelineBuilderParams);
 	pipelineBuilder.LoadColorBlendState(pipelineBuilderParams);
@@ -713,7 +950,141 @@ void VkCubemap::CreateCubemapPipelines()
 	pipelinePtr->pInputAssemblyState = &defaultInputAssemblyState;
 	
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult pipelineResult = vkCreateGraphicsPipelines(vkSettings->device, vkSettings->pipelineCache, 1, pipelinePtr, vkSettings->allocationCallback, &cubemapParams.pipeline);
+	VkResult pipelineResult = vkCreateGraphicsPipelines(vkSettings->device, vkSettings->pipelineCache, 1, &pipelineBuilderParams.pipelineInfo, vkSettings->allocationCallback, &cubemapParams.pipeline);
 	assert(pipelineResult == VK_SUCCESS);
 	// Create pipelines for the remain subpasses using the pipeline of the first subpass as the base
+}
+
+void VkCubemap::UpdateViewProjectionMatricies(DMat4x4 view, DMat4x4 projection)
+{
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+
+	objectProperties.view = view;
+	objectProperties.projection = projection;
+	void* data;
+	VkResult memoryMappingResult = vkMapMemory(vkSettings->device, cubemapParams.vertexMemory, 0, sizeof(CubemapObjectProperties), 0, &data);
+	assert(memoryMappingResult == VK_SUCCESS);
+	memcpy(data, &objectProperties, sizeof(CubemapObjectProperties));
+	vkUnmapMemory(vkSettings->device, cubemapParams.vertexMemory);
+
+
+	VkDescriptorBufferInfo objectPropertyDescriptorBufferInfo;
+	objectPropertyDescriptorBufferInfo.buffer = cubemapParams.objectPropertyBuffer;
+	objectPropertyDescriptorBufferInfo.offset = 0;
+	objectPropertyDescriptorBufferInfo.range = sizeof(CubemapObjectProperties);
+
+	VkWriteDescriptorSetInlineUniformBlock objectPropertyUniformBlock;
+	objectPropertyUniformBlock.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_INLINE_UNIFORM_BLOCK;
+	objectPropertyUniformBlock.pNext = VK_NULL_HANDLE;
+	objectPropertyUniformBlock.pData = data;
+	objectPropertyUniformBlock.dataSize = sizeof(CubemapObjectProperties);
+	
+
+	VkWriteDescriptorSet updateObjectPropertySet;
+	updateObjectPropertySet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	updateObjectPropertySet.pBufferInfo = &objectPropertyDescriptorBufferInfo;
+	updateObjectPropertySet.dstSet = cubemapParams.vertexDescriptor;
+	updateObjectPropertySet.dstBinding = 0;
+	updateObjectPropertySet.descriptorType = VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK;
+	updateObjectPropertySet.descriptorCount = sizeof(CubemapObjectProperties);
+	updateObjectPropertySet.pTexelBufferView = VK_NULL_HANDLE;
+	updateObjectPropertySet.pNext = &objectPropertyUniformBlock;
+	updateObjectPropertySet.dstArrayElement = 0;
+
+	VkDescriptorBufferInfo cubemapDescriptorBufferInfo;
+	cubemapDescriptorBufferInfo.buffer = cubemapParams.stagingBuffer;
+	cubemapDescriptorBufferInfo.offset = 0;
+	cubemapDescriptorBufferInfo.range = cubemapParams.stagingBufferSize;
+
+	VkWriteDescriptorSetInlineUniformBlock cubemapUniformBlock;
+	cubemapUniformBlock.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_INLINE_UNIFORM_BLOCK;
+	cubemapUniformBlock.pNext = VK_NULL_HANDLE;
+	cubemapUniformBlock.dataSize = (VkBool32)cubemapParams.stagingBufferSize;
+	cubemapUniformBlock.pData = cubemapParams.stagingData;
+
+	VkDescriptorImageInfo cubemapDescriptorImageInfo;
+	cubemapDescriptorImageInfo.imageView = cubemapParams.imgView;
+	cubemapDescriptorImageInfo.imageLayout= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	cubemapDescriptorImageInfo.sampler = cubemapParams.sampler;
+
+	VkWriteDescriptorSet updateCubemapTextureSet;
+	updateCubemapTextureSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	updateCubemapTextureSet.pNext = &cubemapUniformBlock;
+	updateCubemapTextureSet.pBufferInfo = &cubemapDescriptorBufferInfo;
+	updateCubemapTextureSet.dstSet = cubemapParams.fragmentDescriptor;
+	updateCubemapTextureSet.dstArrayElement = 0;
+	updateCubemapTextureSet.dstBinding = 2;
+	updateCubemapTextureSet.descriptorCount = 1;
+	updateCubemapTextureSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	updateCubemapTextureSet.pImageInfo = &cubemapDescriptorImageInfo;
+	updateCubemapTextureSet.pTexelBufferView = VK_NULL_HANDLE;
+
+	VkWriteDescriptorSet descriptorUpdates[2] { updateObjectPropertySet, updateCubemapTextureSet };
+
+	vkUpdateDescriptorSets(vkSettings->device, 2, descriptorUpdates, 0, VK_NULL_HANDLE);
+}
+
+void VkCubemap::DrawCubemap(VkBool32 frameIndex)
+{
+	auto cmdbuffer = cmdBuffers[frameIndex];	
+	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
+	VkCommandBufferBeginInfo cmdBufferInfo;
+	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	cmdBufferInfo.pNext = VK_NULL_HANDLE;
+	cmdBufferInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	cmdBufferInfo.pInheritanceInfo = VK_NULL_HANDLE;
+
+	VkClearValue clearValues[2];
+	clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
+	VkRenderPassBeginInfo renderpassBeginInfo;
+	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderpassBeginInfo.pNext = VK_NULL_HANDLE;
+	renderpassBeginInfo.renderArea = {0,0, (VkBool32)width, (VkBool32)height};
+	renderpassBeginInfo.framebuffer = framebuffers[frameIndex];
+	renderpassBeginInfo.renderPass = renderpass;
+	renderpassBeginInfo.clearValueCount = 2;
+	renderpassBeginInfo.pClearValues = clearValues;
+
+
+	assert(vkResetCommandBuffer(cmdbuffer, 0) == VK_SUCCESS);
+	assert(vkBeginCommandBuffer(cmdbuffer, &cmdBufferInfo) == VK_SUCCESS);
+	VkDescriptorSet descriptorSets[2]{cubemapParams.vertexDescriptor, cubemapParams.fragmentDescriptor};
+	vkCmdBeginRenderPass(cmdbuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdNextSubpass(cmdbuffer, VK_SUBPASS_CONTENTS_INLINE);
+	assert(vkDeviceWaitIdle(vkSettings->device) == VK_SUCCESS);
+	//vkCmdNextSubpass(cmdbuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdSetViewport(cmdbuffer, 0, 1, pipelineBuilderParams.viewports.data());
+	vkCmdSetScissor(cmdbuffer, 0, 1, pipelineBuilderParams.scissors.data());
+	vkCmdBindDescriptorSets(cmdBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, cubemapParams.pipelineLayout, 0, 2, descriptorSets, 0, VK_NULL_HANDLE);
+	vkCmdBindPipeline(cmdBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,  cubemapParams.pipeline);
+	VkDeviceSize offset = sizeof(DVector3);
+	vkCmdBindVertexBuffers(cmdBuffers[frameIndex], 0, 1, &cubemapParams.vertexBuffer, &offset);
+	vkCmdBindIndexBuffer(cmdBuffers[frameIndex], cubemapParams.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+	vkCmdDrawIndexed(cmdBuffers[frameIndex], (VkBool32)cubeMapIndexBuffer.size(), 1, 0, 0, 0);
+
+	vkCmdEndRenderPass(cmdbuffer);
+
+	assert(vkEndCommandBuffer(cmdbuffer) == VK_SUCCESS);
+}
+
+void VkCubemap::DrawCubemap(VkCommandBuffer& cmdBuffer)
+{
+	
+
+	VkDescriptorSet descriptorSets[2]{ cubemapParams.vertexDescriptor, cubemapParams.fragmentDescriptor };
+	vkCmdSetViewport(cmdBuffer, 0, 1, pipelineBuilderParams.viewports.data());
+	vkCmdSetScissor(cmdBuffer, 0, 1, pipelineBuilderParams.scissors.data());
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, cubemapParams.pipelineLayout, 0, 2, descriptorSets, 0, VK_NULL_HANDLE);
+	vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, cubemapParams.pipeline);
+
+	VkDeviceSize offset = sizeof(DVector3);
+
+	vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &cubemapParams.vertexBuffer, &offset);
+	vkCmdBindIndexBuffer(cmdBuffer, cubemapParams.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+	vkCmdDrawIndexed(cmdBuffer, (VkBool32)cubeMapIndexBuffer.size(), 1, 0, 0, 0);
 }

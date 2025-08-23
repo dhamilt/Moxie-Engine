@@ -1,6 +1,7 @@
 #include "glPCH.h"
 #include "VulkanPlatformInit.h"
 #include "VulkanFunctionLibrary.h"
+#include "GFSDK_Aftermath.h"
 #include "GLSetup.h"
 
 #if __APPLE__
@@ -128,16 +129,32 @@ bool PVulkanPlatformInit::CreateInstance(SDL_Window* window)
 
         // if deploying a debug build of engine
 #if _DEBUG
-        // Initialize Vulkan Validation Layers
-        currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
+        // ### TEMPORARILY COMMENTED OUT FOR FRAMERATE CHECK ###
+        //// Initialize Vulkan Validation Layers
+        /*currentVKSettings.layers.push_back("VK_LAYER_KHRONOS_validation");
+        currentVKSettings.layerCount++;*/
+        std::vector<VkLayerProperties> supportedLayers;
+        VkBool32 supportedLayerCount;
+        vkEnumerateInstanceLayerProperties(&supportedLayerCount, VK_NULL_HANDLE);
+        supportedLayers.resize(supportedLayerCount);
+        vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
+        currentVKSettings.layers.push_back("VK_LAYER_NV_optimus");
         currentVKSettings.layerCount++;
- 
-
-        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
+        /*currentVKSettings.layers.push_back("VK_LAYER_NV_ngfx_capture_release_public_2025_4_0");
+        currentVKSettings.layerCount++;*/
+        /*currentVKSettings.layers.push_back("VK_LAYER_NV_shader_debugger_release_public_2025_4_0");
+        currentVKSettings.layerCount++;*/
+        /*currentVKSettings.layers.push_back("VK_LAYER_NV_GPU_Trace_release_public_2025_4_0");
+        currentVKSettings.layerCount++;*/
+        /*vkEnumerateInstanceExtensionProperties("VK_LAYER_NV_ngfx_capture_release_public_2025_4_0", &supportedExtensionCount, VK_NULL_HANDLE);
         supportedExtensions.resize(supportedExtensionCount);
-        vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
+        vkEnumerateInstanceExtensionProperties("VK_LAYER_NV_ngfx_capture_release_public_2025_4_0", &supportedExtensionCount, supportedExtensions.data());*/
 
-        // Enable debug report extension
+        //vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, VK_NULL_HANDLE);
+        //supportedExtensions.resize(supportedExtensionCount);
+        //vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &supportedExtensionCount, supportedExtensions.data());
+
+        //// Enable debug report extension
         currentVKSettings.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         currentVKSettings.extensionCount++;
 
@@ -391,11 +408,30 @@ bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
     inlineUniformBlockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES;
     inlineUniformBlockFeatures.inlineUniformBlock = VK_TRUE;
     inlineUniformBlockFeatures.descriptorBindingInlineUniformBlockUpdateAfterBind = VK_TRUE;
-    inlineUniformBlockFeatures.pNext = VK_NULL_HANDLE;
+    
 
     currentVKSettings.deviceExtensions.push_back("VK_KHR_swapchain");
     currentVKSettings.deviceExtensions.push_back("VK_EXT_depth_range_unrestricted");
     currentVKSettings.deviceExtensions.push_back("VK_EXT_inline_uniform_block");
+    // Add Nvidia Nsight Aftermath diagnostic features
+    currentVKSettings.deviceExtensions.push_back(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
+    // Add Nvidia Nsight Aftermath event markers
+    currentVKSettings.deviceExtensions.push_back(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
+
+    VkDeviceDiagnosticsConfigFlagsNV aftermathFlags = 
+        VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV    | // Enable automatic call stack checkpoints
+        VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV        | // Enable tracking of resources
+        VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV        | // Enable debug information for shaders
+        VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV;    // Enable additional runtime shader error reporting
+
+
+    VkDeviceDiagnosticsConfigCreateInfoNV aftermathInfo;
+    aftermathInfo.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
+    aftermathInfo.pNext = VK_NULL_HANDLE;
+    aftermathInfo.flags = aftermathFlags;
+
+    inlineUniformBlockFeatures.pNext = &aftermathInfo;
+
     auto queueInfo = &currentVKSettings.queueInfo;
     auto deviceInfo = &currentVKSettings.deviceInfo;
 
@@ -414,7 +450,6 @@ bool PVulkanPlatformInit::CreateLogicalDeviceAndQueue()
     deviceInfo->ppEnabledExtensionNames = currentVKSettings.deviceExtensions.data();
     auto device = currentVKSettings.physicalDevices[currentVKSettings.discreteGPUIndex];
     VkResult result = vkCreateDevice(device, deviceInfo, currentVKSettings.allocationCallback, &currentVKSettings.device);
-
     if (result != VK_SUCCESS)
     {
         perror("Error! Unable to create device!");
@@ -740,8 +775,6 @@ bool PVulkanPlatformInit::CreateSwapChain()
 
 void PVulkanPlatformInit::ResizeSwapChain(int _width, int _height)
 {
-    VkResult deviceIdle =vkDeviceWaitIdle(currentVKSettings.device);
-    assert(deviceIdle == VK_SUCCESS);
 
     auto info =  &currentVKSettings.swapchainInfo;
     info->imageExtent =VkExtent2D(_width, _height);
@@ -926,8 +959,8 @@ bool PVulkanPlatformInit::CreateRenderPass()
 	// Create Present to Depth/Stencil subpass
 	VkSubpassDescription presentToDepthStencilSubpass;
 	presentToDepthStencilSubpass.flags = 0;
-	presentToDepthStencilSubpass.colorAttachmentCount = 1;
-	presentToDepthStencilSubpass.pColorAttachments = &colorRef;
+	presentToDepthStencilSubpass.colorAttachmentCount = 0;
+	presentToDepthStencilSubpass.pColorAttachments = VK_NULL_HANDLE;
 	presentToDepthStencilSubpass.pDepthStencilAttachment = &depthRef;
 	presentToDepthStencilSubpass.inputAttachmentCount = 0;
 	presentToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
@@ -948,6 +981,8 @@ bool PVulkanPlatformInit::CreateRenderPass()
     depthStencilToColorSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
     depthStencilToColorSubpass.pResolveAttachments = VK_NULL_HANDLE;
     depthStencilToColorSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+    // Create
 
 	// Create Color to Transfer subpass
 	VkSubpassDescription colorToTransferSubpass;
@@ -981,7 +1016,7 @@ bool PVulkanPlatformInit::CreateRenderPass()
 	depthStencilToColorDependency.dstSubpass = 1;
 	depthStencilToColorDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	depthStencilToColorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	depthStencilToColorDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+	depthStencilToColorDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	depthStencilToColorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	depthStencilToColorDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;	
     

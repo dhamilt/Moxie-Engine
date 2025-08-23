@@ -41,16 +41,16 @@ void VulkanFunctionLibrary::EndOneOffCommandBuffer(VkCommandBuffer cmdBuffer)
 	vkFreeCommandBuffers(vkSettings->device, vkSettings->oneOffCommandPool, 1, &cmdBuffer);
 }
 
-void VulkanFunctionLibrary::TransitionImageLayout(VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout)
+void VulkanFunctionLibrary::TransitionImageLayout(VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkBool32 layerCount)
 {
 	auto cmdBuffer = BeginOneOffCommandBuffer();
 
-	TransitionImageLayout(cmdBuffer, image, fmt, aspect, oldLayout, newLayout);
+	TransitionImageLayout(cmdBuffer, image, fmt, aspect, oldLayout, newLayout, layerCount);
 
 	EndOneOffCommandBuffer(cmdBuffer);
 }
 
-void VulkanFunctionLibrary::TransitionImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout)
+void VulkanFunctionLibrary::TransitionImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkFormat fmt, VkImageAspectFlags aspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkBool32 layerCount)
 {
 	VkImageMemoryBarrier barrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -64,7 +64,7 @@ void VulkanFunctionLibrary::TransitionImageLayout(VkCommandBuffer cmdBuffer, VkI
 							.baseMipLevel = 0,
 							.levelCount = 1,
 							.baseArrayLayer = 0,
-							.layerCount = 1
+							.layerCount = layerCount
 							}
 	};
 	VkPipelineStageFlags sourceStage;
@@ -115,7 +115,7 @@ void VulkanFunctionLibrary::TransitionImageLayout(VkCommandBuffer cmdBuffer, VkI
 		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
@@ -270,45 +270,81 @@ VkRenderPass VulkanFunctionLibrary::CreateDefaultRenderpass()
 
 
 	VkBool32 preserveAttachments[2] = { 0, 1 };
-	// Create Color to Depth/Stencil subpass
-	VkSubpassDescription colorToDepthStencilSubpass;
-	colorToDepthStencilSubpass.flags = 0;
-	colorToDepthStencilSubpass.colorAttachmentCount = 1;
-	colorToDepthStencilSubpass.pColorAttachments = &colorRef;
-	colorToDepthStencilSubpass.pDepthStencilAttachment = VK_NULL_HANDLE;
-	colorToDepthStencilSubpass.inputAttachmentCount = 0;
-	colorToDepthStencilSubpass.pPreserveAttachments = VK_NULL_HANDLE;
-	colorToDepthStencilSubpass.preserveAttachmentCount = 0;
-	colorToDepthStencilSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
-	colorToDepthStencilSubpass.pResolveAttachments = VK_NULL_HANDLE;
-	colorToDepthStencilSubpass.pInputAttachments = VK_NULL_HANDLE;
+	// Create Present to Shader Read Subpass
+	VkSubpassDescription presentToShaderReadSubpass;
+	presentToShaderReadSubpass.flags = 0;
+	presentToShaderReadSubpass.colorAttachmentCount = 0;
+	presentToShaderReadSubpass.pColorAttachments = VK_NULL_HANDLE;
+	presentToShaderReadSubpass.pDepthStencilAttachment = VK_NULL_HANDLE;
+	presentToShaderReadSubpass.inputAttachmentCount = 0;
+	presentToShaderReadSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	presentToShaderReadSubpass.preserveAttachmentCount = 0;
+	presentToShaderReadSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Graphics subpass
+	presentToShaderReadSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	presentToShaderReadSubpass.pInputAttachments = VK_NULL_HANDLE;
 
-	//// Create Depth/Stencil to Transfer subpass
-	//VkSubpassDescription depthStencilToTransferSubpass;
-	//depthStencilToTransferSubpass.flags = 0;
-	//depthStencilToTransferSubpass.colorAttachmentCount = 1;
-	//depthStencilToTransferSubpass.pColorAttachments = &colorRef;
-	//depthStencilToTransferSubpass.pDepthStencilAttachment = &depthRef;
-	//depthStencilToTransferSubpass.inputAttachmentCount = 0;
-	//depthStencilToTransferSubpass.pPreserveAttachments = VK_NULL_HANDLE;
-	//depthStencilToTransferSubpass.preserveAttachmentCount = 0;
-	//depthStencilToTransferSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	//depthStencilToTransferSubpass.pResolveAttachments = VK_NULL_HANDLE;
-	//depthStencilToTransferSubpass.pInputAttachments = VK_NULL_HANDLE;
+	// Create Shader Read to Color Subpass
+	VkSubpassDescription shaderReadToColorSubpass;
+	shaderReadToColorSubpass.flags = 0;
+	shaderReadToColorSubpass.colorAttachmentCount = 1;
+	shaderReadToColorSubpass.pColorAttachments = &colorRef;
+	shaderReadToColorSubpass.pDepthStencilAttachment = VK_NULL_HANDLE;
+	shaderReadToColorSubpass.inputAttachmentCount = 0;
+	shaderReadToColorSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	shaderReadToColorSubpass.preserveAttachmentCount = 0;
+	shaderReadToColorSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	shaderReadToColorSubpass.pResolveAttachments = VK_NULL_HANDLE;
+	shaderReadToColorSubpass.pInputAttachments = VK_NULL_HANDLE;
+
+	// Create Color to Present Subpass
+	VkSubpassDescription colorToPresentSubpass;
+	colorToPresentSubpass.flags = 0;
+	colorToPresentSubpass.colorAttachmentCount = 1;
+	colorToPresentSubpass.pColorAttachments = &colorRef;
+	colorToPresentSubpass.pDepthStencilAttachment = VK_NULL_HANDLE;
+	colorToPresentSubpass.inputAttachmentCount = 0;
+	colorToPresentSubpass.pInputAttachments = VK_NULL_HANDLE;
+	colorToPresentSubpass.preserveAttachmentCount = 0;
+	colorToPresentSubpass.pPreserveAttachments = VK_NULL_HANDLE;
+	colorToPresentSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	colorToPresentSubpass.pResolveAttachments = VK_NULL_HANDLE;
 	
 
 
-	std::vector<VkSubpassDescription> subpasses = { colorToDepthStencilSubpass/*, depthStencilToTransferSubpass*/ };
+	std::vector<VkSubpassDescription> subpasses = { presentToShaderReadSubpass, shaderReadToColorSubpass, colorToPresentSubpass };
 
-	// Create Color attachment dependency
-	VkSubpassDependency colorDependency;
-	colorDependency.srcSubpass = 0;
-	colorDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
-	colorDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	colorDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	colorDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-	colorDependency.dstAccessMask = VK_ACCESS_NONE;
-	colorDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Create Present to Shader Read Dependency
+	VkSubpassDependency presentToShaderReadDependency;
+	presentToShaderReadDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	presentToShaderReadDependency.dstSubpass = 0;
+	presentToShaderReadDependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	presentToShaderReadDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	presentToShaderReadDependency.srcAccessMask = VK_ACCESS_NONE;
+	presentToShaderReadDependency.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+	presentToShaderReadDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Create Shader Read to Color Dependency
+	VkSubpassDependency shaderReadToColorDependency;
+	shaderReadToColorDependency.srcSubpass = 0;
+	shaderReadToColorDependency.dstSubpass = 1;
+	shaderReadToColorDependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	shaderReadToColorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	shaderReadToColorDependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	shaderReadToColorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	shaderReadToColorDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Create Color to Present attachment dependency
+	VkSubpassDependency colorToPresentDependency;
+	colorToPresentDependency.srcSubpass = 1;
+	colorToPresentDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+	colorToPresentDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	colorToPresentDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	colorToPresentDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	colorToPresentDependency.dstAccessMask = VK_ACCESS_NONE;
+	colorToPresentDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+
+	std::vector<VkSubpassDependency> dependencies = { presentToShaderReadDependency, shaderReadToColorDependency, colorToPresentDependency };
 
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
 
@@ -319,8 +355,8 @@ VkRenderPass VulkanFunctionLibrary::CreateDefaultRenderpass()
 	renderPassInfo.pNext = VK_NULL_HANDLE;
 	renderPassInfo.subpassCount = (VkBool32)subpasses.size();
 	renderPassInfo.pSubpasses = subpasses.data();
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &colorDependency;
+	renderPassInfo.dependencyCount = (VkBool32)dependencies.size();
+	renderPassInfo.pDependencies = dependencies.data();
 	renderPassInfo.flags = NULL;
 	VkResult result = vkCreateRenderPass(vkSettings->device, &renderPassInfo, vkSettings->allocationCallback, &renderpass);
 	assert(result == VK_SUCCESS);

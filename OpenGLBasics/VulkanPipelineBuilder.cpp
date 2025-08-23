@@ -1,24 +1,28 @@
 #include "glPCH.h"
 #include "VulkanPipelineBuilder.h"
 
+VkPipelineBuilderParams::VkPipelineBuilderParams()
+{
+	pipelineInfo = {
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.pNext = VK_NULL_HANDLE,
+		.flags = 0,
+		.pStages = VK_NULL_HANDLE,
+		.pVertexInputState = VK_NULL_HANDLE,
+		.pInputAssemblyState = &defaultInputAssemblyState,
+		.pTessellationState = VK_NULL_HANDLE,
+		.pViewportState = VK_NULL_HANDLE,
+		.pRasterizationState = &defaultRasterizationState,
+		.pMultisampleState = &defaultMultisamplingState,
+		.pDepthStencilState = &defaultDepthStencilState,
+		.pColorBlendState = &defaultColorBlendState,
+		.renderPass = PVulkanPlatformInit::Get()->GetInfo()->renderPass
+	};
+}
 
 VkPipelineBuilder::VkPipelineBuilder()
 {
-    pipelineInfo = {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
-        .flags = 0,
-        .pStages = VK_NULL_HANDLE,
-        .pVertexInputState = VK_NULL_HANDLE,
-        .pInputAssemblyState = &defaultInputAssemblyState,
-        .pTessellationState = VK_NULL_HANDLE,
-        .pViewportState = VK_NULL_HANDLE,
-        .pRasterizationState = &defaultRasterizationState,
-        .pMultisampleState = &defaultMultisamplingState,
-        .pDepthStencilState = &defaultDepthStencilState,
-        .pColorBlendState = &defaultColorBlendState,
-        .renderPass = PVulkanPlatformInit::Get()->GetInfo()->renderPass
-    };
+    
 }
 
 void VkPipelineBuilder::SetInputAssembly(VkPipelineBuilderParams& params, VkPrimitiveTopology topology, bool primitiveRestart)
@@ -31,13 +35,13 @@ void VkPipelineBuilder::SetInputAssembly(VkPipelineBuilderParams& params, VkPrim
         .primitiveRestartEnable = primitiveRestart
     };
 
-    pipelineInfo.pInputAssemblyState = &params.inputAssemblyInfo;
+    params.pipelineInfo.pInputAssemblyState = &params.inputAssemblyInfo;
 }
 
 void VkPipelineBuilder::SetInputAssembly(VkPipelineBuilderParams& params, VkPipelineInputAssemblyStateCreateInfo inputAssemInfo)
 {
     params.inputAssemblyInfo = inputAssemInfo;
-    pipelineInfo.pInputAssemblyState = &params.inputAssemblyInfo;
+    params.pipelineInfo.pInputAssemblyState = &params.inputAssemblyInfo;
 }
 
 void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPipelineBuilderParams& params)
@@ -99,38 +103,39 @@ void VkPipelineBuilder::LoadShaderModule(VkShaderStageConfigs shaderConfig, VkPi
             params.shaders.push_back(shaderModule);
         }
        
-       pipelineInfo.stageCount = (VkBool32)params.shaderStages.size();
-       pipelineInfo.pStages = params.shaderStages.data();
+       params.pipelineInfo.stageCount = (VkBool32)params.shaderStages.size();
+       params.pipelineInfo.pStages = params.shaderStages.data();
     }
 }
 
-void VkPipelineBuilder::LoadRenderpass(VkRenderPass renderpass)
+void VkPipelineBuilder::LoadRenderpass(VkPipelineBuilderParams&params, VkRenderPass* renderpass)
 {
-    pipelineInfo.renderPass = renderpass;
+    params.pipelineInfo.renderPass = *renderpass;
 }
 
 void VkPipelineBuilder::LoadDepthStencilState(VkPipelineBuilderParams& params, VkPipelineDepthStencilStateCreateInfo depthStencilInfo)
 {
     params.depthStencilInfo = depthStencilInfo;
-    pipelineInfo.pDepthStencilState = &params.depthStencilInfo;
+    params.pipelineInfo.pDepthStencilState = &params.depthStencilInfo;
 }
 
 void VkPipelineBuilder::LoadPipelineLayout(VkPipelineBuilderParams& params, VkPipelineLayout* pPipelineLayout)
 {
+    
     params.pipelineLayouts.push_back(*pPipelineLayout);
-    pipelineInfo.layout = *pPipelineLayout;
+    params.pipelineInfo.layout = params.pipelineLayouts[0];
 }
 
 void VkPipelineBuilder::LoadColorBlendState(VkPipelineBuilderParams& params, VkPipelineColorBlendStateCreateInfo colorBlendInfo)
 {
     params.colorBlendInfo = colorBlendInfo;
-    pipelineInfo.pColorBlendState = &params.colorBlendInfo;
+    params.pipelineInfo.pColorBlendState = &params.colorBlendInfo;
 }
 
 void VkPipelineBuilder::LoadMultispamplingState(VkPipelineBuilderParams& params, VkPipelineMultisampleStateCreateInfo multisampleInfo)
 {
     params.multisamplingInfo = multisampleInfo;
-    pipelineInfo.pMultisampleState = &params.multisamplingInfo;
+    params.pipelineInfo.pMultisampleState = &params.multisamplingInfo;
 }
 
 void VkPipelineBuilder::LoadViewportInfo(VkPipelineBuilderParams& params, VkBool32 viewportCount, VkViewport* viewports, VkBool32 scissorCount, VkRect2D* scissors)
@@ -151,7 +156,7 @@ void VkPipelineBuilder::LoadViewportInfo(VkPipelineBuilderParams& params, VkBool
         params.scissors.push_back(scissors[scissorIndex]);
     
     
-    pipelineInfo.pViewportState = &params.viewportInfo;
+    params.pipelineInfo.pViewportState = &params.viewportInfo;
 }
 
 void VkPipelineBuilder::LoadViewportInfo(VkPipelineBuilderParams& params, VkExtent2D screenResolution)
@@ -182,7 +187,7 @@ void VkPipelineBuilder::LoadViewportInfo(VkPipelineBuilderParams& params, VkExte
         .pScissors = params.scissors.data()
     };
 
-    pipelineInfo.pViewportState = &params.viewportInfo;
+    params.pipelineInfo.pViewportState = &params.viewportInfo;
 }
 
 //void VkPipelineBuilder::GetTriangleShaderPipeline(VkExtent2D windowExtent, VkPipeline* pipelines, VkPipelineBuilderParams params)
@@ -237,7 +242,7 @@ void VkPipelineBuilder::LoadViewportInfo(VkPipelineBuilderParams& params, VkExte
 void VkPipelineBuilder::CreateMeshShaderPipeline(VkPipeline* pipeline,  VkPipelineBuilderParams& params)
 {
     auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-    auto result  = vkCreateGraphicsPipelines(vkSettings->device, VK_NULL_HANDLE, 1, &pipelineInfo, vkSettings->allocationCallback, pipeline);
+    auto result  = vkCreateGraphicsPipelines(vkSettings->device, VK_NULL_HANDLE, 1, &params.pipelineInfo, vkSettings->allocationCallback, pipeline);
     if (result != VK_SUCCESS)
     {
         throw std::runtime_error("Unable to create graphics pipeline for mesh!");
@@ -248,7 +253,7 @@ void VkPipelineBuilder::BuildVertexInputState(VkPipelineBuilderParams& params, V
 {
     params.vertexInputInfo = vertexInputInfo;
    
-    pipelineInfo.pVertexInputState = &params.vertexInputInfo;
+    params.pipelineInfo.pVertexInputState = &params.vertexInputInfo;
 }
 
 VkGraphicsPipelineCreateInfo* VkPipelineBuilder::GetPipelineInfo()

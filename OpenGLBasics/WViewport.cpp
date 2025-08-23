@@ -129,8 +129,6 @@ void WViewport::GetCurrentFramebuffer(VkBool32 frameIndex, VkFramebuffer& frameb
 void WViewport::ResizeFramebuffers(int _width, int _height)
 {
 	auto vkSettings = PVulkanPlatformInit::Get()->GetInfo();
-	VkResult idleResult = vkDeviceWaitIdle(vkSettings->device);
-	assert(idleResult == VK_SUCCESS);
 
 	for(VkFramebuffer framebuf : frameBuffers)
 		vkDestroyFramebuffer(vkSettings->device, framebuf, vkSettings->allocationCallback);
@@ -350,7 +348,7 @@ void WViewport::VkCopySwapchainImg(VkCommandBuffer srcCmdBuffer, VkCommandBuffer
 	
 
 	
-	VulkanFunctionLibrary::TransitionImageLayout(swapChainImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED , VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	//VulkanFunctionLibrary::TransitionImageLayout(swapChainImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED , VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
 	VulkanFunctionLibrary::TransitionImageLayout(paramCollection[frameIndex].viewportImg, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 

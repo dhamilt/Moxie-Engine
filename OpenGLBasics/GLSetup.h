@@ -88,6 +88,7 @@ private:
 	GLuint screenTextureID;
 	// Framebuffer Object and Render buffer Object
 	GLuint fbo, rbo;
+	std::map<uint64_t, std::string> aftermathMarkerIds;
 	// Viewport
 	WViewport* viewport;
 	int width = 1600, height = 900;
